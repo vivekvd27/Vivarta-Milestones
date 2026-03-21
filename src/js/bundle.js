@@ -1999,13 +1999,6 @@ function initRuleOfThreeForm() {
   console.log("✓ initRuleOfThreeForm complete");
 }
 
-  if (cancelBtn) {
-    cancelBtn.onclick = closeRuleOfThreeModal;
-  }
-  
-  console.log("✓ initRuleOfThreeForm complete");
-}
-
 function openRuleOfThreeModal() {
   const modal = document.getElementById("ruleOfThreeModal");
   if (modal) {
