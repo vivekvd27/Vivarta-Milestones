@@ -3259,9 +3259,14 @@ function loadData() {
   // If using Supabase cloud mode AND data is ready, load from window.appState
   if (window.supabaseReady && window.appState?.habitCompletions && typeof window.appState.habitCompletions === 'object') {
     console.log("☁️  Loading habit data from Supabase (window.appState)");
+    console.log("   habitCompletions keys:", Object.keys(window.appState.habitCompletions));
+    console.log("   habitCompletions:", window.appState.habitCompletions);
     return window.appState.habitCompletions || {};
   }
   
+  console.warn("⚠️  Supabase not ready or no habitCompletions - falling back to localStorage");
+  console.log("   window.supabaseReady:", window.supabaseReady);
+  console.log("   window.appState?.habitCompletions:", window.appState?.habitCompletions);
   // Fallback to localStorage
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
   catch { return {}; }

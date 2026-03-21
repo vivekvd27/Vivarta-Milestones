@@ -241,11 +241,15 @@ class SupabaseAppBridge {
       }
 
       // FINAL: Trigger complete dashboard render with all Supabase data loaded
-      if (typeof renderDashboard === 'function') {
-        console.log("📊 Rendering complete Dashboard with Supabase data...");
-        renderDashboard();
-        console.log("✅ Dashboard fully rendered with Supabase data");
-      }
+      // Add small delay to ensure all data is properly set in window.appState
+      setTimeout(() => {
+        if (typeof renderDashboard === 'function') {
+          console.log("📊 Rendering complete Dashboard with Supabase data...");
+          console.log("   🔍 window.appState.habitCompletions keys:", Object.keys(window.appState?.habitCompletions || {}));
+          renderDashboard();
+          console.log("✅ Dashboard fully rendered with Supabase data");
+        }
+      }, 100);
 
       // Set up data sync (interceptLocalStorage will handle saves)
       this.interceptLocalStorageForSync();
@@ -253,11 +257,13 @@ class SupabaseAppBridge {
     } catch (error) {
       console.error("❌ Exception in loadStateFromSupabase:", error);
       this.createDefaultAppState();
-      // Still render dashboard even if there was an error
-      if (typeof renderDashboard === 'function') {
-        console.log("📊 Rendering Dashboard (error recovery)...");
-        renderDashboard();
-      }
+      // Still render dashboard even if there was an error (with delay)
+      setTimeout(() => {
+        if (typeof renderDashboard === 'function') {
+          console.log("📊 Rendering Dashboard (error recovery)...");
+          renderDashboard();
+        }
+      }, 100);
     }
   }
 
