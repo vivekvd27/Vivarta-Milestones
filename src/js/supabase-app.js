@@ -122,8 +122,10 @@ class SupabaseAppBridge {
         
         if (error.code === "PGRST116") {
           // 116 = no rows found (table exists but empty for this user)
-          console.log(`ℹ️  No data yet for user "${this.currentUser}" - starting fresh`);
+          console.log(`ℹ️  No data yet for user "${this.currentUser}" - starting fresh with defaults`);
           this.createDefaultAppState();
+          // Save defaults to Supabase immediately
+          await this.saveDefaultsToSupabase();
         } else if (error.message?.includes("relation") || error.message?.includes("does not exist")) {
           console.error("❌ user_data table not found in Supabase");
           console.error("Please run the docs/SUPABASE_USER_DATA_TABLE.sql in your Supabase SQL Editor");
@@ -184,9 +186,10 @@ class SupabaseAppBridge {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
         }
-      } else {
-        console.warn("⚠️  Query returned no rows - creating default state");
-        this.createDefaultAppState();
+      
+      // IMPORTANT: Ensure defaults are seeded for empty optional fields
+      this.ensureDefaults();
+        await this.saveDefaultsToSupabase();
       }
 
       // IMPORTANT: Trigger re-render of kanban with merged data
@@ -380,19 +383,42 @@ class SupabaseAppBridge {
   }
 
   /**
-   * Create default empty app state
+   * Create default empty app state WITH default values for milestones, goals, affirmations
    */
   createDefaultAppState() {
+    const today = () => new Date().toISOString().split('T')[0];
+    
     this.appState = {
       timeline: [],
       meetings: [],
       contacts: [],
       futureEvents: [],
       ruleOfThree: [],
-      affirmations: [],
-      goals: { yearly: [], monthly: [], weekly: [] },
+      affirmations: this.getDefaultAffirmations(),
+      goals: {
+        yearly: [
+          { id: 1001, text: 'Build Vivarta Tech to ₹1 Crore Revenue', completed: false, date: '2026-01-01' },
+          { id: 1002, text: 'Launch 3 products with real market traction', completed: false, date: '2026-01-01' },
+          { id: 1003, text: 'Get incubated at IIM Ahmedabad', completed: false, date: '2026-01-01' },
+        ],
+        monthly: [
+          { id: 2001, text: 'Close 2 new client deals', completed: false, date: today() },
+          { id: 2002, text: 'Complete product prototype v1', completed: false, date: today() },
+        ],
+        weekly: [
+          { id: 3001, text: 'Finalize product roadmap', completed: false, date: today() },
+          { id: 3002, text: 'Publish 1 LinkedIn article', completed: false, date: today() },
+          { id: 3003, text: 'Complete Rule of 1-1-1 every day this week', completed: false, date: today() },
+        ]
+      },
       announcements: [],
-      milestones: [],
+      milestones: [
+        { id: Date.now() + 1, text: '₹10L revenue', done: false },
+        { id: Date.now() + 2, text: 'First international client', done: false },
+        { id: Date.now() + 3, text: '1st product launch', done: false },
+        { id: Date.now() + 4, text: 'Team of 5', done: false },
+        { id: Date.now() + 5, text: 'IIM incubation', done: false },
+      ],
       affirmationsReviewedToday: '',
       habitCompletions: {},
       teamTasks: {},
@@ -405,14 +431,140 @@ class SupabaseAppBridge {
       window.appState = { ...this.appState };
     }
     
-    console.log("✓ Default app state created for " + this.currentUser);
+    console.log("✓ Default app state created with defaults for " + this.currentUser);
+    console.log("✓ Default milestones:", this.appState.milestones.length, "items");
+    console.log("✓ Default affirmations:", this.appState.affirmations.length, "items");
+    console.log("✓ Default goals:", this.appState.goals.yearly.length, "yearly,", this.appState.goals.monthly.length, "monthly,", this.appState.goals.weekly.length, "weekly");
     console.log("✓ window.appState synchronized");
   }
 
   /**
-   * Intercept localStorage calls for per-user isolation (demo mode)
+   * Get default affirmations (matches bundle.js defaults)
    */
-  interceptLocalStorage() {
+  getDefaultAffirmations() {
+    return [
+      { text: "Spend 30 min in library — new ideas & latest happenings", category: "Startup Guidelines" },
+      { text: "Focus on Government Schemes for Grants — knowledge + due dates", category: "Startup Guidelines" },
+      { text: "Watch Shark Tank videos — study pitches and business models", category: "Startup Guidelines" },
+      { text: "Study business case studies — learn from successes and failures", category: "Startup Guidelines" },
+      { text: "Maintain a learning notebook — startup learnings, AI tools, Design Thinking", category: "Startup Guidelines" },
+      { text: "Maintain a networking notebook — contacts, conversations, follow-ups", category: "Startup Guidelines" },
+      { text: "3 Factors of Success (3M's) — Money, Market, Mindset", category: "Startup Guidelines" },
+      { text: "Use TRIZ & LEAN model effectively", category: "Startup Guidelines" },
+      { text: "If product fails during testing → Empathize and iterate", category: "Startup Guidelines" },
+      { text: "Everything happens twice — first in mind, then in reality → Power of visualization", category: "Mindset & Focus" },
+      { text: "Apart from what you want to achieve, everything else is noise", category: "Mindset & Focus" },
+      { text: "Watch your thoughts — keep what matters, remove noise", category: "Mindset & Focus" },
+      { text: "Read one CAD/CAE article daily", category: "Daily Execution" },
+      { text: "Post one article weekly on LinkedIn", category: "Daily Execution" },
+      { text: "Explore guest lecture opportunities", category: "Daily Execution" },
+      { text: "Read NVIDIA blogs", category: "Daily Execution" },
+    ].map((aff) => ({
+      id: this.generateId(),
+      text: aff.text,
+      category: aff.category,
+      createdAt: new Date().toISOString(),
+    }));
+  }
+
+  generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  /**
+   * Save default state to Supabase (called when first creating defaults)
+   */
+  async saveDefaultsToSupabase() {
+    try {
+      console.log(`💾 Saving default state for user "${this.currentUser}" to Supabase...`);
+      
+      const { data, error } = await this.supabase
+        .from("user_data")
+        .upsert({
+          user_name: this.currentUser,
+          state_json: JSON.stringify(this.appState),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: "user_name"
+        });
+
+      if (error) {
+        console.error("❌ Error saving defaults to Supabase:", error);
+        return false;
+      }
+
+      console.log("✅ Default state saved to Supabase");
+      console.log("   - Milestones:", this.appState.milestones.length);
+      console.log("   - Goals:", Object.values(this.appState.goals).flat().length, "total");
+      console.log("   - Affirmations:", this.appState.affirmations.length);
+      return true;
+    } catch (error) {
+      console.error("Exception saving defaults to Supabase:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Ensure empty fields get seeded with defaults
+   */
+  ensureDefaults() {
+    const today = () => new Date().toISOString().split('T')[0];
+    let needsSave = false;
+
+    // Ensure milestones
+    if (!this.appState.milestones || this.appState.milestones.length === 0) {
+      console.log("📌 Seeding default milestones...");
+      this.appState.milestones = [
+        { id: Date.now() + 1, text: '₹10L revenue', done: false },
+        { id: Date.now() + 2, text: 'First international client', done: false },
+        { id: Date.now() + 3, text: '1st product launch', done: false },
+        { id: Date.now() + 4, text: 'Team of 5', done: false },
+        { id: Date.now() + 5, text: 'IIM incubation', done: false },
+      ];
+      needsSave = true;
+    }
+
+    // Ensure goals
+    if (!this.appState.goals || 
+        ((!this.appState.goals.yearly || this.appState.goals.yearly.length === 0) &&
+         (!this.appState.goals.monthly || this.appState.goals.monthly.length === 0) &&
+         (!this.appState.goals.weekly || this.appState.goals.weekly.length === 0))) {
+      console.log("🎯 Seeding default goals...");
+      this.appState.goals = {
+        yearly: [
+          { id: 1001, text: 'Build Vivarta Tech to ₹1 Crore Revenue', completed: false, date: '2026-01-01' },
+          { id: 1002, text: 'Launch 3 products with real market traction', completed: false, date: '2026-01-01' },
+          { id: 1003, text: 'Get incubated at IIM Ahmedabad', completed: false, date: '2026-01-01' },
+        ],
+        monthly: [
+          { id: 2001, text: 'Close 2 new client deals', completed: false, date: today() },
+          { id: 2002, text: 'Complete product prototype v1', completed: false, date: today() },
+        ],
+        weekly: [
+          { id: 3001, text: 'Finalize product roadmap', completed: false, date: today() },
+          { id: 3002, text: 'Publish 1 LinkedIn article', completed: false, date: today() },
+          { id: 3003, text: 'Complete Rule of 1-1-1 every day this week', completed: false, date: today() },
+        ]
+      };
+      needsSave = true;
+    }
+
+    // Ensure affirmations
+    if (!this.appState.affirmations || this.appState.affirmations.length === 0) {
+      console.log("💡 Seeding default affirmations...");
+      this.appState.affirmations = this.getDefaultAffirmations();
+      needsSave = true;
+    }
+
+    // Update window.appState if anything changed
+    if (needsSave) {
+      if (window.appState) {
+        Object.assign(window.appState, this.appState);
+      }
+      // Save to Supabase
+      this.saveDefaultsToSupabase();
+    }
+  }
     const self = this;  // Capture context for nested functions
     const originalSetItem = Storage.prototype.setItem;
     const originalGetItem = Storage.prototype.getItem;
