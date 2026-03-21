@@ -1962,57 +1962,6 @@ function renderRuleOfThree() {
       });
     }
 
-    // Add "Add Task" button
-    const addBtn = document.createElement("button");
-    addBtn.style.cssText = `
-      background: var(--personal);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 8px;
-    `;
-    addBtn.textContent = "+ Add Task";
-    addBtn.className = "rule3-add-btn";
-    addBtn.setAttribute("data-person", person);
-    console.log(`   ✅ Created "+ Add Task" button for ${person}`);
-    
-    addBtn.onmouseover = () => addBtn.style.background = "var(--entre)";
-    addBtn.onmouseout = () => addBtn.style.background = "var(--personal)";
-    
-    addBtn.onclick = (e) => {
-      console.log("🖱️  BUTTON CLICKED for " + person);
-      console.log("   event:", e);
-      console.log("   openRuleOfThreeModal function exists:", typeof openRuleOfThreeModal);
-      
-      // Pre-select the person in the modal
-      const personSelect = document.getElementById("ruleOfThreePersonSelect");
-      if (personSelect) {
-        personSelect.value = person;
-        console.log("   ✅ Pre-selected person:", person);
-      } else {
-        console.warn("   ❌ personSelect NOT FOUND");
-      }
-      
-      console.log("   📞 Calling openRuleOfThreeModal()...");
-      openRuleOfThreeModal();
-      
-      // Focus on task input
-      setTimeout(() => {
-        const taskInput = document.getElementById("ruleOfThreeTaskInput");
-        if (taskInput) {
-          taskInput.focus();
-          console.log("   ✅ Task input focused");
-        } else {
-          console.warn("   ❌ taskInput NOT FOUND");
-        }
-      }, 50);
-    };
-    card.appendChild(addBtn);
-
     container.appendChild(card);
   });
   
