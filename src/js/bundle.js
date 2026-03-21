@@ -18,6 +18,9 @@ const appState = {
   announcements: [], // Dashboard announcements from Supabase
   habitCompletions: {}, // Multi-person habit data: { "YYYY-MM-DD": { "Vivek": { habitId: true } } }
   teamTasks: {}, // Team Tasks by person: { "Vivek": [{ id, text, done }], ... }
+  goals: { yearly: [], monthly: [], weekly: [] }, // Goals and Milestones from Supabase
+  milestones: [], // Milestones from Supabase
+  affirmationsReviewedToday: '', // Today's date when affirmations were marked as reviewed
 };
 
 function saveState() {
@@ -52,6 +55,9 @@ function loadState() {
     if (data.ruleOfThree) appState.ruleOfThree = data.ruleOfThree;
     if (data.affirmations) appState.affirmations = data.affirmations;
     if (data.announcements) appState.announcements = data.announcements;
+    if (data.goals) appState.goals = data.goals;
+    if (data.milestones) appState.milestones = data.milestones;
+    if (data.affirmationsReviewedToday) appState.affirmationsReviewedToday = data.affirmationsReviewedToday;
   } catch (error) {
     console.error("Error loading state:", error);
   }

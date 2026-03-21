@@ -4476,13 +4476,15 @@ function initVision() {
 //  AFFIRMATIONS
 // ═══════════════════════════════════════════════════
 
-const AFF_REVIEWED_KEY = 'habitforge_aff_reviewed';
-
 function getAffReviewedToday() {
-  return localStorage.getItem(AFF_REVIEWED_KEY) === today();
+  return window.appState?.affirmationsReviewedToday === today();
 }
 function setAffReviewedToday() {
-  localStorage.setItem(AFF_REVIEWED_KEY, today());
+  if (window.appState && window.supabaseReady) {
+    window.appState.affirmationsReviewedToday = today();
+    if (typeof appState !== 'undefined') appState.affirmationsReviewedToday = today();
+    if (typeof saveState === 'function') saveState();
+  }
 }
 
 function renderAffirmationsState() {
@@ -4814,8 +4816,6 @@ function initManifestations() {
 
 // ═══════════════════════════════════════════════════
 //  DASHBOARD MODULE
-// ═══════════════════════════════════════════════════
-
 const MILESTONE_KEY  = 'habitforge_milestones';
 
 function loadAnn() {
@@ -4824,7 +4824,6 @@ function loadAnn() {
   console.log("   Data:", anns);
   return anns;
 }
-function saveAnn(d) {
   console.log("💾 saveAnn() called");
   if (!Array.isArray(d)) {
     console.error("❌ Invalid data structure for saveAnn:", d);
@@ -4849,8 +4848,25 @@ function saveAnn(d) {
     }
   }
 }
-function loadMilestones(){ try { return JSON.parse(localStorage.getItem(MILESTONE_KEY)) || []; } catch { return []; } }
-function saveMilestones(d){ localStorage.setItem(MILESTONE_KEY, JSON.stringify(d)); }
+function loadMilestones() {
+  console.log("📋 loadMilestones() called - loading from Supabase");
+  return window.appState?.milestones || [];
+}
+function saveMilestones(d) {
+  console.log("💾 saveMilestones() called");
+  if (!Array.isArray(d)) return;
+  if (window.appState && window.supabaseReady) {
+    console.log("☁️  Saving Milestones to Supabase");
+    window.appState.milestones = JSON.parse(JSON.stringify(d));
+    if (typeof appState !== 'undefined' && appState) {
+      appState.milestones = JSON.parse(JSON.stringify(d));
+    }
+    if (typeof saveState === 'function') {
+      console.log("   Calling saveState() to sync to Supabase");
+      saveState();
+    }
+  }
+}
 function loadTasks() {
   console.log("📋 loadTasks() called - loading from Supabase (window.appState)");
   const tasks = window.appState?.teamTasks || {};
@@ -4938,12 +4954,11 @@ function renderMilestones() {
   if (!el) return;
   const ms = loadMilestones();
 
-  // Default milestones on first load
-  if (!ms.length && !localStorage.getItem('habitforge_ms_init')) {
+  // Default milestones on first load (seeded from Supabase defaults)
+  if (!ms.length) {
     const defaults = ['₹10L revenue', 'First international client', '1st product launch', 'Team of 5', 'IIM incubation'];
     defaults.forEach((t,i) => ms.push({ id: Date.now()+i, text: t, done: false }));
     saveMilestones(ms);
-    localStorage.setItem('habitforge_ms_init','1');
   }
 
   if (!ms.length) {
@@ -5256,8 +5271,6 @@ function initDashboard() {
 //  GOALS MODULE (Yearly / Monthly / Weekly)
 // ═══════════════════════════════════════════════════
 
-const GOALS_KEY = 'habitforge_goals_v1';
-
 const GOAL_DEFAULTS = {
   yearly: [
     { id: 1001, text: 'Build Vivarta Tech to ₹1 Crore Revenue', completed: false, date: '2026-01-01' },
@@ -5276,19 +5289,27 @@ const GOAL_DEFAULTS = {
 };
 
 function loadGoals() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(GOALS_KEY));
-    if (saved && (saved.yearly || saved.monthly || saved.weekly)) return saved;
-    // First run — seed defaults
-    saveGoals(GOAL_DEFAULTS);
-    return GOAL_DEFAULTS;
-  } catch {
-    saveGoals(GOAL_DEFAULTS);
-    return GOAL_DEFAULTS;
+  console.log("📋 loadGoals() called - loading from Supabase");
+  let goals = window.appState?.goals;
+  // First run — seed defaults if empty
+  if (!goals || (!goals.yearly && !goals.monthly && !goals.weekly)) {
+    goals = GOAL_DEFAULTS;
+    saveGoals(goals);
   }
+  return goals || { yearly: [], monthly: [], weekly: [] };
 }
 function saveGoals(data) {
-  localStorage.setItem(GOALS_KEY, JSON.stringify(data));
+  console.log("💾 saveGoals() called - syncing to Supabase");
+  if (!data || (typeof data !== 'object')) return;
+  if (window.appState && window.supabaseReady) {
+    window.appState.goals = JSON.parse(JSON.stringify(data));
+    if (typeof appState !== 'undefined' && appState) {
+      appState.goals = JSON.parse(JSON.stringify(data));
+    }
+    if (typeof saveState === 'function') {
+      saveState();
+    }
+  }
 }
 function addGoal(level, text) {
   const goals = loadGoals();

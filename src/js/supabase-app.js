@@ -160,6 +160,9 @@ class SupabaseAppBridge {
             ruleOfThree: state.ruleOfThree || [],
             affirmations: state.affirmations || [],
             announcements: state.announcements || [],
+            goals: state.goals || { yearly: [], monthly: [], weekly: [] },
+            milestones: state.milestones || [],
+            affirmationsReviewedToday: state.affirmationsReviewedToday || '',
             habitCompletions: state.habitCompletions || {},
             teamTasks: state.teamTasks || {}
           };
@@ -200,6 +203,20 @@ class SupabaseAppBridge {
         console.log("🔄 Re-rendering Announcements with Supabase data...");
         renderAnnouncements();
         console.log("✅ Announcements re-rendered with Supabase data");
+      }
+
+      // Also trigger re-render of milestones with Supabase data
+      if (typeof renderMilestones === 'function') {
+        console.log("🔄 Re-rendering Milestones with Supabase data...");
+        renderMilestones();
+        console.log("✅ Milestones re-rendered with Supabase data");
+      }
+
+      // Also trigger re-render of goals with Supabase data
+      if (typeof renderGoalsSummary === 'function') {
+        console.log("🔄 Re-rendering Goals Summary with Supabase data...");
+        renderGoalsSummary();
+        console.log("✅ Goals Summary re-rendered with Supabase data");
       }
 
       // Set up data sync (interceptLocalStorage will handle saves)
@@ -373,9 +390,10 @@ class SupabaseAppBridge {
       futureEvents: [],
       ruleOfThree: [],
       affirmations: [],
-      goals: [],
+      goals: { yearly: [], monthly: [], weekly: [] },
       announcements: [],
       milestones: [],
+      affirmationsReviewedToday: '',
       habitCompletions: {},
       teamTasks: {},
     };
