@@ -186,9 +186,13 @@ class SupabaseAppBridge {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
         }
-      
-      // IMPORTANT: Ensure defaults are seeded for empty optional fields
-      this.ensureDefaults();
+        
+        // IMPORTANT: Ensure defaults are seeded for empty optional fields
+        this.ensureDefaults();
+      } else {
+        console.warn("⚠️  Query returned no rows - creating default state");
+        this.createDefaultAppState();
+        // Save defaults to Supabase immediately
         await this.saveDefaultsToSupabase();
       }
 
