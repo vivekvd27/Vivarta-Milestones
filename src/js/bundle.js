@@ -1923,6 +1923,39 @@ function renderRuleOfThree() {
       });
     }
 
+    // Add "Add Task" button
+    const addBtn = document.createElement("button");
+    addBtn.style.cssText = `
+      background: var(--personal);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    `;
+    addBtn.textContent = "+ Add Task";
+    addBtn.onmouseover = () => addBtn.style.background = "var(--entre)";
+    addBtn.onmouseout = () => addBtn.style.background = "var(--personal)";
+    addBtn.onclick = () => {
+      console.log("🎯 Add Task button clicked for " + person);
+      // Pre-select the person in the modal
+      const personSelect = document.getElementById("ruleOfThreePersonSelect");
+      if (personSelect) {
+        personSelect.value = person;
+        console.log("   Pre-selected person:", person);
+      }
+      openRuleOfThreeModal();
+      // Focus on task input
+      setTimeout(() => {
+        const taskInput = document.getElementById("ruleOfThreeTaskInput");
+        if (taskInput) taskInput.focus();
+      }, 50);
+    };
+    card.appendChild(addBtn);
+
     container.appendChild(card);
   });
 }
@@ -1954,22 +1987,23 @@ function initRuleOfThreeForm() {
     
     // Create handler function
     const handleSaveClick = function(e) {
-      console.log("🖱️  Save button click detected!");
+      console.log("🖱️  ====== Save button click DETECTED ======");
       e.preventDefault();
       e.stopPropagation();
 
       const person = personSelect.value.trim();
       const task = taskInput.value.trim();
 
-      console.log("Form values extracted:", { person, task });
+      console.log("   📋 Form values extracted:", { person, task });
 
       if (!person || !task) {
-        console.warn("❌ Validation failed - person or task empty");
+        console.warn("❌ VALIDATION FAILED - person or task empty");
+        console.log("   person:", person, "| task:", task);
         alert("Please select a person and enter a task");
         return;
       }
 
-      console.log("✓ Validation passed, calling addRuleOfThreeTask");
+      console.log("✅ VALIDATION PASSED - calling addRuleOfThreeTask");
       addRuleOfThreeTask(person, task);
       console.log("✓ addRuleOfThreeTask completed, re-rendering");
       renderRuleOfThree();

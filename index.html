@@ -3404,6 +3404,11 @@ function getRule3ForPersonDay(person, dateKey) {
   return data[dateKey]?.[person] || [{text:'',done:false},{text:'',done:false},{text:'',done:false}];
 }
 function setRule3(person, dateKey, tasks) {
+  console.log("🎯 setRule3 called:", { person, dateKey, tasksCount: tasks?.length });
+  console.log("   window.appState exists:", !!window.appState);
+  console.log("   window.appState.ruleOfThree exists:", !!window.appState?.ruleOfThree);
+  console.log("   typeof saveState:", typeof saveState);
+  
   // If using Supabase cloud mode, update window.appState.ruleOfThree
   if (window.appState?.ruleOfThree && Array.isArray(window.appState.ruleOfThree)) {
     console.log("🔄 setRule3: Saving to Supabase format for person:", person);
