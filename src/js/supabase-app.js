@@ -242,6 +242,13 @@ class SupabaseAppBridge {
         console.log("✅ Recent Activity re-rendered with Supabase data");
       }
 
+      // Also trigger re-render of Rule of 3 with Supabase data
+      if (typeof renderRuleOfThree === 'function') {
+        console.log("🔄 Re-rendering Rule of 3 with Supabase data...");
+        renderRuleOfThree();
+        console.log("✅ Rule of 3 re-rendered with Supabase data");
+      }
+
       // Dashboard will be rendered by bundle.js after initializeApp() completes
       // (DO NOT call renderDashboard here - let bundle.js handle full initialization)
 
