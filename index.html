@@ -4878,6 +4878,16 @@ function saveTasks(d) {
     return;
   }
   
+  // ALWAYS save to localStorage habitforge_tasks to keep it in sync
+  // This prevents deleted tasks from reappearing on refresh
+  console.log("💾 Updating habitforge_tasks localStorage key...");
+  try {
+    localStorage.setItem(TASKS_KEY, JSON.stringify(d));
+    console.log("✅ habitforge_tasks updated in localStorage");
+  } catch (e) {
+    console.warn("⚠️  Could not save to habitforge_tasks:", e);
+  }
+  
   // If using Supabase, sync to window.appState
   if (window.appState && window.supabaseReady) {
     console.log("☁️  Saving Team Tasks to Supabase (window.appState)");
@@ -4910,9 +4920,7 @@ function saveTasks(d) {
     return;
   }
   
-  // Fallback to localStorage
-  console.log("💾 Saving Team Tasks to localStorage only (Supabase not ready)");
-  localStorage.setItem(TASKS_KEY, JSON.stringify(d));
+  console.log("✅ Team Tasks saved to localStorage (Supabase not ready)");
 }
 
 function getTasksForPerson(person) {
