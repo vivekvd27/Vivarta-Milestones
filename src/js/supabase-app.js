@@ -97,119 +97,80 @@ class SupabaseAppBridge {
    */
   async loadStateFromSupabase() {
     try {
-      console.log(`📥 Loading state from Supabase for ${this.currentUser}...`);
+      console.log(`📥 Querying Supabase for user: "${this.currentUser}"`);
       
-      const { data, error } = await this.supabase
+      // Query for this user's data
+      const query = this.supabase
         .from("user_data")
         .select("*")
-        .eq("user_name", this.currentUser)
-        .single();
+        .eq("user_name", this.currentUser);
+      
+      console.log("Query prepared, executing...");
+      
+      const { data, error } = await query.single();
+
+      console.log("Query response:", { data, error });
 
       if (error) {
-        // Handle table not existing or connection issues
+        console.warn(`❌ Query error code: ${error.code}, message: ${error.message}`);
+        
         if (error.code === "PGRST116") {
-          // 116 = no rows found (table exists but empty)
-          console.log("⚠️  No existing data for " + this.currentUser + " in Supabase, creating new state...");
+          // 116 = no rows found (table exists but empty for this user)
+          console.log(`ℹ️  No data yet for user "${this.currentUser}" - starting fresh`);
           this.createDefaultAppState();
         } else if (error.message?.includes("relation") || error.message?.includes("does not exist")) {
-          console.warn("⚠️  user_data table not found in Supabase");
-          console.warn("Please run: docs/SUPABASE_USER_DATA_TABLE.sql in Supabase SQL Editor");
-          console.warn("Falling back to demo mode...");
+          console.error("❌ user_data table not found in Supabase");
+          console.error("Please run the docs/SUPABASE_USER_DATA_TABLE.sql in your Supabase SQL Editor");
           this.demoMode = true;
           this.initializeDemoMode();
           return;
         } else {
-          console.warn("Query error:", error.code, error.message);
+          console.error("Unexpected query error:", error);
           throw error;
         }
       } else if (data) {
-        console.log("✅ Loaded data from Supabase for " + this.currentUser);
-        console.log("Data:", data);
+        console.log(`✅ SUCCESS! Loaded existing data for "${this.currentUser}"`);
+        console.log("Raw data from Supabase:", data);
         
         // Parse the state object
-        const state = JSON.parse(data.state_json || "{}");
-        this.appState = {
-          timeline: state.timeline || [],
-          meetings: state.meetings || [],
-          contacts: state.contacts || [],
-          futureEvents: state.futureEvents || [],
-          ruleOfThree: state.ruleOfThree || [],
-          affirmations: state.affirmations || []
-        };
-        
-        console.log("✓ App state populated:", this.appState);
+        try {
+          const state = JSON.parse(data.state_json || "{}");
+          this.appState = {
+            timeline: state.timeline || [],
+            meetings: state.meetings || [],
+            contacts: state.contacts || [],
+            futureEvents: state.futureEvents || [],
+            ruleOfThree: state.ruleOfThree || [],
+            affirmations: state.affirmations || []
+          };
+          console.log("✓ Parsed app state:", this.appState);
+        } catch (parseErr) {
+          console.error("Error parsing state_json:", parseErr);
+          this.createDefaultAppState();
+        }
       } else {
-        console.log("⚠️  No data returned (null), creating new state...");
+        console.warn("⚠️  Query returned no error but also no data - creating default state");
         this.createDefaultAppState();
       }
 
-      // Intercept localStorage calls to sync with Supabase
+      // Set up data sync (interceptLocalStorage will handle saves)
       this.interceptLocalStorageForSync();
+      
     } catch (error) {
-      console.error("❌ Error loading state from Supabase:", error);
-      console.warn("💡 Ensure the user_data table exists. Run: docs/SUPABASE_USER_DATA_TABLE.sql");
+      console.error("❌ Exception in loadStateFromSupabase:", error);
       this.createDefaultAppState();
     }
   }
 
   /**
-   * Set up real-time subscription to Supabase changes
+   * Set up real-time subscription to Supabase changes (optional enhancement for v2)
+   * For now, focus on reliable load/save between devices
    */
   setupRealtimeSync() {
-    if (!this.supabase) return;
-
-    const self = this;
-    try {
-      // Supabase v2 real-time API
-      const channel = this.supabase
-        .channel(`user_data_${this.currentUser}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'user_data',
-            filter: `user_name=eq.${this.currentUser}`
-          },
-          (payload) => {
-            console.log("🔄 Real-time update received:");
-            if (payload.new) {
-              const state = JSON.parse(payload.new.state_json || "{}");
-              self.appState = {
-                timeline: state.timeline || [],
-                meetings: state.meetings || [],
-                contacts: state.contacts || [],
-                futureEvents: state.futureEvents || [],
-                ruleOfThree: state.ruleOfThree || [],
-                affirmations: state.affirmations || []
-              };
-              
-              // CRITICAL: Update window.appState so bundle.js sees the changes
-              if (window.appState) {
-                Object.assign(window.appState, self.appState);
-                console.log("✓ window.appState updated with Supabase changes");
-              }
-              
-              // Trigger UI update
-              window.dispatchEvent(new CustomEvent("stateChange", {
-                detail: { type: "sync:updated", data: self.appState }
-              }));
-            }
-          }
-        );
-      
-      // Subscribe to channel
-      channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log("✓ Real-time subscription active for " + self.currentUser);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.warn("⚠️  Channel error - real-time may not work");
-        }
-      });
-
-    } catch (error) {
-      console.warn("Real-time subscription setup error:", error.message);
-    }
+    // Real-time subscriptions are a nice-to-have enhancement
+    // The core sync happens through load/save, which is reliable
+    console.log("ℹ️  Real-time subscriptions disabled for now (focus on load/save)");
+    console.log("💡 To see updates: refresh the page or switch users");
   }
 
   /**
