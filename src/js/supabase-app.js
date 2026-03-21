@@ -209,6 +209,17 @@ class SupabaseAppBridge {
           console.log("  - habitCompletions keys:", Object.keys(window.appState.habitCompletions || {}).length);
           console.log("  - teamTasks:", Object.keys(window.appState.teamTasks || {}).length, "people with tasks");
           console.log("  - teamTasks detail:", Object.entries(window.appState.teamTasks || {}).map(([person, tasks]) => `${person}: ${tasks.length} tasks`).join(", "));
+          
+          // CRITICAL: Save the merged teamTasks back to localStorage so renderTasksKanban can find it
+          // This ensures that if renderTasksKanban was already called (before Supabase loaded),
+          // the next call will get the merged data from Supabase
+          console.log("💾 Saving merged teamTasks back to localStorage (habitforge_tasks key)");
+          try {
+            localStorage.setItem("habitforge_tasks", JSON.stringify(this.appState.teamTasks));
+            console.log("✅ Merged teamTasks saved to localStorage");
+          } catch (e) {
+            console.warn("Could not save merged teamTasks to localStorage:", e);
+          }
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
@@ -216,6 +227,15 @@ class SupabaseAppBridge {
       } else {
         console.warn("⚠️  Query returned no rows - creating default state");
         this.createDefaultAppState();
+      }
+
+      // IMPORTANT: Trigger re-render of kanban with merged data
+      // This ensures that if renderTasksKanban() was called before Supabase loaded,
+      // it will be called again with the correct merged data
+      if (typeof renderTasksKanban === 'function') {
+        console.log("🔄 Re-rendering Team Tasks kanban with merged Supabase data...");
+        renderTasksKanban();
+        console.log("✅ Team Tasks kanban re-rendered with merged data");
       }
 
       // Set up data sync (interceptLocalStorage will handle saves)
