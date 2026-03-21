@@ -323,6 +323,11 @@ class SupabaseAppBridge {
                 } else {
                   console.log(`✅ Successfully synced to Supabase for ${self.currentUser}`);
                   console.log("   Team Tasks persisted:", state.ruleOfThree?.length || 0, "tasks");
+                  
+                  // IMPORTANT: Reload from Supabase to resolve conflicts with other devices
+                  // This ensures consistency if another device made changes at the same time
+                  console.log("🔄 Reloading from Supabase to resolve multi-device conflicts...");
+                  self.loadStateFromSupabase();
                 }
               })
               .catch(err => {
