@@ -19,7 +19,10 @@ const appState = {
 
 function saveState() {
   try {
+    console.log("📝 saveState() called - saving appState to localStorage");
+    console.log("   appState.ruleOfThree.length:", appState.ruleOfThree?.length || 0);
     localStorage.setItem("vivartaState", JSON.stringify(appState));
+    console.log("✓ setItem called successfully");
   } catch (error) {
     console.error("Error saving state:", error);
   }
@@ -1379,6 +1382,8 @@ function initFutureEventsForm() {
 // ============================================
 
 function addRuleOfThreeTask(person, task) {
+  console.log("➕ addRuleOfThreeTask called:", { person, task });
+  
   const ruleTask = {
     id: generateId(),
     person: escapeHtml(person),
@@ -1387,9 +1392,17 @@ function addRuleOfThreeTask(person, task) {
     createdAt: new Date().toISOString(),
   };
 
+  console.log("   Pushing task to appState:", ruleTask);
+  console.log("   Current appState.ruleOfThree:", appState.ruleOfThree);
+  
   appState.ruleOfThree.push(ruleTask);
+  console.log("   After push, appState.ruleOfThree.length:", appState.ruleOfThree.length);
+  
+  console.log("   Calling saveState()...");
   saveState();
+  
   dispatchStateChange("ruleOfThree:add", ruleTask);
+  console.log("✓ addRuleOfThreeTask complete");
   return ruleTask;
 }
 
