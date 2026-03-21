@@ -5225,7 +5225,11 @@ function initDashboard() {
       const markSection = document.createElement('div');
       markSection.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);flex-wrap:wrap;gap:10px;margin-top:8px';
       markSection.innerHTML = '<div style="font-size:0.83rem;color:var(--text2)">📋 Mark today\'s affirmations as reviewed</div>';
-      const btn = markBtn.cloneNode(true);
+      
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary';
+      btn.style.cssText = 'font-size:0.82rem;padding:7px 16px';
+      btn.textContent = '✦ Mark as Reviewed';
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (localStorage.getItem('habitforge_aff_reviewed') !== today()) {
