@@ -3418,6 +3418,12 @@ function setRule3(person, dateKey, tasks) {
       console.log("   Calling saveState() to sync to Supabase");
       saveState(); // This will trigger Supabase sync via interceptor
     }
+    
+    // Dispatch state change event to trigger dashboard re-render
+    if (typeof dispatchStateChange === 'function') {
+      console.log("   Dispatching stateChange event for dashboard update");
+      dispatchStateChange("ruleOfThree:update", { person, dateKey, tasks });
+    }
     return;
   }
   
