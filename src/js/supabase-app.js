@@ -139,6 +139,12 @@ class SupabaseAppBridge {
         // Parse the state object
         try {
           const state = JSON.parse(userData.state_json || "{}");
+          console.log("  📝 Parsed JSON state:", state);
+          console.log("  🎯 ruleOfThree in DB:", state.ruleOfThree?.length || 0, "tasks");
+          if (state.ruleOfThree && state.ruleOfThree.length > 0) {
+            console.log("     Team Tasks:", state.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
+          }
+          
           this.appState = {
             timeline: state.timeline || [],
             meetings: state.meetings || [],
@@ -157,7 +163,9 @@ class SupabaseAppBridge {
           }
           
           console.log("✓ Parsed app state with", this.appState.ruleOfThree?.length || 0, "tasks");
-          console.log("✓ window.appState synchronized with loaded data");
+          console.log("✓ window.appState synchronized:");
+          console.log("  - ruleOfThree:", window.appState.ruleOfThree?.length || 0, "tasks");
+          console.log("  - habitCompletions keys:", Object.keys(window.appState.habitCompletions || {}).length);
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
@@ -213,6 +221,10 @@ class SupabaseAppBridge {
 
           // Save to Supabase asynchronously
           if (self.supabase && self.currentUser) {
+            console.log("  🎯 About to sync ruleOfThree:", state.ruleOfThree?.length || 0, "tasks");
+            if (state.ruleOfThree && state.ruleOfThree.length > 0) {
+              console.log("     Team Tasks to sync:", state.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
+            }
             self.supabase
               .from("user_data")
               .upsert(
@@ -229,8 +241,10 @@ class SupabaseAppBridge {
                 if (error) {
                   console.error(`❌ Supabase upsert error: ${error.message}`);
                   console.error("Error code:", error.code);
+                  console.error("Status:", error.status);
                 } else {
                   console.log(`✅ Successfully synced to Supabase for ${self.currentUser}`);
+                  console.log("   Team Tasks persisted:", state.ruleOfThree?.length || 0, "tasks");
                 }
               })
               .catch(err => {

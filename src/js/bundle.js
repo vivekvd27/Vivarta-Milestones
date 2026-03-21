@@ -1383,29 +1383,7 @@ function initFutureEventsForm() {
 // ============================================
 
 function addRuleOfThreeTask(person, task) {
-  console.log("➕ addRuleOfThreeTask called:", { person, task });
-  
-  const ruleTask = {
-    id: generateId(),
-    person: escapeHtml(person),
-    task: escapeHtml(task),
-    completed: false,
-    createdAt: new Date().toISOString(),
-  };
-
-  console.log("   Pushing task to appState:", ruleTask);
-  console.log("   Current appState.ruleOfThree:", appState.ruleOfThree);
-  
-  appState.ruleOfThree.push(ruleTask);
-  console.log("   After push, appState.ruleOfThree.length:", appState.ruleOfThree.length);
-  
-  console.log("   Calling saveState()...");
-  saveState();
-  
-  dispatchStateChange("ruleOfThree:add", ruleTask);
-  console.log("✓ addRuleOfThreeTask complete");
-  return ruleTask;
-}
+  console.log("➕ addRuleOfThreeTask called:", { person, task });\n  \n  const ruleTask = {\n    id: generateId(),\n    person: escapeHtml(person),\n    task: escapeHtml(task),\n    completed: false,\n    createdAt: new Date().toISOString(),\n  };\n\n  console.log(\"   🎯 New Team Task:\", <span style=\"color: #0066cc\">ruleTask</span>);\n  console.log(\"   📊 Before adding - appState.ruleOfThree length:\", appState.ruleOfThree?.length || 0);  \n  appState.ruleOfThree.push(ruleTask);\n  console.log(\"   ✅ Task added - appState.ruleOfThree length:\", appState.ruleOfThree.length);\n  \n  console.log(\"   📤 Calling saveState() to sync to Supabase...\");\n  saveState();\n  \n  dispatchStateChange(\"ruleOfThree:add\", ruleTask);\n  console.log(\"✓ addRuleOfThreeTask complete - Team Task queued for Supabase\");\n  return ruleTask;
 
 function toggleRuleOfThreeTask(taskId) {
   const task = appState.ruleOfThree.find((t) => t.id === taskId);
@@ -2065,12 +2043,16 @@ function initializeApp() {
     // so that when initializeDefaultAffirmations() calls saveState(), it saves the correct data
     if (window.appState) {
       console.log("🔄 Syncing window.appState to local appState variable...");
+      console.log("   🎯 window.appState.ruleOfThree before sync:", window.appState.ruleOfThree?.length || 0, "tasks");
       // Copy all properties from window.appState to the local appState
       Object.keys(window.appState).forEach(key => {
         appState[key] = window.appState[key];
       });
       console.log("✓ Local appState synchronized with Supabase data");
       console.log("   ruleOfThree length:", appState.ruleOfThree?.length || 0);
+      if (appState.ruleOfThree && appState.ruleOfThree.length > 0) {
+        console.log("   🎯 Team Tasks loaded:", appState.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
+      }
     }
   }
   
