@@ -149,6 +149,21 @@ class SupabaseAppBridge {
             console.log("     Team Tasks:", state.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
           }
           
+          let teamTasks = state.teamTasks || {};
+          
+          // MIGRATION: If teamTasks is empty, check localStorage for old habitforge_tasks
+          if (Object.keys(teamTasks).length === 0) {
+            try {
+              const oldTasks = localStorage.getItem("habitforge_tasks");
+              if (oldTasks) {
+                teamTasks = JSON.parse(oldTasks);
+                console.log("📚 Migrated legacy teamTasks from localStorage");
+              }
+            } catch (e) {
+              console.warn("Could not migrate old tasks:", e);
+            }
+          }
+          
           this.appState = {
             timeline: state.timeline || [],
             meetings: state.meetings || [],
@@ -157,7 +172,7 @@ class SupabaseAppBridge {
             ruleOfThree: state.ruleOfThree || [],
             affirmations: state.affirmations || [],
             habitCompletions: state.habitCompletions || {},
-            teamTasks: state.teamTasks || {}
+            teamTasks: teamTasks
           };
           
           // CRITICAL: Sync to window.appState so bundle.js sees the data
@@ -171,6 +186,7 @@ class SupabaseAppBridge {
           console.log("✓ window.appState synchronized:");
           console.log("  - ruleOfThree:", window.appState.ruleOfThree?.length || 0, "tasks");
           console.log("  - habitCompletions keys:", Object.keys(window.appState.habitCompletions || {}).length);
+          console.log("  - teamTasks:", Object.keys(window.appState.teamTasks || {}).length, "people with tasks");
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();

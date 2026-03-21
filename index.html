@@ -4825,34 +4825,86 @@ function saveAnn(d)      { localStorage.setItem(ANN_KEY, JSON.stringify(d)); }
 function loadMilestones(){ try { return JSON.parse(localStorage.getItem(MILESTONE_KEY)) || []; } catch { return []; } }
 function saveMilestones(d){ localStorage.setItem(MILESTONE_KEY, JSON.stringify(d)); }
 function loadTasks() {
-  // If using Supabase, load from window.appState
+  console.log("📋 loadTasks() called");
+  
+  // First check if Supabase has data
   if (window.appState?.teamTasks && typeof window.appState.teamTasks === 'object') {
-    console.log("☁️  Loading Team Tasks from Supabase (window.appState)");
-    return window.appState.teamTasks || {};
+    const keys = Object.keys(window.appState.teamTasks);
+    const hasData = keys.length > 0 && keys.some(k => 
+      Array.isArray(window.appState.teamTasks[k]) && 
+      window.appState.teamTasks[k].length > 0
+    );
+    
+    if (hasData) {
+      console.log("☁️  Loading Team Tasks from Supabase (window.appState)");
+      console.log("   Data:", window.appState.teamTasks);
+      return window.appState.teamTasks;
+    }
   }
-  // Fallback to localStorage
-  try { return JSON.parse(localStorage.getItem(TASKS_KEY)) || {}; } 
-  catch { return {}; } 
+  
+  // Try localStorage as fallback
+  try { 
+    const localData = JSON.parse(localStorage.getItem(TASKS_KEY)) || {};
+    console.log("📚 Loading Team Tasks from localStorage");
+    console.log("   Data:", localData);
+    
+    // If we loaded from localStorage and using Supabase, sync it to window.appState
+    const hasLocalData = Object.keys(localData).length > 0 && 
+                         Object.values(localData).some(arr => Array.isArray(arr) && arr.length > 0);
+    
+    if (hasLocalData && window.appState && window.supabaseReady) {
+      console.log("   📤 Syncing localStorage data to window.appState for Supabase");
+      window.appState.teamTasks = JSON.parse(JSON.stringify(localData));
+    }
+    
+    return localData;
+  } 
+  catch (e) { 
+    console.log("📭 No Team Tasks found. Error:", e);
+    return {}; 
+  } 
 }
 function saveTasks(d) {
-  // If using Supabase, also sync to window.appState
+  console.log("💾 saveTasks() called");
+  console.log("   Data structure:", {
+    type: typeof d,
+    keys: typeof d === 'object' ? Object.keys(d) : 'N/A',
+    content: d
+  });
+  
+  // Validate structure
+  if (!d || typeof d !== 'object') {
+    console.error("❌ Invalid data structure for saveTasks:", d);
+    return;
+  }
+  
+  // If using Supabase, sync to window.appState
   if (window.appState && window.supabaseReady) {
     console.log("☁️  Saving Team Tasks to Supabase (window.appState)");
-    window.appState.teamTasks = d;
+    console.log("   Before: window.appState.teamTasks =", window.appState.teamTasks);
+    
+    // Deep copy to avoid reference issues
+    window.appState.teamTasks = JSON.parse(JSON.stringify(d));
+    console.log("   After: window.appState.teamTasks =", window.appState.teamTasks);
     
     // Also sync to local appState if it exists
-    if (typeof appState !== 'undefined') {
-      appState.teamTasks = d;
+    if (typeof appState !== 'undefined' && appState) {
+      appState.teamTasks = JSON.parse(JSON.stringify(d));
+      console.log("   Synced to appState.teamTasks");
     }
     
     // Trigger save through bundle.js if available
     if (typeof saveState === 'function') {
       console.log("   Calling saveState() to sync to Supabase");
       saveState();
+    } else {
+      console.warn("   ⚠️  saveState() not available!");
     }
     return;
   }
+  
   // Fallback to localStorage
+  console.log("💾 Saving Team Tasks to localStorage only (Supabase not ready)");
   localStorage.setItem(TASKS_KEY, JSON.stringify(d));
 }
 
