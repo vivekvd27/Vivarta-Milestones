@@ -4866,10 +4866,10 @@ function loadTasks() {
 }
 function saveTasks(d) {
   console.log("💾 saveTasks() called");
+  console.log("   Input data:", d);
   console.log("   Data structure:", {
     type: typeof d,
     keys: typeof d === 'object' ? Object.keys(d) : 'N/A',
-    content: d
   });
   
   // Validate structure
@@ -4884,14 +4884,21 @@ function saveTasks(d) {
     console.log("   Before: window.appState.teamTasks =", window.appState.teamTasks);
     
     // Deep copy to avoid reference issues
-    window.appState.teamTasks = JSON.parse(JSON.stringify(d));
+    const dataCopy = JSON.parse(JSON.stringify(d));
+    window.appState.teamTasks = dataCopy;
     console.log("   After: window.appState.teamTasks =", window.appState.teamTasks);
     
     // Also sync to local appState if it exists
     if (typeof appState !== 'undefined' && appState) {
       appState.teamTasks = JSON.parse(JSON.stringify(d));
       console.log("   Synced to appState.teamTasks");
+      console.log("   appState.teamTasks now has:", Object.entries(appState.teamTasks || {}).map(([p, t]) => `${p}: ${t?.length || 0}`).join(", "));
     }
+    
+    // Log full appState before save to see what will be saved to Supabase
+    console.log("   About to save full appState to Supabase. appState has:");
+    console.log("      - ruleOfThree:", appState.ruleOfThree?.length || 0, "tasks");
+    console.log("      - teamTasks:", Object.entries(appState.teamTasks || {}).map(([p, t]) => `${p}: ${t?.length || 0}`).join(", "));
     
     // Trigger save through bundle.js if available
     if (typeof saveState === 'function') {

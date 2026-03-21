@@ -272,8 +272,17 @@ class SupabaseAppBridge {
           if (self.supabase && self.currentUser) {
             console.log("  🎯 About to sync ruleOfThree:", state.ruleOfThree?.length || 0, "tasks");
             if (state.ruleOfThree && state.ruleOfThree.length > 0) {
-              console.log("     Team Tasks to sync:", state.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
+              console.log("     Rule Of Three tasks to sync:", state.ruleOfThree.slice(0, 3).map(t => `${t.person}: ${t.task}`).join(", "));
             }
+            
+            console.log("  👥 About to sync teamTasks:", Object.entries(state.teamTasks || {}).map(([p, t]) => `${p}: ${t?.length || 0}`).join(", "));
+            Object.entries(state.teamTasks || {}).forEach(([person, tasks]) => {
+              if (tasks && Array.isArray(tasks) && tasks.length > 0) {
+                const taskTexts = tasks.map(t => t?.text || '[no text]').join(', ');
+                console.log(`     → ${person}: ${taskTexts}`);
+              }
+            });
+            
             self.supabase
               .from("user_data")
               .upsert(

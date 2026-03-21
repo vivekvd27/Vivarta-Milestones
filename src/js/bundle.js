@@ -25,8 +25,17 @@ function saveState() {
     console.log("   appState.ruleOfThree.length:", appState.ruleOfThree?.length || 0);
     console.log("   appState.teamTasks:", appState.teamTasks || {});
     console.log("   teamTasks detail:", Object.entries(appState.teamTasks || {}).map(([p, t]) => `${p}: ${t?.length || 0} tasks`).join(", "));
+    
+    // Show actual task content for each person
+    Object.entries(appState.teamTasks || {}).forEach(([person, tasks]) => {
+      if (tasks && Array.isArray(tasks) && tasks.length > 0) {
+        const taskTexts = tasks.map(t => t?.text || '[no text]').join(', ');
+        console.log(`      → ${person}: ${taskTexts}`);
+      }
+    });
+    
     localStorage.setItem("vivartaState", JSON.stringify(appState));
-    console.log("✓ setItem called successfully");
+    console.log("✓ setItem called successfully - full appState saved to storage");
   } catch (error) {
     console.error("Error saving state:", error);
   }
