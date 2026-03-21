@@ -1448,7 +1448,14 @@ function deleteRuleOfThreeTask(taskId) {
 function getRuleOfThreeByPerson(person, date) {
   // If date is provided, filter by both person and date
   if (date) {
-    return appState.ruleOfThree.filter((t) => t.person === person && t.date === date);
+    console.log(`🔍 getRuleOfThreeByPerson("${person}", "${date}"):`);
+    console.log(`   Total tasks in appState.ruleOfThree:`, appState.ruleOfThree?.length || 0);
+    if (appState.ruleOfThree && appState.ruleOfThree.length > 0) {
+      console.log(`   All tasks:`, appState.ruleOfThree.map(t => `${t.person}/${t.date}: ${t.task}`).join(", "));
+    }
+    const result = appState.ruleOfThree.filter((t) => t.person === person && t.date === date);
+    console.log(`   Filtered result:`, result.length, "tasks");
+    return result;
   }
   // Otherwise return all tasks for this person (for backward compatibility)
   return appState.ruleOfThree.filter((t) => t.person === person);
@@ -1860,6 +1867,17 @@ function renderRuleOfThree() {
   people.forEach((person) => {
     const tasks = getRuleOfThreeByPerson(person, today);
     console.log(`🎯 Rendering for ${person} on ${today}:`, tasks.length, "tasks");
+    
+    // Debug: Log all tasks for this person
+    tasks.forEach((t, idx) => {
+      console.log(`   Task ${idx}:`, {
+        text: t.task,
+        done: t.completed,
+        id: t.id,
+        date: t.date,
+        person: t.person
+      });
+    });
     
     const card = document.createElement("div");
     card.style.cssText = `

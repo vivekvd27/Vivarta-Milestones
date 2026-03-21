@@ -3359,6 +3359,7 @@ function getRule3ForPersonDay(person, dateKey) {
 }
 function setRule3(person, dateKey, tasks) {
   console.log("🎯 setRule3 called:", { person, dateKey, tasksCount: tasks?.length });
+  console.log("   Input tasks:", tasks.map(t => `"${t.text}" (done=${t.done})`).join(", "));
   console.log("   window.appState exists:", !!window.appState);
   console.log("   window.appState.ruleOfThree exists:", !!window.appState?.ruleOfThree);
   console.log("   typeof saveState:", typeof saveState);
@@ -3416,7 +3417,9 @@ function setRule3(person, dateKey, tasks) {
     // Trigger save through bundle.js if available
     if (typeof saveState === 'function') {
       console.log("   Calling saveState() to sync to Supabase");
+      console.log("   📊 window.appState.ruleOfThree BEFORE saveState:", window.appState.ruleOfThree.map(t => `${t.person}/${t.date}: ${t.task}`).join(", "));
       saveState(); // This will trigger Supabase sync via interceptor
+      console.log("   📊 window.appState.ruleOfThree AFTER saveState:", window.appState.ruleOfThree.map(t => `${t.person}/${t.date}: ${t.task}`).join(", "));
     }
     
     // Dispatch state change event to trigger dashboard re-render
