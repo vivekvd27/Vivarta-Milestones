@@ -150,40 +150,7 @@ class SupabaseAppBridge {
           }
           
           let teamTasks = state.teamTasks || {};
-          
-          // MERGE LOGIC: Always merge localStorage data with Supabase data to avoid losing tasks
-          try {
-            const localStorageTasks = localStorage.getItem("habitforge_tasks");
-            if (localStorageTasks) {
-              const localData = JSON.parse(localStorageTasks);
-              console.log("📚 Found localStorage Team Tasks, merging with Supabase data");
-              console.log("   Supabase data before merge:", teamTasks);
-              console.log("   localStorage data:", localData);
-              console.log("   Supabase has:", Object.keys(teamTasks).length, "people");
-              console.log("   localStorage has:", Object.keys(localData).length, "people");
-              
-              // Merge: localStorage data takes priority for existing people, add missing people
-              teamTasks = { ...teamTasks };  // Start with Supabase data
-              Object.keys(localData).forEach(person => {
-                // Always use localStorage version - it's the most recent from this device
-                const oldCount = teamTasks[person]?.length || 0;
-                const newCount = localData[person]?.length || 0;
-                console.log(`   Merging ${person}: replacing ${oldCount} old tasks with ${newCount} localStorage tasks`);
-                if (newCount > 0) {
-                  console.log(`      Tasks: ${localData[person].map(t => t?.text || '[no text]').join(', ')}`);
-                }
-                teamTasks[person] = localData[person];
-              });
-              
-              console.log("   ✅ Merged result has:", Object.keys(teamTasks).length, "people");
-              console.log("   Merged people:", Object.keys(teamTasks).join(", "));
-              console.log("   ✅ MERGED DATA FINAL:", teamTasks);
-            } else {
-              console.log("   ℹ️  No localStorage tasks found, using Supabase data only");
-            }
-          } catch (e) {
-            console.warn("Could not merge localStorage tasks:", e);
-          }
+          // Load teamTasks directly from Supabase (no localStorage merge needed)
           
           this.appState = {
             timeline: state.timeline || [],
@@ -209,17 +176,6 @@ class SupabaseAppBridge {
           console.log("  - habitCompletions keys:", Object.keys(window.appState.habitCompletions || {}).length);
           console.log("  - teamTasks:", Object.keys(window.appState.teamTasks || {}).length, "people with tasks");
           console.log("  - teamTasks detail:", Object.entries(window.appState.teamTasks || {}).map(([person, tasks]) => `${person}: ${tasks.length} tasks`).join(", "));
-          
-          // CRITICAL: Save the merged teamTasks back to localStorage so renderTasksKanban can find it
-          // This ensures that if renderTasksKanban was already called (before Supabase loaded),
-          // the next call will get the merged data from Supabase
-          console.log("💾 Saving merged teamTasks back to localStorage (habitforge_tasks key)");
-          try {
-            localStorage.setItem("habitforge_tasks", JSON.stringify(this.appState.teamTasks));
-            console.log("✅ Merged teamTasks saved to localStorage");
-          } catch (e) {
-            console.warn("Could not save merged teamTasks to localStorage:", e);
-          }
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
