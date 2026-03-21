@@ -157,6 +157,8 @@ class SupabaseAppBridge {
             if (localStorageTasks) {
               const localData = JSON.parse(localStorageTasks);
               console.log("📚 Found localStorage Team Tasks, merging with Supabase data");
+              console.log("   Supabase data before merge:", JSON.stringify(teamTasks, null, 2));
+              console.log("   localStorage data:", JSON.stringify(localData, null, 2));
               console.log("   Supabase has:", Object.keys(teamTasks).length, "people");
               console.log("   localStorage has:", Object.keys(localData).length, "people");
               
@@ -164,11 +166,17 @@ class SupabaseAppBridge {
               teamTasks = { ...teamTasks };  // Start with Supabase data
               Object.keys(localData).forEach(person => {
                 // Always use localStorage version - it's the most recent from this device
+                const oldCount = teamTasks[person]?.length || 0;
+                const newCount = localData[person]?.length || 0;
+                console.log(`   Merging ${person}: replacing ${oldCount} old tasks with ${newCount} localStorage tasks`);
                 teamTasks[person] = localData[person];
               });
               
               console.log("   ✅ Merged result has:", Object.keys(teamTasks).length, "people");
               console.log("   Merged people:", Object.keys(teamTasks).join(", "));
+              console.log("   ✅ MERGED DATA FINAL:", JSON.stringify(teamTasks, null, 2));
+            } else {
+              console.log("   ℹ️  No localStorage tasks found, using Supabase data only");
             }
           } catch (e) {
             console.warn("Could not merge localStorage tasks:", e);

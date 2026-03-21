@@ -2149,6 +2149,7 @@ function initializeApp() {
       console.log("🔄 Syncing window.appState to local appState variable...");
       console.log("   🎯 window.appState.ruleOfThree before sync:", window.appState.ruleOfThree?.length || 0, "tasks");
       console.log("   📋 window.appState.teamTasks before sync:", Object.keys(window.appState.teamTasks || {}).length, "people");
+      console.log("   📊 window.appState.teamTasks CONTENT before sync:", JSON.stringify(window.appState.teamTasks, null, 2));
       // Copy all properties from window.appState to the local appState
       Object.keys(window.appState).forEach(key => {
         appState[key] = window.appState[key];
@@ -2156,9 +2157,10 @@ function initializeApp() {
       console.log("✓ Local appState synchronized with Supabase data");
       console.log("   ruleOfThree length:", appState.ruleOfThree?.length || 0);
       if (appState.ruleOfThree && appState.ruleOfThree.length > 0) {
-        console.log("   🎯 Team Tasks loaded:", appState.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
+        console.log("   🎯 Rule Of Three tasks loaded:", appState.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
       }
       console.log("   teamTasks keys:", Object.keys(appState.teamTasks || {}));
+      console.log("   📊 appState.teamTasks CONTENT after sync:", JSON.stringify(appState.teamTasks, null, 2));
     }
   }
   
