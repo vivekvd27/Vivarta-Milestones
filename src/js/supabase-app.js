@@ -565,6 +565,11 @@ class SupabaseAppBridge {
       this.saveDefaultsToSupabase();
     }
   }
+
+  /**
+   * Intercept localStorage calls for per-user isolation (demo mode)
+   */
+  interceptLocalStorage() {
     const self = this;  // Capture context for nested functions
     const originalSetItem = Storage.prototype.setItem;
     const originalGetItem = Storage.prototype.getItem;
