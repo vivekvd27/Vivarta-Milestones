@@ -99,17 +99,15 @@ class SupabaseAppBridge {
     try {
       console.log(`📥 Querying Supabase for user: "${this.currentUser}"`);
       
-      // Query for this user's data
-      const query = this.supabase
+      // Query for this user's data using limit instead of single
+      // .single() can fail with certain data structures
+      const { data, error } = await this.supabase
         .from("user_data")
         .select("*")
-        .eq("user_name", this.currentUser);
-      
-      console.log("Query prepared, executing...");
-      
-      const { data, error } = await query.single();
+        .eq("user_name", this.currentUser)
+        .limit(1);
 
-      console.log("Query response:", { data, error });
+      console.log(`Query response:`, { data, error });
 
       if (error) {
         console.warn(`❌ Query error code: ${error.code}, message: ${error.message}`);
@@ -128,13 +126,15 @@ class SupabaseAppBridge {
           console.error("Unexpected query error:", error);
           throw error;
         }
-      } else if (data) {
+      } else if (data && data.length > 0) {
+        // data is now an array because we used .limit() instead of .single()
+        const userData = data[0];
         console.log(`✅ SUCCESS! Loaded existing data for "${this.currentUser}"`);
-        console.log("Raw data from Supabase:", data);
+        console.log("Raw data from Supabase:", userData);
         
         // Parse the state object
         try {
-          const state = JSON.parse(data.state_json || "{}");
+          const state = JSON.parse(userData.state_json || "{}");
           this.appState = {
             timeline: state.timeline || [],
             meetings: state.meetings || [],
@@ -143,13 +143,13 @@ class SupabaseAppBridge {
             ruleOfThree: state.ruleOfThree || [],
             affirmations: state.affirmations || []
           };
-          console.log("✓ Parsed app state:", this.appState);
+          console.log("✓ Parsed app state with", this.appState.ruleOfThree?.length || 0, "tasks");
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
         }
       } else {
-        console.warn("⚠️  Query returned no error but also no data - creating default state");
+        console.warn("⚠️  Query returned no rows - creating default state");
         this.createDefaultAppState();
       }
 
