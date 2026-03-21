@@ -5605,7 +5605,32 @@ init();
   </div>
 </div>
 
+<!-- SUPABASE INTEGRATION -->
+<!-- 1. Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js"></script>
+
+<!-- 2. Supabase configuration -->
+<script src="src/js/supabase-config.js"></script>
+
+<!-- 3. Authentication manager -->
+<script src="src/js/supabase-auth.js"></script>
+
+<!-- 4. Data sync layer -->
+<script src="src/js/supabase-sync.js"></script>
+
+<!-- 5. App bridge (replaces localStorage) -->
+<script src="src/js/supabase-app.js"></script>
+
 <!-- BUNDLED APPLICATION (no ES Modules, works as static file) -->
+<!-- NOTE: bundle.js will use localStorage which gets intercepted by supabase-app.js -->
 <script src="src/js/bundle.js"></script>
+
+<!-- Fallback: if Supabase fails, use localStorage -->
+<script>
+if (!window.supabaseConfig?.supabase) {
+  console.warn("Supabase not available - falling back to localStorage");
+  // The app will work with localStorage as before
+}
+</script>
 </body>
 </html>
