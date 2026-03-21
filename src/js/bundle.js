@@ -1950,41 +1950,54 @@ function initRuleOfThreeForm() {
   });
 
   if (saveBtn) {
-    console.log("📌 Attaching click handler to save button");
+    console.log("📌 Attaching click handler to save button using addEventListener");
     
-    // Remove any existing listeners to avoid duplicates
-    saveBtn.replaceWith(saveBtn.cloneNode(true));
-    const freshSaveBtn = document.getElementById("btnRuleOfThreeSave");
-    
-    // Use addEventListener for better compatibility
-    freshSaveBtn.addEventListener("click", function(e) {
-      console.log("🖱️  Save button clicked via addEventListener");
+    // Create handler function
+    const handleSaveClick = function(e) {
+      console.log("🖱️  Save button click detected!");
       e.preventDefault();
       e.stopPropagation();
 
       const person = personSelect.value.trim();
       const task = taskInput.value.trim();
 
-      console.log("Form values:", { person, task });
+      console.log("Form values extracted:", { person, task });
 
       if (!person || !task) {
+        console.warn("❌ Validation failed - person or task empty");
         alert("Please select a person and enter a task");
         return;
       }
 
       console.log("✓ Validation passed, calling addRuleOfThreeTask");
       addRuleOfThreeTask(person, task);
+      console.log("✓ addRuleOfThreeTask completed, re-rendering");
       renderRuleOfThree();
 
       personSelect.value = "";
       taskInput.value = "";
       closeRuleOfThreeModal();
-    });
+    };
+    
+    // Remove old listener if exists and add new one
+    saveBtn.removeEventListener("click", window.ruleOfThreeSaveHandler);
+    saveBtn.addEventListener("click", handleSaveClick);
+    window.ruleOfThreeSaveHandler = handleSaveClick;
     
     console.log("✓ Click handler attached successfully");
   } else {
     console.warn("❌ Save button not found!");
   }
+
+  if (cancelBtn) {
+    cancelBtn.removeEventListener("click", window.ruleOfThreeCancelHandler);
+    const handleCancelClick = closeRuleOfThreeModal;
+    cancelBtn.addEventListener("click", handleCancelClick);
+    window.ruleOfThreeCancelHandler = handleCancelClick;
+  }
+  
+  console.log("✓ initRuleOfThreeForm complete");
+}
 
   if (cancelBtn) {
     cancelBtn.onclick = closeRuleOfThreeModal;
