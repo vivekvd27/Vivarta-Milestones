@@ -97,6 +97,8 @@ class SupabaseAppBridge {
    */
   async loadStateFromSupabase() {
     try {
+      console.log(`📥 Loading state from Supabase for ${this.currentUser}...`);
+      
       const { data, error } = await this.supabase
         .from("user_data")
         .select("*")
@@ -107,7 +109,8 @@ class SupabaseAppBridge {
         // Handle table not existing or connection issues
         if (error.code === "PGRST116") {
           // 116 = no rows found (table exists but empty)
-          console.log("No existing data in Supabase, creating new state...");
+          console.log("⚠️  No existing data for " + this.currentUser + " in Supabase, creating new state...");
+          this.createDefaultAppState();
         } else if (error.message?.includes("relation") || error.message?.includes("does not exist")) {
           console.warn("⚠️  user_data table not found in Supabase");
           console.warn("Please run: docs/SUPABASE_USER_DATA_TABLE.sql in Supabase SQL Editor");
@@ -116,12 +119,13 @@ class SupabaseAppBridge {
           this.initializeDemoMode();
           return;
         } else {
+          console.warn("Query error:", error.code, error.message);
           throw error;
         }
-      }
-
-      if (data) {
-        console.log("📥 Loaded data from Supabase for " + this.currentUser);
+      } else if (data) {
+        console.log("✅ Loaded data from Supabase for " + this.currentUser);
+        console.log("Data:", data);
+        
         // Parse the state object
         const state = JSON.parse(data.state_json || "{}");
         this.appState = {
@@ -132,15 +136,17 @@ class SupabaseAppBridge {
           ruleOfThree: state.ruleOfThree || [],
           affirmations: state.affirmations || []
         };
+        
+        console.log("✓ App state populated:", this.appState);
       } else {
-        console.log("No existing data in Supabase, creating new state...");
+        console.log("⚠️  No data returned (null), creating new state...");
         this.createDefaultAppState();
       }
 
       // Intercept localStorage calls to sync with Supabase
       this.interceptLocalStorageForSync();
     } catch (error) {
-      console.error("Error loading state from Supabase:", error);
+      console.error("❌ Error loading state from Supabase:", error);
       console.warn("💡 Ensure the user_data table exists. Run: docs/SUPABASE_USER_DATA_TABLE.sql");
       this.createDefaultAppState();
     }
@@ -154,7 +160,7 @@ class SupabaseAppBridge {
 
     const self = this;
     try {
-      // Supabase v2 uses .realtime.on() instead of .on()
+      // Supabase v2 real-time API
       const channel = this.supabase
         .channel(`user_data_${this.currentUser}`)
         .on(
@@ -166,7 +172,7 @@ class SupabaseAppBridge {
             filter: `user_name=eq.${this.currentUser}`
           },
           (payload) => {
-            console.log("🔄 Real-time update received from Supabase");
+            console.log("🔄 Real-time update received:");
             if (payload.new) {
               const state = JSON.parse(payload.new.state_json || "{}");
               self.appState = {
@@ -190,15 +196,17 @@ class SupabaseAppBridge {
               }));
             }
           }
-        )
-        .subscribe()
-        .then(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log("✓ Real-time subscription active");
-          }
-        });
+        );
+      
+      // Subscribe to channel
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log("✓ Real-time subscription active for " + self.currentUser);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn("⚠️  Channel error - real-time may not work");
+        }
+      });
 
-      console.log("✓ Real-time subscription setup complete");
     } catch (error) {
       console.warn("Real-time subscription setup error:", error.message);
     }
