@@ -4824,16 +4824,51 @@ function loadAnn()       { try { return JSON.parse(localStorage.getItem(ANN_KEY)
 function saveAnn(d)      { localStorage.setItem(ANN_KEY, JSON.stringify(d)); }
 function loadMilestones(){ try { return JSON.parse(localStorage.getItem(MILESTONE_KEY)) || []; } catch { return []; } }
 function saveMilestones(d){ localStorage.setItem(MILESTONE_KEY, JSON.stringify(d)); }
-function loadTasks()     { try { return JSON.parse(localStorage.getItem(TASKS_KEY))     || {}; } catch { return {}; } }
-function saveTasks(d)    { localStorage.setItem(TASKS_KEY, JSON.stringify(d)); }
+function loadTasks() {
+  // If using Supabase, load from window.appState
+  if (window.appState?.teamTasks && typeof window.appState.teamTasks === 'object') {
+    console.log("☁️  Loading Team Tasks from Supabase (window.appState)");
+    return window.appState.teamTasks || {};
+  }
+  // Fallback to localStorage
+  try { return JSON.parse(localStorage.getItem(TASKS_KEY)) || {}; } 
+  catch { return {}; } 
+}
+function saveTasks(d) {
+  // If using Supabase, also sync to window.appState
+  if (window.appState && window.supabaseReady) {
+    console.log("☁️  Saving Team Tasks to Supabase (window.appState)");
+    window.appState.teamTasks = d;
+    
+    // Also sync to local appState if it exists
+    if (typeof appState !== 'undefined') {
+      appState.teamTasks = d;
+    }
+    
+    // Trigger save through bundle.js if available
+    if (typeof saveState === 'function') {
+      console.log("   Calling saveState() to sync to Supabase");
+      saveState();
+    }
+    return;
+  }
+  // Fallback to localStorage
+  localStorage.setItem(TASKS_KEY, JSON.stringify(d));
+}
 
 function getTasksForPerson(person) {
-  return loadTasks()[person] || [];
+  console.log(`📋 getTasksForPerson("${person}") called`);
+  const tasks = loadTasks()[person] || [];
+  console.log(`   Found ${tasks.length} tasks for ${person}`);
+  return tasks;
 }
 function setTasksForPerson(person, tasks) {
+  console.log(`💾 setTasksForPerson("${person}") called with ${tasks.length} tasks`);
   const all = loadTasks();
   all[person] = tasks;
+  console.log(`   Calling saveTasks() to persist...`);
   saveTasks(all);
+  console.log(`   ✅ Team Tasks updated for ${person}`);
 }
 
 // ── Render Announcements ──
@@ -4977,13 +5012,25 @@ function renderTasksKanban() {
     const person = btn.dataset.addPerson;
     const input = document.getElementById('taskInput_'+person);
     const doAdd = () => {
+      console.log(`🎯 Add Team Task button clicked for ${person}`);
       const text = input.value.trim();
-      if (!text) return;
+      console.log(`   Task text: "${text}"`);
+      if (!text) {
+        console.warn("   ⚠️  Task text is empty, skipping");
+        return;
+      }
+      console.log(`   ✅ Task text is valid, adding...`);
       const tasks = getTasksForPerson(person);
-      tasks.push({ id: Date.now(), text, done: false });
+      console.log(`   Current tasks for ${person}:`, tasks.length);
+      const newTask = { id: Date.now(), text, done: false };
+      console.log(`   New task object:`, newTask);
+      tasks.push(newTask);
+      console.log(`   Tasks after push:`, tasks.length);
       setTasksForPerson(person, tasks);
       input.value = '';
+      console.log(`   Calling renderTasksKanban()...`);
       renderTasksKanban();
+      console.log(`   ✅ Done adding task for ${person}`);
     };
     btn.addEventListener('click', doAdd);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });

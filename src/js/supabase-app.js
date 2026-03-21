@@ -156,7 +156,8 @@ class SupabaseAppBridge {
             futureEvents: state.futureEvents || [],
             ruleOfThree: state.ruleOfThree || [],
             affirmations: state.affirmations || [],
-            habitCompletions: state.habitCompletions || {}
+            habitCompletions: state.habitCompletions || {},
+            teamTasks: state.teamTasks || {}
           };
           
           // CRITICAL: Sync to window.appState so bundle.js sees the data
@@ -344,7 +345,8 @@ class SupabaseAppBridge {
       goals: [],
       announcements: [],
       milestones: [],
-      habitCompletions: {}, // Multi-person habit data: { "YYYY-MM-DD": { "Vivek": { habitId: true } } }
+      habitCompletions: {},
+      teamTasks: {},
     };
     
     // CRITICAL: Also set window.appState so bundle.js sees it

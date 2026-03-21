@@ -16,6 +16,7 @@ const appState = {
   ruleOfThree: [],
   affirmations: [],
   habitCompletions: {}, // Multi-person habit data: { "YYYY-MM-DD": { "Vivek": { habitId: true } } }
+  teamTasks: {}, // Team Tasks by person: { "Vivek": [{ id, text, done }], ... }
 };
 
 function saveState() {
@@ -2145,6 +2146,7 @@ function initializeApp() {
     if (window.appState) {
       console.log("🔄 Syncing window.appState to local appState variable...");
       console.log("   🎯 window.appState.ruleOfThree before sync:", window.appState.ruleOfThree?.length || 0, "tasks");
+      console.log("   📋 window.appState.teamTasks before sync:", Object.keys(window.appState.teamTasks || {}).length, "people");
       // Copy all properties from window.appState to the local appState
       Object.keys(window.appState).forEach(key => {
         appState[key] = window.appState[key];
@@ -2154,6 +2156,7 @@ function initializeApp() {
       if (appState.ruleOfThree && appState.ruleOfThree.length > 0) {
         console.log("   🎯 Team Tasks loaded:", appState.ruleOfThree.map(t => `${t.person}: ${t.task}`).join(", "));
       }
+      console.log("   teamTasks keys:", Object.keys(appState.teamTasks || {}));
     }
   }
   
