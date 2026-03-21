@@ -184,9 +184,18 @@ class SupabaseAppBridge {
       // For vivartaState, sync to Supabase
       if (key === "vivartaState") {
         try {
+          console.log(`🔄 Saving state for user: "${self.currentUser}"`);
+          
+          if (!self.currentUser) {
+            console.warn("⚠️  currentUser not set! Cannot sync to Supabase. Data will be lost!");
+            return;
+          }
+          
           // Parse the state
           const state = JSON.parse(value);
           self.appState = state;
+          
+          console.log(`📤 Uploading to Supabase: user="${self.currentUser}", tasks=${state.ruleOfThree?.length || 0}`);
 
           // Save to Supabase asynchronously
           if (self.supabase && self.currentUser) {
@@ -204,25 +213,30 @@ class SupabaseAppBridge {
               )
               .then(({ data, error }) => {
                 if (error) {
-                  console.error("❌ Error syncing to Supabase:", error.message);
+                  console.error(`❌ Supabase upsert error: ${error.message}`);
+                  console.error("Error code:", error.code);
                 } else {
-                  console.log("☁️  Synced to Supabase for " + self.currentUser);
+                  console.log(`✅ Successfully synced to Supabase for ${self.currentUser}`);
                 }
               })
               .catch(err => {
-                console.error("❌ Sync exception:", err.message);
+                console.error(`❌ Supabase exception: ${err.message}`);
               });
+          } else {
+            console.warn("⚠️  Cannot sync: Supabase client not ready");
           }
 
-          console.log(`✓ State updated for ${self.currentUser}`);
+          console.log(`✓ State queued for sync`);
         } catch (error) {
-          console.error("Error in setItem:", error);
+          console.error("Error in setItem interception:", error);
         }
       } else {
         // Other keys: save normally
         originalSetItem.call(this, key, value);
       }
     };
+    
+    console.log(`✓ Supabase sync interceptor installed for user: "${self.currentUser}"`);
   }
 
   /**
