@@ -5557,8 +5557,8 @@ function init() {
     document.getElementById('mainApp').classList.add('hidden');
     document.getElementById('dashboardPage').classList.add('active');
 
-    // Render dashboard content
-    renderDashboard();
+    // Dashboard rendering will be triggered after Supabase loads the data (see supabase-app.js)
+    // Don't render here - wait for cloud sync to be ready
 
   } catch(e) {
     console.error('HabitForge init error:', e);

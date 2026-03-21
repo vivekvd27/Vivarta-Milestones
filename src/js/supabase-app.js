@@ -233,6 +233,13 @@ class SupabaseAppBridge {
         console.log("✅ Habit Mini Preview re-rendered with Supabase data");
       }
 
+      // Also trigger re-render of recent activity with Supabase data
+      if (typeof renderRecentActivity === 'function') {
+        console.log("🔄 Re-rendering Recent Activity with Supabase data...");
+        renderRecentActivity();
+        console.log("✅ Recent Activity re-rendered with Supabase data");
+      }
+
       // Set up data sync (interceptLocalStorage will handle saves)
       this.interceptLocalStorageForSync();
       
@@ -365,6 +372,12 @@ class SupabaseAppBridge {
 
       this.isInitialized = true;
       console.log("✓ Dashboard ready for " + this.currentUser);
+      
+      // Render dashboard content for demo mode
+      if (typeof renderDashboard === 'function') {
+        console.log("📊 Rendering dashboard in demo mode...");
+        renderDashboard();
+      }
       
       return true;
     } catch (error) {
