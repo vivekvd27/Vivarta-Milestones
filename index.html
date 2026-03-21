@@ -3379,18 +3379,56 @@ function getRule3ForPersonDay(person, dateKey) {
 function setRule3(person, dateKey, tasks) {
   // If using Supabase cloud mode, update window.appState.ruleOfThree
   if (window.appState?.ruleOfThree && Array.isArray(window.appState.ruleOfThree)) {
-    // Update the tasks for this person in window.appState
-    const personTasks = window.appState.ruleOfThree.filter(t => t.person === person);
+    console.log("🔄 setRule3: Saving to Supabase format for person:", person);
     
-    // Update completion status from Day view format
+    // Get existing tasks for this person
+    const personTasksExisting = window.appState.ruleOfThree.filter(t => t.person === person);
+    console.log("   Existing tasks for", person, ":", personTasksExisting.length);
+    
+    // Process the Day view format tasks
     tasks.forEach((dayTask, idx) => {
-      if (personTasks[idx]) {
-        personTasks[idx].completed = dayTask.done || false;
+      const existingTask = personTasksExisting[idx];
+      
+      if (dayTask.text.trim()) {
+        // Task has content - either update or create
+        if (existingTask) {
+          // Update existing task
+          console.log(`   Updating existing task ${idx}: "${dayTask.text}" (done=${dayTask.done})`);
+          existingTask.task = dayTask.text;
+          existingTask.completed = dayTask.done || false;
+        } else {
+          // Create new task - add to window.appState.ruleOfThree
+          const newTask = {
+            id: generateId ? generateId() : Date.now().toString(36) + Math.random().toString(36).substr(2),
+            person: person,
+            task: dayTask.text,
+            completed: dayTask.done || false,
+            createdAt: new Date().toISOString()
+          };
+          console.log(`   Creating NEW task ${idx}: "${dayTask.text}"`);
+          window.appState.ruleOfThree.push(newTask);
+        }
+      } else {
+        // Empty task - delete if exists
+        if (existingTask) {
+          console.log(`   Removing empty task ${idx}`);
+          const taskIdx = window.appState.ruleOfThree.indexOf(existingTask);
+          if (taskIdx > -1) {
+            window.appState.ruleOfThree.splice(taskIdx, 1);
+          }
+        }
       }
     });
     
+    // CRITICAL: Also sync back to local appState (bundle.js) so it stays in sync
+    if (window.appState && typeof appState !== 'undefined') {
+      // Force sync appState.ruleOfThree with window.appState.ruleOfThree
+      appState.ruleOfThree = window.appState.ruleOfThree;
+    }
+    
     // Trigger save through bundle.js if available
     if (typeof saveState === 'function') {
+      console.log("   Calling saveState() to sync to Supabase");
       saveState(); // This will trigger Supabase sync via interceptor
     }
     return;
