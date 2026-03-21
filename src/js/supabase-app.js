@@ -240,12 +240,24 @@ class SupabaseAppBridge {
         console.log("✅ Recent Activity re-rendered with Supabase data");
       }
 
+      // FINAL: Trigger complete dashboard render with all Supabase data loaded
+      if (typeof renderDashboard === 'function') {
+        console.log("📊 Rendering complete Dashboard with Supabase data...");
+        renderDashboard();
+        console.log("✅ Dashboard fully rendered with Supabase data");
+      }
+
       // Set up data sync (interceptLocalStorage will handle saves)
       this.interceptLocalStorageForSync();
       
     } catch (error) {
       console.error("❌ Exception in loadStateFromSupabase:", error);
       this.createDefaultAppState();
+      // Still render dashboard even if there was an error
+      if (typeof renderDashboard === 'function') {
+        console.log("📊 Rendering Dashboard (error recovery)...");
+        renderDashboard();
+      }
     }
   }
 
