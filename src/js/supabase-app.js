@@ -72,6 +72,10 @@ class SupabaseAppBridge {
         console.log("✓ State synced to window.appState for bundle.js");
       }
       
+      // CRITICAL: Set flag to indicate Supabase is ready
+      window.supabaseReady = true;
+      console.log("✓ SUPABASE READY - flag set for bundle.js");
+      
       // Set up real-time subscription
       this.setupRealtimeSync();
 

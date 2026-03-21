@@ -2497,13 +2497,54 @@ function initializeFullPageModals() {
   });
 }
 
-// Auto-initialize
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => {
-    initializeApp();
-    initializeFullPageModals();
-  });
-} else {
+// Auto-initialize (wait for Supabase if available)
+function startDashboard() {
+  console.log("🎬 Starting dashboard initialization...");
   initializeApp();
   initializeFullPageModals();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    // Wait for Supabase to load data (if in cloud mode)
+    if (window.supabaseConfig?.supabase && !window.supabaseReady) {
+      console.log("⏳ Waiting for Supabase to load data...");
+      let checkCount = 0;
+      const waitForSupabase = setInterval(() => {
+        checkCount++;
+        if (window.supabaseReady) {
+          console.log("✅ Supabase ready, starting dashboard");
+          clearInterval(waitForSupabase);
+          startDashboard();
+        } else if (checkCount > 100) {
+          // Timeout after 5 seconds - proceed anyway
+          console.warn("⚠️  Supabase timeout, starting with empty state");
+          clearInterval(waitForSupabase);
+          startDashboard();
+        }
+      }, 50);
+    } else {
+      startDashboard();
+    }
+  });
+} else {
+  // Page already loaded
+  if (window.supabaseConfig?.supabase && !window.supabaseReady) {
+    console.log("⏳ Waiting for Supabase to load data...");
+    let checkCount = 0;
+    const waitForSupabase = setInterval(() => {
+      checkCount++;
+      if (window.supabaseReady) {
+        console.log("✅ Supabase ready, starting dashboard");
+        clearInterval(waitForSupabase);
+        startDashboard();
+      } else if (checkCount > 100) {
+        console.warn("⚠️  Supabase timeout, starting with empty state");
+        clearInterval(waitForSupabase);
+        startDashboard();
+      }
+    }, 50);
+  } else {
+    startDashboard();
+  }
 }
