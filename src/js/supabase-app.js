@@ -11,7 +11,7 @@ class SupabaseAppBridge {
     this.dataSync = null;
     this.appState = null;
     this.isInitialized = false;
-    this.demoMode = false;  // Enable demo mode by default
+    this.demoMode = false;  // false = Supabase cloud mode, true = localStorage only
     this.currentUser = null;  // Vivek, Mirat, or Chirag
   }
 
@@ -27,7 +27,15 @@ class SupabaseAppBridge {
       if (savedUser) {
         console.log("User selected: " + savedUser);
         this.currentUser = savedUser;
-        this.initializeDemoMode();
+        
+        // Use Supabase cloud sync instead of localStorage
+        if (!this.demoMode && window.supabaseConfig?.supabase) {
+          console.log("🌐 Initializing Supabase cloud mode...");
+          await this.initializeSupabaseMode();
+        } else {
+          console.log("📱 Using demo mode (localStorage)");
+          this.initializeDemoMode();
+        }
         return true;
       }
 
@@ -41,6 +49,174 @@ class SupabaseAppBridge {
       this.showUserSelector();  // Fallback to demo mode
       return false;
     }
+  }
+
+  /**
+   * Initialize Supabase cloud mode (real-time sync from database)
+   */
+  async initializeSupabaseMode() {
+    try {
+      this.supabase = window.supabaseConfig?.supabase;
+      if (!this.supabase) {
+        throw new Error("Supabase client not available");
+      }
+
+      console.log("✓ Supabase mode initialized for user: " + this.currentUser);
+      
+      // Fetch user's data from Supabase
+      await this.loadStateFromSupabase();
+      
+      // Set up real-time subscription
+      this.setupRealtimeSync();
+
+      // Dispatch event that app is ready
+      window.dispatchEvent(new CustomEvent("stateChange", {
+        detail: { type: "app:ready", data: { user: this.currentUser }, timestamp: Date.now() }
+      }));
+
+      this.isInitialized = true;
+      console.log("✓ Dashboard ready for " + this.currentUser + " (Supabase cloud)");
+      
+      return true;
+    } catch (error) {
+      console.error("Supabase mode initialization error:", error);
+      console.warn("Falling back to demo mode");
+      this.initializeDemoMode();
+      return false;
+    }
+  }
+
+  /**
+   * Load state from Supabase database
+   */
+  async loadStateFromSupabase() {
+    try {
+      const { data, error } = await this.supabase
+        .from("user_data")
+        .select("*")
+        .eq("user_name", this.currentUser)
+        .single();
+
+      if (error) {
+        // Handle table not existing or connection issues
+        if (error.code === "PGRST116") {
+          // 116 = no rows found (table exists but empty)
+          console.log("No existing data in Supabase, creating new state...");
+        } else if (error.message?.includes("relation") || error.message?.includes("does not exist")) {
+          console.warn("⚠️  user_data table not found in Supabase");
+          console.warn("Please run: docs/SUPABASE_USER_DATA_TABLE.sql in Supabase SQL Editor");
+          console.warn("Falling back to demo mode...");
+          this.demoMode = true;
+          this.initializeDemoMode();
+          return;
+        } else {
+          throw error;
+        }
+      }
+
+      if (data) {
+        console.log("📥 Loaded data from Supabase for " + this.currentUser);
+        // Parse the state object
+        const state = JSON.parse(data.state_json || "{}");
+        this.appState = {
+          timeline: state.timeline || [],
+          meetings: state.meetings || [],
+          contacts: state.contacts || [],
+          futureEvents: state.futureEvents || [],
+          ruleOfThree: state.ruleOfThree || [],
+          affirmations: state.affirmations || []
+        };
+      } else {
+        console.log("No existing data in Supabase, creating new state...");
+        this.createDefaultAppState();
+      }
+
+      // Intercept localStorage calls to sync with Supabase
+      this.interceptLocalStorageForSync();
+    } catch (error) {
+      console.error("Error loading state from Supabase:", error);
+      console.warn("💡 Ensure the user_data table exists. Run: docs/SUPABASE_USER_DATA_TABLE.sql");
+      this.createDefaultAppState();
+    }
+  }
+
+  /**
+   * Set up real-time subscription to Supabase changes
+   */
+  setupRealtimeSync() {
+    if (!this.supabase) return;
+
+    try {
+      // Subscribe to changes to this user's data
+      const subscription = this.supabase
+        .from("user_data")
+        .on("*", (payload) => {
+          if (payload.new?.user_name === this.currentUser) {
+            console.log("🔄 Real-time update received from Supabase");
+            const state = JSON.parse(payload.new.state_json || "{}");
+            this.appState = {
+              timeline: state.timeline || [],
+              meetings: state.meetings || [],
+              contacts: state.contacts || [],
+              futureEvents: state.futureEvents || [],
+              ruleOfThree: state.ruleOfThree || [],
+              affirmations: state.affirmations || []
+            };
+            // Trigger UI update
+            window.dispatchEvent(new CustomEvent("stateChange", {
+              detail: { type: "sync:updated", data: this.appState }
+            }));
+          }
+        })
+        .subscribe();
+
+      console.log("✓ Real-time subscription active");
+    } catch (error) {
+      console.warn("Real-time subscription not available:", error.message);
+    }
+  }
+
+  /**
+   * Intercept localStorage to sync with Supabase
+   */
+  interceptLocalStorageForSync() {
+    const self = this;
+    const originalSetItem = Storage.prototype.setItem;
+
+    Storage.prototype.setItem = function(key, value) {
+      // For vivartaState, sync to Supabase
+      if (key === "vivartaState") {
+        try {
+          // Parse the state
+          const state = JSON.parse(value);
+          self.appState = state;
+
+          // Save to Supabase asynchronously
+          if (self.supabase && self.currentUser) {
+            self.supabase
+              .from("user_data")
+              .upsert({
+                user_name: self.currentUser,
+                state_json: JSON.stringify(state),
+                updated_at: new Date().toISOString()
+              }, { onConflict: "user_name" })
+              .then(({ error }) => {
+                if (error) {
+                  console.error("Error syncing to Supabase:", error);
+                } else {
+                  console.log("☁️  Synced to Supabase");
+                }
+              });
+          }
+
+          console.log("Saved state for " + self.currentUser);
+        } catch (error) {
+          console.error("Error in setItem:", error);
+        }
+      } else {
+        originalSetItem.call(this, key, value);
+      }
+    };
   }
 
   /**
@@ -237,12 +413,29 @@ class SupabaseAppBridge {
     console.log("User selected: " + userName);
     localStorage.setItem("vivarta_demo_user", userName);
     this.currentUser = userName;
-    this.initializeDemoMode();
     
-    // Trigger full page load of dashboard
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    // Initialize appropriate mode
+    if (!this.demoMode && window.supabaseConfig?.supabase) {
+      console.log("🌐 Initializing Supabase for " + userName);
+      this.initializeSupabaseMode().then(() => {
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }).catch(error => {
+        console.error("Failed to init Supabase:", error);
+        this.initializeDemoMode();
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+      });
+    } else {
+      this.initializeDemoMode();
+      
+      // Trigger full page load of dashboard
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    }
   }
 
   /**
