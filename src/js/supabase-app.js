@@ -240,6 +240,11 @@ class SupabaseAppBridge {
           }
 
           console.log(`✓ State queued for sync`);
+          
+          // CRITICAL: Also save to localStorage so data persists locally
+          console.log(`💾 Also saving to localStorage for local persistence`);
+          originalSetItem.call(this, key, value);
+          console.log(`✓ Data saved to both localStorage AND Supabase`);
         } catch (error) {
           console.error("Error in setItem interception:", error);
         }
