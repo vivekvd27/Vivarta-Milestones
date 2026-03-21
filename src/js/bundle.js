@@ -1812,15 +1812,22 @@ function closeAffirmationsFullPage() {
 }
 
 function renderRuleOfThree() {
+  console.log("🎨 ========== renderRuleOfThree() START ==========");
   const container = document.getElementById("ruleOfThreeWidget");
-  if (!container) return;
+  if (!container) {
+    console.error("❌ ruleOfThreeWidget container NOT FOUND");
+    return;
+  }
+  console.log("✓ Container found, clearing...");
 
   clearChildren(container);
 
   const people = ["Vivek", "Mirat", "Chirag"];
+  console.log("📋 About to render tasks for", people.length, "people");
   
   people.forEach((person) => {
     const tasks = getRuleOfThreeByPerson(person);
+    console.log(`🎯 Rendering for ${person}:`, tasks.length, "tasks");
     
     const card = document.createElement("div");
     card.style.cssText = `
@@ -1937,45 +1944,65 @@ function renderRuleOfThree() {
       margin-top: 8px;
     `;
     addBtn.textContent = "+ Add Task";
+    addBtn.className = "rule3-add-btn";
+    addBtn.setAttribute("data-person", person);
+    console.log(`   ✅ Created "+ Add Task" button for ${person}`);
+    
     addBtn.onmouseover = () => addBtn.style.background = "var(--entre)";
     addBtn.onmouseout = () => addBtn.style.background = "var(--personal)";
-    addBtn.onclick = () => {
-      console.log("🎯 Add Task button clicked for " + person);
+    
+    addBtn.onclick = (e) => {
+      console.log("🖱️  BUTTON CLICKED for " + person);
+      console.log("   event:", e);
+      console.log("   openRuleOfThreeModal function exists:", typeof openRuleOfThreeModal);
+      
       // Pre-select the person in the modal
       const personSelect = document.getElementById("ruleOfThreePersonSelect");
       if (personSelect) {
         personSelect.value = person;
-        console.log("   Pre-selected person:", person);
+        console.log("   ✅ Pre-selected person:", person);
+      } else {
+        console.warn("   ❌ personSelect NOT FOUND");
       }
+      
+      console.log("   📞 Calling openRuleOfThreeModal()...");
       openRuleOfThreeModal();
+      
       // Focus on task input
       setTimeout(() => {
         const taskInput = document.getElementById("ruleOfThreeTaskInput");
-        if (taskInput) taskInput.focus();
+        if (taskInput) {
+          taskInput.focus();
+          console.log("   ✅ Task input focused");
+        } else {
+          console.warn("   ❌ taskInput NOT FOUND");
+        }
       }, 50);
     };
     card.appendChild(addBtn);
 
     container.appendChild(card);
   });
+  
+  console.log("🎨 ========== renderRuleOfThree() COMPLETE ==========");
 }
 
 function initRuleOfThreeForm() {
-  console.log("🔧 initRuleOfThreeForm() called");
+  console.log("🔧 ========== initRuleOfThreeForm() START ==========");
   
   const form = document.getElementById("ruleOfThreeModal");
   if (!form) {
-    console.warn("❌ ruleOfThreeModal not found in DOM");
+    console.error("❌ ruleOfThreeModal NOT found in DOM");
     return;
   }
-  console.log("✓ Form found");
+  console.log("✓ Form modal found");
 
   const personSelect = document.getElementById("ruleOfThreePersonSelect");
   const taskInput = document.getElementById("ruleOfThreeTaskInput");
   const saveBtn = document.getElementById("btnRuleOfThreeSave");
   const cancelBtn = document.getElementById("btnRuleOfThreeCancel");
 
-  console.log("Form elements:", {
+  console.log("Form element check:", {
     personSelect: !!personSelect,
     taskInput: !!taskInput,
     saveBtn: !!saveBtn,
@@ -1983,34 +2010,38 @@ function initRuleOfThreeForm() {
   });
 
   if (saveBtn) {
-    console.log("📌 Attaching click handler to save button using addEventListener");
+    console.log("📌 Attaching click listener to save button");
     
     // Create handler function
     const handleSaveClick = function(e) {
-      console.log("🖱️  ====== Save button click DETECTED ======");
+      console.log("🖱️  ====== SAVE BUTTON CLICK DETECTED ======");
       e.preventDefault();
       e.stopPropagation();
 
       const person = personSelect.value.trim();
       const task = taskInput.value.trim();
 
-      console.log("   📋 Form values extracted:", { person, task });
+      console.log("   📋 Form values:", { person, task });
 
       if (!person || !task) {
         console.warn("❌ VALIDATION FAILED - person or task empty");
-        console.log("   person:", person, "| task:", task);
+        console.log("   person:", JSON.stringify(person), "| task:", JSON.stringify(task));
         alert("Please select a person and enter a task");
         return;
       }
 
       console.log("✅ VALIDATION PASSED - calling addRuleOfThreeTask");
       addRuleOfThreeTask(person, task);
-      console.log("✓ addRuleOfThreeTask completed, re-rendering");
+      console.log("✓ addRuleOfThreeTask completed");
+      
+      console.log("Calling renderRuleOfThree()");
       renderRuleOfThree();
+      console.log("✓ Re-render complete");
 
       personSelect.value = "";
       taskInput.value = "";
       closeRuleOfThreeModal();
+      console.log("✅ Modal closed and form cleared");
     };
     
     // Remove old listener if exists and add new one
@@ -2018,9 +2049,9 @@ function initRuleOfThreeForm() {
     saveBtn.addEventListener("click", handleSaveClick);
     window.ruleOfThreeSaveHandler = handleSaveClick;
     
-    console.log("✓ Click handler attached successfully");
+    console.log("✅ Click handler successfully attached to save button");
   } else {
-    console.warn("❌ Save button not found!");
+    console.error("❌ Save button NOT FOUND in DOM");
   }
 
   if (cancelBtn) {
@@ -2028,23 +2059,38 @@ function initRuleOfThreeForm() {
     const handleCancelClick = closeRuleOfThreeModal;
     cancelBtn.addEventListener("click", handleCancelClick);
     window.ruleOfThreeCancelHandler = handleCancelClick;
+    console.log("✅ Cancel handler attached");
   }
   
-  console.log("✓ initRuleOfThreeForm complete");
+  console.log("🔧 ========== initRuleOfThreeForm() COMPLETE ==========");
 }
 
 function openRuleOfThreeModal() {
+  console.log("📖 openRuleOfThreeModal() called");
   const modal = document.getElementById("ruleOfThreeModal");
+  console.log("   modal element found:", !!modal);
   if (modal) {
+    console.log("   Adding 'show' class...");
     modal.classList.add("show");
-    document.getElementById("ruleOfThreePersonSelect").focus();
+    console.log("   ✅ Modal should be visible now");
+    
+    const personSelect = document.getElementById("ruleOfThreePersonSelect");
+    console.log("   personSelect found:", !!personSelect);
+    if (personSelect) {
+      personSelect.focus();
+      console.log("   ✅ Focused on personSelect");
+    }
+  } else {
+    console.error("❌ ruleOfThreeModal NOT FOUND!");
   }
 }
 
 function closeRuleOfThreeModal() {
+  console.log("🚫 closeRuleOfThreeModal() called");
   const modal = document.getElementById("ruleOfThreeModal");
   if (modal) {
     modal.classList.remove("show");
+    console.log("   ✅ Modal closed");
   }
 }
 
@@ -2118,28 +2164,33 @@ function initializeApp() {
 }
 
 function initializeWidgets() {
-  console.log("🚀 initializeWidgets() starting...");
+  console.log("🚀 ========== initializeWidgets() START ==========");
   
+  console.log("📍 About to render Timeline");
   renderTimeline();
   initTimelineForm();
 
+  console.log("📍 About to render Meetings");
   renderMeetings();
   initMeetingsForm();
 
+  console.log("📍 About to render Contacts");
   renderContacts();
   initNetworkingForm();
 
+  console.log("📍 About to render FutureEvents");
   renderFutureEvents();
   initFutureEventsForm();
 
-  console.log("📌 About to render and init Rule of Three...");
+  console.log("📍 About to render Rule Of Three");
   renderRuleOfThree();
   console.log("✓ renderRuleOfThree() done");
   
+  console.log("📍 About to init Rule Of Three Form");
   initRuleOfThreeForm();
   console.log("✓ initRuleOfThreeForm() done");
   
-  console.log("✓ initializeWidgets() complete");
+  console.log("🚀 ========== initializeWidgets() COMPLETE ==========");
 }
 
 function handleStateChange(event) {
