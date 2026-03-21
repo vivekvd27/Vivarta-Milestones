@@ -143,7 +143,16 @@ class SupabaseAppBridge {
             ruleOfThree: state.ruleOfThree || [],
             affirmations: state.affirmations || []
           };
+          
+          // CRITICAL: Sync to window.appState so bundle.js sees the data
+          if (window.appState) {
+            Object.assign(window.appState, this.appState);
+          } else {
+            window.appState = { ...this.appState };
+          }
+          
           console.log("✓ Parsed app state with", this.appState.ruleOfThree?.length || 0, "tasks");
+          console.log("✓ window.appState synchronized with loaded data");
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();
@@ -302,7 +311,16 @@ class SupabaseAppBridge {
       announcements: [],
       milestones: [],
     };
-    console.log("Default app state created for " + this.currentUser);
+    
+    // CRITICAL: Also set window.appState so bundle.js sees it
+    if (typeof window.appState !== 'undefined') {
+      Object.assign(window.appState, this.appState);
+    } else {
+      window.appState = { ...this.appState };
+    }
+    
+    console.log("✓ Default app state created for " + this.currentUser);
+    console.log("✓ window.appState synchronized");
   }
 
   /**
