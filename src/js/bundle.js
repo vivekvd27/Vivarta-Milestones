@@ -1928,26 +1928,44 @@ function renderRuleOfThree() {
 }
 
 function initRuleOfThreeForm() {
+  console.log("🔧 initRuleOfThreeForm() called");
+  
   const form = document.getElementById("ruleOfThreeModal");
-  if (!form) return;
+  if (!form) {
+    console.warn("❌ ruleOfThreeModal not found in DOM");
+    return;
+  }
+  console.log("✓ Form found");
 
   const personSelect = document.getElementById("ruleOfThreePersonSelect");
   const taskInput = document.getElementById("ruleOfThreeTaskInput");
   const saveBtn = document.getElementById("btnRuleOfThreeSave");
   const cancelBtn = document.getElementById("btnRuleOfThreeCancel");
 
+  console.log("Form elements:", {
+    personSelect: !!personSelect,
+    taskInput: !!taskInput,
+    saveBtn: !!saveBtn,
+    cancelBtn: !!cancelBtn
+  });
+
   if (saveBtn) {
+    console.log("📌 Attaching click handler to save button");
     saveBtn.onclick = (e) => {
+      console.log("🖱️  Save button clicked");
       e.preventDefault();
 
       const person = personSelect.value.trim();
       const task = taskInput.value.trim();
+
+      console.log("Form values:", { person, task });
 
       if (!person || !task) {
         alert("Please select a person and enter a task");
         return;
       }
 
+      console.log("✓ Validation passed, calling addRuleOfThreeTask");
       addRuleOfThreeTask(person, task);
       renderRuleOfThree();
 
@@ -1955,11 +1973,15 @@ function initRuleOfThreeForm() {
       taskInput.value = "";
       closeRuleOfThreeModal();
     };
+  } else {
+    console.warn("❌ Save button not found!");
   }
 
   if (cancelBtn) {
     cancelBtn.onclick = closeRuleOfThreeModal;
   }
+  
+  console.log("✓ initRuleOfThreeForm complete");
 }
 
 function openRuleOfThreeModal() {
@@ -2024,6 +2046,8 @@ function initializeApp() {
 }
 
 function initializeWidgets() {
+  console.log("🚀 initializeWidgets() starting...");
+  
   renderTimeline();
   initTimelineForm();
 
@@ -2036,8 +2060,14 @@ function initializeWidgets() {
   renderFutureEvents();
   initFutureEventsForm();
 
+  console.log("📌 About to render and init Rule of Three...");
   renderRuleOfThree();
+  console.log("✓ renderRuleOfThree() done");
+  
   initRuleOfThreeForm();
+  console.log("✓ initRuleOfThreeForm() done");
+  
+  console.log("✓ initializeWidgets() complete");
 }
 
 function handleStateChange(event) {
