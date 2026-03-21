@@ -4824,6 +4824,7 @@ function loadAnn() {
   console.log("   Data:", anns);
   return anns;
 }
+function saveAnn(d) {
   console.log("💾 saveAnn() called");
   if (!Array.isArray(d)) {
     console.error("❌ Invalid data structure for saveAnn:", d);
