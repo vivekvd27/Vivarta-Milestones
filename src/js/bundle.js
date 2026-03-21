@@ -2060,6 +2060,17 @@ function initializeApp() {
     loadState();
   } else {
     console.log("☁️  Using Supabase-loaded state (skipping localStorage)");
+    // CRITICAL: Sync window.appState (set by Supabase) back to local appState variable
+    // so that when initializeDefaultAffirmations() calls saveState(), it saves the correct data
+    if (window.appState) {
+      console.log("🔄 Syncing window.appState to local appState variable...");
+      // Copy all properties from window.appState to the local appState
+      Object.keys(window.appState).forEach(key => {
+        appState[key] = window.appState[key];
+      });
+      console.log("✓ Local appState synchronized with Supabase data");
+      console.log("   ruleOfThree length:", appState.ruleOfThree?.length || 0);
+    }
   }
   
   initializeDefaultAffirmations();
