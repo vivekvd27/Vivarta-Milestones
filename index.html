@@ -3256,10 +3256,37 @@ const THEME_KEY = 'habitforge_theme';
 
 // Load/save multi-person data: { "YYYY-MM-DD": { "Vivek": { "HabitId": true }, ... } }
 function loadData() {
+  // If using Supabase cloud mode, load from window.appState
+  if (window.appState?.habitCompletions && typeof window.appState.habitCompletions === 'object') {
+    console.log("☁️  Loading habit data from Supabase (window.appState)");
+    return window.appState.habitCompletions || {};
+  }
+  
+  // Fallback to localStorage
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
   catch { return {}; }
 }
+
 function saveData(data) {
+  // If using Supabase cloud mode, update window.appState
+  if (window.appState && window.supabaseReady) {
+    console.log("🔄 Saving habit data to Supabase (window.appState)");
+    window.appState.habitCompletions = data;
+    
+    // Also sync back to local appState (bundle.js) if it exists
+    if (typeof appState !== 'undefined') {
+      appState.habitCompletions = data;
+    }
+    
+    // Trigger save through bundle.js if available
+    if (typeof saveState === 'function') {
+      console.log("   Calling saveState() to sync to Supabase");
+      saveState(); // This will trigger Supabase sync via interceptor
+    }
+    return;
+  }
+  
+  // Fallback to localStorage
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 

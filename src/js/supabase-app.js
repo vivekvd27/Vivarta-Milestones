@@ -319,6 +319,7 @@ class SupabaseAppBridge {
       goals: [],
       announcements: [],
       milestones: [],
+      habitCompletions: {}, // Multi-person habit data: { "YYYY-MM-DD": { "Vivek": { habitId: true } } }
     };
     
     // CRITICAL: Also set window.appState so bundle.js sees it

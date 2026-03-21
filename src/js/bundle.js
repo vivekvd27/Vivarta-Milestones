@@ -15,6 +15,7 @@ const appState = {
   futureEvents: [],
   ruleOfThree: [],
   affirmations: [],
+  habitCompletions: {}, // Multi-person habit data: { "YYYY-MM-DD": { "Vivek": { habitId: true } } }
 };
 
 function saveState() {
