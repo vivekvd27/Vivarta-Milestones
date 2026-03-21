@@ -1383,7 +1383,28 @@ function initFutureEventsForm() {
 // ============================================
 
 function addRuleOfThreeTask(person, task) {
-  console.log("➕ addRuleOfThreeTask called:", { person, task });\n  \n  const ruleTask = {\n    id: generateId(),\n    person: escapeHtml(person),\n    task: escapeHtml(task),\n    completed: false,\n    createdAt: new Date().toISOString(),\n  };\n\n  console.log(\"   🎯 New Team Task:\", <span style=\"color: #0066cc\">ruleTask</span>);\n  console.log(\"   📊 Before adding - appState.ruleOfThree length:\", appState.ruleOfThree?.length || 0);  \n  appState.ruleOfThree.push(ruleTask);\n  console.log(\"   ✅ Task added - appState.ruleOfThree length:\", appState.ruleOfThree.length);\n  \n  console.log(\"   📤 Calling saveState() to sync to Supabase...\");\n  saveState();\n  \n  dispatchStateChange(\"ruleOfThree:add\", ruleTask);\n  console.log(\"✓ addRuleOfThreeTask complete - Team Task queued for Supabase\");\n  return ruleTask;
+  console.log("➕ addRuleOfThreeTask called:", { person, task });
+  
+  const ruleTask = {
+    id: generateId(),
+    person: escapeHtml(person),
+    task: escapeHtml(task),
+    completed: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  console.log("   🎯 New Team Task:", ruleTask);
+  console.log("   📊 Before adding - appState.ruleOfThree length:", appState.ruleOfThree?.length || 0);
+  appState.ruleOfThree.push(ruleTask);
+  console.log("   ✅ Task added - appState.ruleOfThree length:", appState.ruleOfThree.length);
+  
+  console.log("   📤 Calling saveState() to sync to Supabase...");
+  saveState();
+  
+  dispatchStateChange("ruleOfThree:add", ruleTask);
+  console.log("✓ addRuleOfThreeTask complete - Team Task queued for Supabase");
+  return ruleTask;
+}
 
 function toggleRuleOfThreeTask(taskId) {
   const task = appState.ruleOfThree.find((t) => t.id === taskId);
