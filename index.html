@@ -2618,6 +2618,106 @@
       </div>
     </div>
 
+    <!-- Daily Affirmations Widget - Full width -->
+    <div class="db-card wide" id="dbAffCard">
+      <div class="db-card-header" style="cursor:pointer" id="dbAffToggleHeader">
+        <div class="db-card-icon" style="background:linear-gradient(135deg,var(--accent-light),var(--entre-light))">💡</div>
+        <div class="db-card-title">Daily Affirmations</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="dbAffReviewedBadge" style="display:none;padding:3px 10px;background:var(--accent2-light);border:1px solid var(--accent2);border-radius:20px;font-size:0.72rem;color:var(--accent2);font-family:'DM Mono',monospace;font-weight:600">✔ Reviewed</div>
+          <button class="db-card-btn" id="dbAffToggleBtn" style="display:flex;align-items:center;gap:5px">
+            <span id="dbAffBtnLabel">Show All</span><span id="dbAffArrow" style="display:inline-block;transition:transform 0.3s">▼</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── PREVIEW: always visible ── -->
+      <div style="padding:14px 18px 16px;display:flex;flex-direction:column;gap:8px">
+
+        <!-- Key pills row -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+          <span style="padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;background:var(--gold-light);color:#8a6a00;border:1px solid var(--gold)">🔥 3M's: Money · Market · Mindset</span>
+          <span style="padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;background:var(--entre-light);color:var(--entre);border:1px solid var(--entre)">🧠 Power of Visualization</span>
+          <span style="padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;background:var(--accent2-light);color:var(--accent2);border:1px solid var(--accent2)">⚡ TRIZ &amp; LEAN</span>
+          <span style="padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;background:var(--personal-light);color:var(--personal);border:1px solid var(--personal)">📚 30 min Library Daily</span>
+        </div>
+
+        <!-- 3 highlight affirmations -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+          <div style="padding:10px 14px;background:linear-gradient(120deg,#fef3e2,var(--surface2));border:1px solid var(--gold);border-left:3px solid var(--gold);border-radius:var(--radius-sm)">
+            <div style="font-size:0.68rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin-bottom:4px">🚀 Startup</div>
+            <div style="font-size:0.83rem;color:var(--text);line-height:1.5">Everything happens twice — first in mind, <em style="color:var(--accent2)">then in reality</em></div>
+          </div>
+          <div style="padding:10px 14px;background:linear-gradient(120deg,#e8f4f0,var(--surface2));border:1px solid var(--accent2);border-left:3px solid var(--accent2);border-radius:var(--radius-sm)">
+            <div style="font-size:0.68rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent2);margin-bottom:4px">🧠 Mindset</div>
+            <div style="font-size:0.83rem;color:var(--text);line-height:1.5">Apart from what you want to achieve, <em style="color:var(--entre)">everything else is noise</em></div>
+          </div>
+          <div style="padding:10px 14px;background:linear-gradient(120deg,#eee8f8,var(--surface2));border:1px solid var(--entre);border-left:3px solid var(--entre);border-radius:var(--radius-sm)">
+            <div style="font-size:0.68rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;color:var(--entre);margin-bottom:4px">⚡ Execution</div>
+            <div style="font-size:0.83rem;color:var(--text);line-height:1.5">If product fails during testing → <em style="color:var(--accent2)">Empathize and iterate</em></div>
+          </div>
+        </div>
+
+        <div style="font-size:0.75rem;color:var(--text3);font-family:'DM Mono',monospace;padding-top:2px">16 affirmations total · click <strong>Show All</strong> to expand</div>
+      </div>
+
+      <!-- ── FULL DETAIL: expands on toggle ── -->
+      <div id="dbAffBody" style="overflow:hidden;max-height:0;transition:max-height 0.6s cubic-bezier(0.4,0,0.2,1),opacity 0.35s ease;opacity:0;border-top:1px solid var(--border)">
+        <div style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:14px">
+
+          <!-- Startup Guidelines -->
+          <div style="border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(90deg,#fef3e2,var(--surface2));font-family:'DM Serif Display',serif;font-size:0.95rem;color:var(--text)">
+              🚀 Startup Guidelines
+            </div>
+            <div style="background:var(--surface2)">
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">01</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Spend 30 min in library — new ideas &amp; latest happenings</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">02</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Focus on Government Schemes for Grants — knowledge + due dates</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">03</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Watch Shark Tank videos — study pitches and business models</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">04</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Study business case studies — learn from successes and failures</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">05</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Maintain a learning notebook — startup learnings, AI tools, Design Thinking</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">06</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Maintain a networking notebook — contacts, conversations, follow-ups</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">07</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">3 Factors of Success (3M's) — <strong style="color:var(--accent)">Money</strong>, <strong style="color:var(--accent)">Market</strong>, <strong style="color:var(--accent)">Mindset</strong></span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">08</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Use <strong style="color:var(--entre)">TRIZ</strong> &amp; <strong style="color:var(--accent2)">LEAN</strong> model effectively</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">09</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">If product fails during testing → <em style="color:var(--accent2);font-style:italic">Empathize and iterate</em></span></div>
+            </div>
+          </div>
+
+          <!-- Mindset & Focus -->
+          <div style="border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(90deg,#e8f4f0,var(--surface2));font-family:'DM Serif Display',serif;font-size:0.95rem;color:var(--text)">
+              🧠 Mindset &amp; Focus
+            </div>
+            <div style="background:var(--surface2)">
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">10</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Everything happens twice — first in mind, then in reality → <em style="color:var(--accent2)">Power of visualization</em></span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">11</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Apart from what you want to achieve, everything else is noise</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">12</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Watch your thoughts — keep what matters, remove noise</span></div>
+            </div>
+          </div>
+
+          <!-- Daily Execution -->
+          <div style="border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(90deg,#eee8f8,var(--surface2));font-family:'DM Serif Display',serif;font-size:0.95rem;color:var(--text)">
+              ⚡ Daily Execution
+            </div>
+            <div style="background:var(--surface2)">
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">13</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Read one CAD/CAE article daily</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">14</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Post one article weekly on LinkedIn</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">15</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Explore guest lecture opportunities</span></div>
+              <div style="display:flex;gap:12px;padding:9px 16px"><span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);min-width:22px;padding-top:2px">16</span><span style="font-size:0.85rem;color:var(--text);line-height:1.55">Read NVIDIA blogs — <a href="https://blogs.nvidia.com/" target="_blank" style="color:var(--accent);font-size:0.8rem;text-decoration:none">blogs.nvidia.com ↗</a></span></div>
+            </div>
+          </div>
+
+          <!-- Mark Reviewed -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);flex-wrap:wrap;gap:10px">
+            <div style="font-size:0.83rem;color:var(--text2)">📋 Mark today's affirmations as reviewed</div>
+            <button id="dbBtnMarkReviewed" class="btn btn-primary" style="font-size:0.82rem;padding:7px 16px">✦ Mark as Reviewed</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -4683,7 +4783,62 @@ function initDashboard() {
   });
   
 
-  // Custom habit modal
+  // ── Dashboard Affirmations Widget ──
+  (function() {
+    const header  = document.getElementById('dbAffToggleHeader');
+    const body    = document.getElementById('dbAffBody');
+    const btnLabel= document.getElementById('dbAffBtnLabel');
+    const arrow   = document.getElementById('dbAffArrow');
+    const badge   = document.getElementById('dbAffReviewedBadge');
+    const markBtn = document.getElementById('dbBtnMarkReviewed');
+    if (!header || !body) return;
+
+    let isOpen = false;
+
+    function syncReviewed() {
+      const reviewed = localStorage.getItem('habitforge_aff_reviewed') === today();
+      if (badge) badge.style.display = reviewed ? 'flex' : 'none';
+      if (markBtn) {
+        markBtn.textContent = reviewed ? '✔ Reviewed Today' : '✦ Mark as Reviewed';
+        markBtn.style.opacity = reviewed ? '0.6' : '1';
+        markBtn.style.pointerEvents = reviewed ? 'none' : '';
+      }
+    }
+
+    function toggle() {
+      isOpen = !isOpen;
+      if (isOpen) {
+        body.style.maxHeight = body.scrollHeight + 2000 + 'px';
+        body.style.opacity   = '1';
+        if (btnLabel) btnLabel.textContent = 'Hide';
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      } else {
+        body.style.maxHeight = '0';
+        body.style.opacity   = '0';
+        if (btnLabel) btnLabel.textContent = 'Show All';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      }
+      syncReviewed();
+    }
+
+    // Only the header triggers toggle (button is inside header)
+    header.addEventListener('click', toggle);
+
+    if (markBtn) {
+      markBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // don't collapse on mark
+        if (localStorage.getItem('habitforge_aff_reviewed') !== today()) {
+          localStorage.setItem('habitforge_aff_reviewed', today());
+          syncReviewed();
+          showToast('Affirmations marked as reviewed! 🌟', 'success');
+          confetti(markBtn.getBoundingClientRect().left + 60, markBtn.getBoundingClientRect().top);
+        }
+      });
+    }
+
+    syncReviewed();
+  })();
+
   document.getElementById('btnCustHabitCancel').addEventListener('click', () => document.getElementById('customHabitModal').classList.remove('show'));
   document.getElementById('btnCustHabitSave').addEventListener('click', () => {
     const name = document.getElementById('custHabitName').value.trim();
