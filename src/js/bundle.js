@@ -1951,9 +1951,16 @@ function initRuleOfThreeForm() {
 
   if (saveBtn) {
     console.log("📌 Attaching click handler to save button");
-    saveBtn.onclick = (e) => {
-      console.log("🖱️  Save button clicked");
+    
+    // Remove any existing listeners to avoid duplicates
+    saveBtn.replaceWith(saveBtn.cloneNode(true));
+    const freshSaveBtn = document.getElementById("btnRuleOfThreeSave");
+    
+    // Use addEventListener for better compatibility
+    freshSaveBtn.addEventListener("click", function(e) {
+      console.log("🖱️  Save button clicked via addEventListener");
       e.preventDefault();
+      e.stopPropagation();
 
       const person = personSelect.value.trim();
       const task = taskInput.value.trim();
@@ -1972,7 +1979,9 @@ function initRuleOfThreeForm() {
       personSelect.value = "";
       taskInput.value = "";
       closeRuleOfThreeModal();
-    };
+    });
+    
+    console.log("✓ Click handler attached successfully");
   } else {
     console.warn("❌ Save button not found!");
   }
