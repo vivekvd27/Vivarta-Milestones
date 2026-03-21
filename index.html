@@ -612,6 +612,9 @@
   .view { animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+  /* Slide-in animation for event cards */
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
   /* Confetti effect (inline) */
   .confetti-piece {
     position: fixed;
@@ -2253,6 +2256,9 @@
     .manifest-modal-body { padding: 20px; }
   }
 </style>
+<!-- MODULAR WIDGET STYLES -->
+<link rel="stylesheet" href="src/css/dashboard.css">
+<link rel="stylesheet" href="src/css/widgets.css">
 </head>
 <body data-theme="light">
 
@@ -2556,68 +2562,6 @@
 <div id="dashboardPage">
   <div class="db-layout">
 
-    <!-- Announcements -->
-    <div class="db-card">
-      <div class="db-card-header">
-        <div class="db-card-icon" style="background:#fef3e2">📢</div>
-        <div class="db-card-title">Announcements</div>
-        <button class="db-card-btn" id="btnAddAnn">+ Add</button>
-      </div>
-      <div class="db-card-body" id="annList"><div style="color:var(--text3);font-size:0.83rem;text-align:center;padding:20px 0">No announcements yet</div></div>
-    </div>
-
-    <!-- Goals & Milestones -->
-    <div class="db-card">
-      <div class="db-card-header">
-        <div class="db-card-icon" style="background:#e8f4f0">🎯</div>
-        <div class="db-card-title">Goals & Milestones</div>
-        <div style="display:flex;gap:6px">
-          <button class="db-card-btn" id="btnViewAllGoals">View All Goals</button>
-          <button class="db-card-btn" id="btnAddMilestone">+ Milestone</button>
-        </div>
-      </div>
-      <div class="db-card-body" id="goalsCardBody">
-        <div id="goalsSummary"></div>
-        <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
-          <div style="font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Milestones</div>
-          <div id="milestoneList"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mini Habit Tracker -->
-    <div class="db-card">
-      <div class="db-card-header">
-        <div class="db-card-icon" style="background:var(--personal-light)">📊</div>
-        <div class="db-card-title">Today's Habit Completion</div>
-        <button class="db-card-btn" id="btnOpenHabits">Open Tracker</button>
-      </div>
-      <div class="db-card-body" id="habitMiniPreview"></div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="db-card">
-      <div class="db-card-header">
-        <div class="db-card-icon" style="background:var(--entre-light)">⚡</div>
-        <div class="db-card-title">Recent Activity</div>
-      </div>
-      <div class="db-card-body" id="recentActivity"></div>
-    </div>
-
-    <!-- Team Tasks - Full width -->
-    <div class="db-card wide">
-      <div class="db-card-header">
-        <div class="db-card-icon" style="background:var(--accent2-light)">🗂️</div>
-        <div class="db-card-title">Team Tasks</div>
-        <div style="font-size:0.75rem;color:var(--text3);font-family:'DM Mono',monospace" id="teamTasksStats"></div>
-      </div>
-      <div class="db-card-body" style="padding:16px">
-        <div class="tasks-kanban" id="tasksKanban">
-          <!-- Rendered by JS -->
-        </div>
-      </div>
-    </div>
-
     <!-- Daily Affirmations Widget - Full width -->
     <div class="db-card wide" id="dbAffCard">
       <div class="db-card-header" style="cursor:pointer" id="dbAffToggleHeader">
@@ -2718,6 +2662,263 @@
       </div>
     </div>
 
+    <!-- Announcements -->
+    <div class="db-card">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:#fef3e2">📢</div>
+        <div class="db-card-title">Announcements</div>
+        <button class="db-card-btn" id="btnAddAnn">+ Add</button>
+      </div>
+      <div class="db-card-body" id="annList"><div style="color:var(--text3);font-size:0.83rem;text-align:center;padding:20px 0">No announcements yet</div></div>
+    </div>
+
+    <!-- Goals & Milestones -->
+    <div class="db-card">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:#e8f4f0">🎯</div>
+        <div class="db-card-title">Goals & Milestones</div>
+        <div style="display:flex;gap:6px">
+          <button class="db-card-btn" id="btnViewAllGoals">View All Goals</button>
+          <button class="db-card-btn" id="btnAddMilestone">+ Milestone</button>
+        </div>
+      </div>
+      <div class="db-card-body" id="goalsCardBody">
+        <div id="goalsSummary"></div>
+        <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+          <div style="font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Milestones</div>
+          <div id="milestoneList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mini Habit Tracker -->
+    <div class="db-card">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:var(--personal-light)">📊</div>
+        <div class="db-card-title">Today's Habit Completion</div>
+        <button class="db-card-btn" id="btnOpenHabits">Open Tracker</button>
+      </div>
+      <div class="db-card-body" id="habitMiniPreview"></div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="db-card">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:var(--entre-light)">⚡</div>
+        <div class="db-card-title">Recent Activity</div>
+      </div>
+      <div class="db-card-body" id="recentActivity"></div>
+    </div>
+
+    <!-- Rule of 3 — Vivarta Tech -->
+    <div class="db-card wide">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:var(--personal-light)">🎯</div>
+        <div class="db-card-title">Rule of 3 — Vivarta Tech</div>
+        <button class="db-card-btn" id="btnAddRuleOfThree">+ Add</button>
+      </div>
+      <div class="db-card-body" id="ruleOfThreeWidget" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;padding:16px"></div>
+    </div>
+
+    <!-- Team Tasks - Full width -->
+    <div class="db-card wide">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:var(--accent2-light)">🗂️</div>
+        <div class="db-card-title">Team Tasks</div>
+        <div style="font-size:0.75rem;color:var(--text3);font-family:'DM Mono',monospace" id="teamTasksStats"></div>
+      </div>
+      <div class="db-card-body" style="padding:16px">
+        <div class="tasks-kanban" id="tasksKanban">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Announcements -->
+
+    <!-- TIMELINE WIDGET -->
+    <div class="db-card widget-card timeline">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:linear-gradient(135deg,#fef6ed,#f5ede8)">📅</div>
+        <div class="db-card-title">Timeline of Events</div>
+        <div style="display:flex;gap:8px">
+          <button class="db-card-btn" id="btnViewTimeline" style="background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:6px 10px;font-size:0.8rem" title="View full page">⤢</button>
+          <button class="db-card-btn" id="btnAddTimelineEvent">+ Add Event</button>
+        </div>
+      </div>
+      <div class="db-card-body" id="timelineWidget"></div>
+    </div>
+
+    <!-- MEETINGS TRACKER WIDGET -->
+    <div class="db-card widget-card meetings">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:linear-gradient(135deg,#fef3e2,#faf8f5)">🤝</div>
+        <div class="db-card-title">Meetings Tracker</div>
+        <div style="display:flex;gap:8px">
+          <button class="db-card-btn" id="btnViewMeetings" style="background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:6px 10px;font-size:0.8rem" title="View full page">⤢</button>
+          <button class="db-card-btn" id="btnAddMeeting">+ Add Meeting</button>
+        </div>
+      </div>
+      <div class="db-card-body" id="meetingsWidget"></div>
+    </div>
+
+    <!-- NETWORKING / CRM WIDGET -->
+    <div class="db-card widget-card networking">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:linear-gradient(135deg,#e8f4f0,#faf8f5)">🌐</div>
+        <div class="db-card-title">Networking CRM</div>
+        <div style="display:flex;gap:8px">
+          <button class="db-card-btn" id="btnViewNetworking" style="background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:6px 10px;font-size:0.8rem" title="View full page">⤢</button>
+          <button class="db-card-btn" id="btnAddContact">+ Add Contact</button>
+        </div>
+      </div>
+      <div class="db-card-body" id="networkingWidget"></div>
+    </div>
+
+    <!-- FUTURE EVENTS / PREPARATION WIDGET -->
+    <div class="db-card widget-card futureEvents">
+      <div class="db-card-header">
+        <div class="db-card-icon" style="background:linear-gradient(135deg,#eee8f8,#faf8f5)">🎯</div>
+        <div class="db-card-title">Future Events & Prep</div>
+        <div style="display:flex;gap:8px">
+          <button class="db-card-btn" id="btnViewFutureEvents" style="background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:6px 10px;font-size:0.8rem" title="View full page">⤢</button>
+          <button class="db-card-btn" id="btnAddFutureEvent">+ Add Event</button>
+        </div>
+      </div>
+      <div class="db-card-body" id="futureEventsWidget"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIMELINE EVENT ADD MODAL -->
+<div class="modal-overlay" id="timelineModal">
+  <div class="modal">
+    <div class="modal-title">Add Timeline Event</div>
+    <div class="modal-sub">Record an important milestone or event.</div>
+    <form id="timelineForm" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Title *</label>
+        <input id="timelineTitle" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="Event title…" maxlength="80" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Description (optional)</label>
+        <textarea id="timelineDesc" rows="3" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none;resize:vertical" placeholder="Details…"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Date *</label>
+          <input id="timelineDate" type="date" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" required>
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Type</label>
+          <select id="timelineType" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none">
+            <option value="minor">Minor</option>
+            <option value="major">Major</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnTimelineCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Event</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MEETING ADD MODAL -->
+<div class="modal-overlay" id="meetingModal">
+  <div class="modal">
+    <div class="modal-title">Add Meeting</div>
+    <div class="modal-sub">Track a meeting with someone.</div>
+    <form id="meetingsForm" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Meeting Title *</label>
+        <input id="meetingTitle" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="e.g. Meeting with Rohan Shah" maxlength="80" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Person *</label>
+        <input id="meetingPerson" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="Name…" maxlength="60" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Date *</label>
+        <input id="meetingDate" type="date" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Notes (optional)</label>
+        <textarea id="meetingNotes" rows="2" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none;resize:vertical" placeholder="Meeting notes…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnMeetingCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Meeting</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- NETWORKING / CONTACT ADD MODAL -->
+<div class="modal-overlay" id="networkingModal">
+  <div class="modal">
+    <div class="modal-title">Add Contact</div>
+    <div class="modal-sub">Add a person to your professional network.</div>
+    <form id="networkingForm" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Name *</label>
+        <input id="contactName" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="Full name…" maxlength="60" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Role / Title *</label>
+        <input id="contactRole" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="E.g. CEO, Product Manager…" maxlength="60" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Company *</label>
+        <input id="contactCompany" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="Company name…" maxlength="60" required>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Notes (optional)</label>
+        <textarea id="contactNotes" rows="2" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none;resize:vertical" placeholder="How you met, interests, follow-up ideas…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnNetworkingCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Contact</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- FUTURE EVENTS ADD MODAL -->
+<div class="modal-overlay" id="futureEventsModal">
+  <div class="modal">
+    <div class="modal-title">Add Future Event</div>
+    <div class="modal-sub">Track important upcoming events that need preparation.</div>
+    <form id="futureEventsForm" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Event Title *</label>
+        <input id="eventTitle" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="E.g. Pitch to VCs, Launch Product v2…" maxlength="80" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Date *</label>
+          <input id="eventDate" type="date" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" required>
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Priority</label>
+          <select id="eventPriority" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High / Critical</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Preparation Notes (optional)</label>
+        <textarea id="eventNotes" rows="3" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none;resize:vertical" placeholder="What do you need to prepare? Key milestones?"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnFutureEventsCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Event</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -5126,6 +5327,7 @@ function init() {
     initManifestations();
     initDashboard();
     initGoals();
+    initWidgetModals();
 
     // Start on Dashboard by default
     currentView = 'dashboard';
@@ -5145,8 +5347,228 @@ function init() {
   }
 }
 
+/**
+ * Initialize modal handlers for new widgets
+ */
+function initWidgetModals() {
+  // Timeline Modal
+  const timelineBtn = document.getElementById('btnAddTimelineEvent');
+  const timelineModal = document.getElementById('timelineModal');
+  const timelineCancel = document.getElementById('btnTimelineCancel');
+  
+  if (timelineBtn) {
+    timelineBtn.addEventListener('click', () => {
+      document.getElementById('timelineTitle').value = '';
+      document.getElementById('timelineDesc').value = '';
+      document.getElementById('timelineDate').value = '';
+      document.getElementById('timelineType').value = 'minor';
+      timelineModal.classList.add('show');
+      setTimeout(() => document.getElementById('timelineTitle').focus(), 100);
+    });
+  }
+  if (timelineCancel) {
+    timelineCancel.addEventListener('click', () => timelineModal.classList.remove('show'));
+  }
+  if (timelineModal) {
+    timelineModal.addEventListener('click', e => {
+      if (e.target === timelineModal) timelineModal.classList.remove('show');
+    });
+  }
+
+  // Meetings Modal
+  const meetingBtn = document.getElementById('btnAddMeeting');
+  const meetingModal = document.getElementById('meetingModal');
+  const meetingCancel = document.getElementById('btnMeetingCancel');
+  
+  if (meetingBtn) {
+    meetingBtn.addEventListener('click', () => {
+      document.getElementById('meetingTitle').value = '';
+      document.getElementById('meetingPerson').value = '';
+      document.getElementById('meetingDate').value = '';
+      document.getElementById('meetingNotes').value = '';
+      meetingModal.classList.add('show');
+      setTimeout(() => document.getElementById('meetingTitle').focus(), 100);
+    });
+  }
+  if (meetingCancel) {
+    meetingCancel.addEventListener('click', () => meetingModal.classList.remove('show'));
+  }
+  if (meetingModal) {
+    meetingModal.addEventListener('click', e => {
+      if (e.target === meetingModal) meetingModal.classList.remove('show');
+    });
+  }
+
+  // Networking/Contact Modal
+  const networkingBtn = document.getElementById('btnAddContact');
+  const networkingModal = document.getElementById('networkingModal');
+  const networkingCancel = document.getElementById('btnNetworkingCancel');
+  
+  if (networkingBtn) {
+    networkingBtn.addEventListener('click', () => {
+      document.getElementById('contactName').value = '';
+      document.getElementById('contactRole').value = '';
+      document.getElementById('contactCompany').value = '';
+      document.getElementById('contactNotes').value = '';
+      networkingModal.classList.add('show');
+      setTimeout(() => document.getElementById('contactName').focus(), 100);
+    });
+  }
+  if (networkingCancel) {
+    networkingCancel.addEventListener('click', () => networkingModal.classList.remove('show'));
+  }
+  if (networkingModal) {
+    networkingModal.addEventListener('click', e => {
+      if (e.target === networkingModal) networkingModal.classList.remove('show');
+    });
+  }
+
+  // Future Events Modal
+  const futureEventsBtn = document.getElementById('btnAddFutureEvent');
+  const futureEventsModal = document.getElementById('futureEventsModal');
+  const futureEventsCancel = document.getElementById('btnFutureEventsCancel');
+  
+  if (futureEventsBtn) {
+    futureEventsBtn.addEventListener('click', () => {
+      document.getElementById('eventTitle').value = '';
+      document.getElementById('eventDate').value = '';
+      document.getElementById('eventNotes').value = '';
+      document.getElementById('eventPriority').value = 'medium';
+      futureEventsModal.classList.add('show');
+      setTimeout(() => document.getElementById('eventTitle').focus(), 100);
+    });
+  }
+  if (futureEventsCancel) {
+    futureEventsCancel.addEventListener('click', () => futureEventsModal.classList.remove('show'));
+  }
+  if (futureEventsModal) {
+    futureEventsModal.addEventListener('click', e => {
+      if (e.target === futureEventsModal) futureEventsModal.classList.remove('show');
+    });
+  }
+
+  // Rule of 3 Modal
+  const ruleOfThreeBtn = document.getElementById('btnAddRuleOfThree');
+  const ruleOfThreeModal = document.getElementById('ruleOfThreeModal');
+  const ruleOfThreeCancel = document.getElementById('btnRuleOfThreeCancel');
+  
+  if (ruleOfThreeBtn) {
+    ruleOfThreeBtn.addEventListener('click', () => {
+      document.getElementById('ruleOfThreePersonSelect').value = '';
+      document.getElementById('ruleOfThreeTaskInput').value = '';
+      ruleOfThreeModal.classList.add('show');
+      setTimeout(() => document.getElementById('ruleOfThreePersonSelect').focus(), 100);
+    });
+  }
+  if (ruleOfThreeCancel) {
+    ruleOfThreeCancel.addEventListener('click', () => ruleOfThreeModal.classList.remove('show'));
+  }
+  if (ruleOfThreeModal) {
+    ruleOfThreeModal.addEventListener('click', e => {
+      if (e.target === ruleOfThreeModal) ruleOfThreeModal.classList.remove('show');
+    });
+  }
+
+  // View Full Page Buttons
+  const btnViewTimeline = document.getElementById('btnViewTimeline');
+  if (btnViewTimeline) {
+    btnViewTimeline.addEventListener('click', () => openTimelineFullPage());
+  }
+
+  const btnViewMeetings = document.getElementById('btnViewMeetings');
+  if (btnViewMeetings) {
+    btnViewMeetings.addEventListener('click', () => openMeetingsFullPage());
+  }
+
+  const btnViewNetworking = document.getElementById('btnViewNetworking');
+  if (btnViewNetworking) {
+    btnViewNetworking.addEventListener('click', () => openNetworkingFullPage());
+  }
+
+  const btnViewFutureEvents = document.getElementById('btnViewFutureEvents');
+  if (btnViewFutureEvents) {
+    btnViewFutureEvents.addEventListener('click', () => openFutureEventsFullPage());
+  }
+}
+
 // Run immediately - script is at end of body so DOM is ready
 init();
 </script>
+
+<!-- FULL-PAGE MODALS FOR WIDGETS -->
+
+<!-- TIMELINE FULL PAGE MODAL -->
+<div class="fullpage-modal" id="timelineFullPageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:1000;overflow-y:auto;padding:20px">
+  <div style="max-width:900px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h1 style="font-family:'DM Serif Display',serif;font-size:2rem">📅 Timeline of Events</h1>
+      <button id="closeTimelineModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text3)">&times;</button>
+    </div>
+    <div id="timelineFullPageContent"></div>
+  </div>
+</div>
+
+<!-- MEETINGS FULL PAGE MODAL -->
+<div class="fullpage-modal" id="meetingsFullPageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:1000;overflow-y:auto;padding:20px">
+  <div style="max-width:900px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h1 style="font-family:'DM Serif Display',serif;font-size:2rem">📋 Meetings Tracker</h1>
+      <button id="closeMeetingsModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text3)">&times;</button>
+    </div>
+    <div id="meetingsFullPageContent"></div>
+  </div>
+</div>
+
+<!-- NETWORKING FULL PAGE MODAL -->
+<div class="fullpage-modal" id="networkingFullPageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:1000;overflow-y:auto;padding:20px">
+  <div style="max-width:900px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h1 style="font-family:'DM Serif Display',serif;font-size:2rem">🤝 Networking CRM</h1>
+      <button id="closeNetworkingModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text3)">&times;</button>
+    </div>
+    <div id="networkingFullPageContent"></div>
+  </div>
+</div>
+
+<!-- RULE OF 3 ADD MODAL -->
+<div class="modal-overlay" id="ruleOfThreeModal">
+  <div class="modal">
+    <div class="modal-title">Add Rule of 3 Task</div>
+    <div class="modal-sub">Add a priority task for someone on the team.</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Person *</label>
+        <select id="ruleOfThreePersonSelect" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none">
+          <option value="">Select a person</option>
+          <option value="Vivek">Vivek</option>
+          <option value="Mirat">Mirat</option>
+          <option value="Chirag">Chirag</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Task *</label>
+        <input id="ruleOfThreeTaskInput" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none" placeholder="Task description…" maxlength="100">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnRuleOfThreeCancel">Cancel</button>
+      <button class="btn btn-primary" id="btnRuleOfThreeSave">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- FUTURE EVENTS FULL PAGE MODAL -->
+<div class="fullpage-modal" id="futureEventsFullPageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:1000;overflow-y:auto;padding:20px">
+  <div style="max-width:900px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h1 style="font-family:'DM Serif Display',serif;font-size:2rem">🎯 Future Events & Prep</h1>
+      <button id="closeFutureEventsModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text3)">&times;</button>
+    </div>
+    <div id="futureEventsFullPageContent"></div>
+  </div>
+</div>
+
+<!-- BUNDLED APPLICATION (no ES Modules, works as static file) -->
+<script src="src/js/bundle.js"></script>
 </body>
 </html>

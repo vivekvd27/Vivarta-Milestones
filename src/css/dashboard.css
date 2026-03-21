@@ -1,0 +1,180 @@
+/**
+ * DASHBOARD CSS
+ * Styles specific to dashboard cards and layout
+ */
+
+/* ── NEW DASHBOARD WIDGET CARDS ── */
+.db-widget-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: slideInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.db-widget-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.db-widget-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.db-widget-title {
+  font-family: "DM Serif Display", serif;
+  font-size: 1rem;
+  color: var(--text);
+  flex: 1;
+}
+
+.db-widget-body {
+  padding: 16px 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Timeline Widget Card */
+.widget-card.timeline {
+  background: var(--surface);
+}
+
+.widget-card.timeline .db-widget-icon {
+  background: linear-gradient(135deg, #fef6ed 0%, #f5ede8 100%);
+  color: #c17d3c;
+}
+
+/* Meetings Widget Card */
+.widget-card.meetings {
+  background: var(--surface);
+}
+
+.widget-card.meetings .db-widget-icon {
+  background: linear-gradient(135deg, #fef3e2 0%, #faf8f5 100%);
+  color: #d4a843;
+}
+
+/* Networking Widget Card */
+.widget-card.networking {
+  background: var(--surface);
+}
+
+.widget-card.networking .db-widget-icon {
+  background: linear-gradient(135deg, #e8f4f0 0%, #faf8f5 100%);
+  color: #4a7c6f;
+}
+
+/* Future Events Widget Card */
+.widget-card.futureEvents {
+  background: var(--surface);
+}
+
+.widget-card.futureEvents .db-widget-icon {
+  background: linear-gradient(135deg, #eee8f8 0%, #faf8f5 100%);
+  color: #7a5c9e;
+}
+
+/* ── WIDGET CONTROLS ── */
+.db-widget-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.db-widget-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 0.78rem;
+  font-family: "DM Mono", monospace;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.db-widget-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── EMPTY STATES ── */
+.widget-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text3);
+}
+
+.widget-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.widget-empty-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 200px;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── DASHBOARD GRID ── */
+.db-layout-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 24px 28px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .db-widget-card {
+    margin: 0;
+  }
+
+  .db-layout-enhanced {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px;
+  }
+}
