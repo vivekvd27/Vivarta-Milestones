@@ -2640,6 +2640,13 @@ function startDashboard() {
   console.log("🎬 Starting dashboard initialization...");
   initializeApp();
   initializeFullPageModals();
+  
+  // Now render the dashboard with all initialized data
+  console.log("📊 Rendering Dashboard...");
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+    console.log("✅ Dashboard rendered with initialized data");
+  }
 }
 
 if (document.readyState === "loading") {
