@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vivarta Supabase Diagnostic</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #00ff00; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #444; }
+        .pass { color: #00ff00; }
+        .fail { color: #ff0000; }
+        .warn { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vivarta Supabase Diagnostic</h1>
+    <div id="results"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js"></script>
+    <script src="src/js/supabase-config.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        
+        function test(name, condition, details = '') {
+            const div = document.createElement('div');
+            div.className = 'test';
+            const status = condition ? '<span class="pass">✓ PASS</span>' : '<span class="fail">✗ FAIL</span>';
+            div.innerHTML = `${status} - ${name}${details ? '<br>' + details : ''}`;
+            results.appendChild(div);
+            return condition;
+        }
+
+        // Test 1: Supabase JS loaded
+        const supabaseLoaded = test(
+            'Supabase JS Library',
+            typeof window.supabase !== 'undefined',
+            window.supabase ? 'Loaded: window.supabase exists' : 'MISSING: window.supabase'
+        );
+
+        // Test 2: Supabase config loaded
+        const configLoaded = test(
+            'Supabase Config',
+            typeof window.supabaseConfig !== 'undefined',
+            window.supabaseConfig ? 'Loaded: window.supabaseConfig exists' : 'MISSING'
+        );
+
+        // Test 3: Supabase client
+        const clientReady = test(
+            'Supabase Client',
+            window.supabaseConfig?.supabase !== undefined,
+            window.supabaseConfig?.supabase ? 'Ready' : 'NOT initialized'
+        );
+
+        // Test 4: App bridge
+        const bridgeLoaded = test(
+            'App Bridge Class',
+            typeof SupabaseAppBridge !== 'undefined',
+            'SupabaseAppBridge class should be defined in supabase-app.js'
+        );
+
+        // Test 5: Try connecting
+        async function testConnection() {
+            if (!window.supabaseConfig?.supabase) {
+                test('Supabase Connection', false, 'Cannot test - no client');
+                return;
+            }
+
+            try {
+                const { data, error } = await window.supabaseConfig.supabase
+                    .from('user_data')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    test('Supabase Connection', false, `Error: ${error.message}`);
+                } else {
+                    test('Supabase Connection', true, 'Query successful - table accessible');
+                }
+            } catch (e) {
+                test('Supabase Connection', false, `Exception: ${e.message}`);
+            }
+        }
+
+        // Test 6: Try inserting test data
+        async function testInsert() {
+            if (!window.supabaseConfig?.supabase) return;
+
+            try {
+                const { data, error } = await window.supabaseConfig.supabase
+                    .from('user_data')
+                    .upsert({
+                        user_name: '__DIAGNOSTIC_TEST__',
+                        state_json: { test: true, timestamp: new Date().toISOString() },
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_name' });
+
+                if (error) {
+                    test('Insert Test Data', false, `Error: ${error.message}`);
+                } else {
+                    test('Insert Test Data', true, 'Successfully wrote to database');
+                }
+            } catch (e) {
+                test('Insert Test Data', false, `Exception: ${e.message}`);
+            }
+        }
+
+        // Run async tests
+        setTimeout(async () => {
+            await testConnection();
+            await testInsert();
+            
+            // Show next steps
+            const div = document.createElement('div');
+            div.className = 'test';
+            div.innerHTML = '<strong>📋 Next Steps:</strong><br>' +
+                '1. Check above tests - all should be GREEN<br>' +
+                '2. If "Insert Test Data" is GREEN, Supabase is working<br>' +
+                '3. Go to Supabase Table Editor → user_data<br>' +
+                '4. Look for row with user_name = "__DIAGNOSTIC_TEST__"<br>' +
+                '5. If it exists, Supabase is properly connected!';
+            results.appendChild(div);
+        }, 1000);
+    </script>
+</body>
+</html>

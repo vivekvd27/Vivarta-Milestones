@@ -147,32 +147,46 @@ class SupabaseAppBridge {
     if (!this.supabase) return;
 
     try {
-      // Subscribe to changes to this user's data
-      const subscription = this.supabase
-        .from("user_data")
-        .on("*", (payload) => {
-          if (payload.new?.user_name === this.currentUser) {
+      // Supabase v2 uses .realtime.on() instead of .on()
+      const channel = this.supabase
+        .channel(`user_data_${this.currentUser}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_data',
+            filter: `user_name=eq.${this.currentUser}`
+          },
+          (payload) => {
             console.log("🔄 Real-time update received from Supabase");
-            const state = JSON.parse(payload.new.state_json || "{}");
-            this.appState = {
-              timeline: state.timeline || [],
-              meetings: state.meetings || [],
-              contacts: state.contacts || [],
-              futureEvents: state.futureEvents || [],
-              ruleOfThree: state.ruleOfThree || [],
-              affirmations: state.affirmations || []
-            };
-            // Trigger UI update
-            window.dispatchEvent(new CustomEvent("stateChange", {
-              detail: { type: "sync:updated", data: this.appState }
-            }));
+            if (payload.new) {
+              const state = JSON.parse(payload.new.state_json || "{}");
+              this.appState = {
+                timeline: state.timeline || [],
+                meetings: state.meetings || [],
+                contacts: state.contacts || [],
+                futureEvents: state.futureEvents || [],
+                ruleOfThree: state.ruleOfThree || [],
+                affirmations: state.affirmations || []
+              };
+              // Trigger UI update
+              window.dispatchEvent(new CustomEvent("stateChange", {
+                detail: { type: "sync:updated", data: this.appState }
+              }));
+            }
           }
-        })
-        .subscribe();
+        )
+        .subscribe()
+        .then(status => {
+          if (status === 'SUBSCRIBED') {
+            console.log("✓ Real-time subscription active");
+          }
+        });
 
-      console.log("✓ Real-time subscription active");
+      console.log("✓ Real-time subscription setup complete");
     } catch (error) {
-      console.warn("Real-time subscription not available:", error.message);
+      console.warn("Real-time subscription setup error:", error.message);
     }
   }
 
@@ -195,25 +209,34 @@ class SupabaseAppBridge {
           if (self.supabase && self.currentUser) {
             self.supabase
               .from("user_data")
-              .upsert({
-                user_name: self.currentUser,
-                state_json: JSON.stringify(state),
-                updated_at: new Date().toISOString()
-              }, { onConflict: "user_name" })
-              .then(({ error }) => {
-                if (error) {
-                  console.error("Error syncing to Supabase:", error);
-                } else {
-                  console.log("☁️  Synced to Supabase");
+              .upsert(
+                {
+                  user_name: self.currentUser,
+                  state_json: JSON.stringify(state),
+                  updated_at: new Date().toISOString()
+                },
+                { 
+                  onConflict: "user_name"
                 }
+              )
+              .then(({ data, error }) => {
+                if (error) {
+                  console.error("❌ Error syncing to Supabase:", error.message);
+                } else {
+                  console.log("☁️  Synced to Supabase for " + self.currentUser);
+                }
+              })
+              .catch(err => {
+                console.error("❌ Sync exception:", err.message);
               });
           }
 
-          console.log("Saved state for " + self.currentUser);
+          console.log(`✓ State updated for ${self.currentUser}`);
         } catch (error) {
           console.error("Error in setItem:", error);
         }
       } else {
+        // Other keys: save normally
         originalSetItem.call(this, key, value);
       }
     };
