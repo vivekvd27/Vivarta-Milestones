@@ -4,6 +4,8 @@
  * Replaces localStorage while maintaining existing UI
  */
 
+console.log("✅ supabase-app.js LOADED!");
+
 class SupabaseAppBridge {
   constructor() {
     this.supabase = window.supabaseConfig?.supabase;
@@ -789,11 +791,17 @@ class SupabaseAppBridge {
 // Create global instance
 window.supabaseApp = new SupabaseAppBridge();
 
+console.log("🔧 Supabase app instance created");
+console.log("📍 document.readyState:", document.readyState);
+
 // Auto-initialize on page load
 if (document.readyState === "loading") {
+  console.log("⏳ DOM still loading, waiting for DOMContentLoaded...");
   document.addEventListener("DOMContentLoaded", () => {
+    console.log("📍 DOMContentLoaded fired - initializing Supabase...");
     window.supabaseApp.initialize();
   });
 } else {
+  console.log("✅ DOM already loaded - initializing Supabase immediately...");
   window.supabaseApp.initialize();
 }
