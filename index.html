@@ -3256,8 +3256,8 @@ const THEME_KEY = 'habitforge_theme';
 
 // Load/save multi-person data: { "YYYY-MM-DD": { "Vivek": { "HabitId": true }, ... } }
 function loadData() {
-  // If using Supabase cloud mode, load from window.appState
-  if (window.appState?.habitCompletions && typeof window.appState.habitCompletions === 'object') {
+  // If using Supabase cloud mode AND data is ready, load from window.appState
+  if (window.supabaseReady && window.appState?.habitCompletions && typeof window.appState.habitCompletions === 'object') {
     console.log("☁️  Loading habit data from Supabase (window.appState)");
     return window.appState.habitCompletions || {};
   }

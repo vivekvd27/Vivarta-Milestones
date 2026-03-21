@@ -145,7 +145,8 @@ class SupabaseAppBridge {
             contacts: state.contacts || [],
             futureEvents: state.futureEvents || [],
             ruleOfThree: state.ruleOfThree || [],
-            affirmations: state.affirmations || []
+            affirmations: state.affirmations || [],
+            habitCompletions: state.habitCompletions || {}
           };
           
           // CRITICAL: Sync to window.appState so bundle.js sees the data
