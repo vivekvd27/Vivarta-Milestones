@@ -3336,8 +3336,8 @@ function saveRule3(data) {
 function getRule3ForPersonDay(person, dateKey) {
   // Check if using Supabase cloud mode
   if (window.appState?.ruleOfThree && Array.isArray(window.appState.ruleOfThree)) {
-    // Convert Supabase format to Day view format
-    const tasksForPerson = window.appState.ruleOfThree.filter(t => t.person === person);
+    // Filter by person AND date - this now respects the dateKey parameter
+    const tasksForPerson = window.appState.ruleOfThree.filter(t => t.person === person && t.date === dateKey);
     
     // Map to the format the Day view expects
     const dayTasks = tasksForPerson.map(t => ({
@@ -3365,11 +3365,11 @@ function setRule3(person, dateKey, tasks) {
   
   // If using Supabase cloud mode, update window.appState.ruleOfThree
   if (window.appState?.ruleOfThree && Array.isArray(window.appState.ruleOfThree)) {
-    console.log("🔄 setRule3: Saving to Supabase format for person:", person);
+    console.log("🔄 setRule3: Saving to Supabase format for person:", person, "on date:", dateKey);
     
-    // Get existing tasks for this person
-    const personTasksExisting = window.appState.ruleOfThree.filter(t => t.person === person);
-    console.log("   Existing tasks for", person, ":", personTasksExisting.length);
+    // Get existing tasks for this person on this SPECIFIC DATE
+    const personTasksExisting = window.appState.ruleOfThree.filter(t => t.person === person && t.date === dateKey);
+    console.log("   Existing tasks for", person, "on", dateKey, ":", personTasksExisting.length);
     
     // Process the Day view format tasks
     tasks.forEach((dayTask, idx) => {
@@ -3383,15 +3383,16 @@ function setRule3(person, dateKey, tasks) {
           existingTask.task = dayTask.text;
           existingTask.completed = dayTask.done || false;
         } else {
-          // Create new task - add to window.appState.ruleOfThree
+          // Create new task - add to window.appState.ruleOfThree with the correct DATE
           const newTask = {
             id: generateId ? generateId() : Date.now().toString(36) + Math.random().toString(36).substr(2),
             person: person,
             task: dayTask.text,
+            date: dateKey,
             completed: dayTask.done || false,
             createdAt: new Date().toISOString()
           };
-          console.log(`   Creating NEW task ${idx}: "${dayTask.text}"`);
+          console.log(`   Creating NEW task ${idx}: "${dayTask.text}" for ${person} on ${dateKey}`);
           window.appState.ruleOfThree.push(newTask);
         }
       } else {
@@ -5709,6 +5710,7 @@ function initWidgetModals() {
   if (ruleOfThreeBtn) {
     ruleOfThreeBtn.addEventListener('click', () => {
       document.getElementById('ruleOfThreePersonSelect').value = '';
+      document.getElementById('ruleOfThreeDateInput').value = today();
       document.getElementById('ruleOfThreeTaskInput').value = '';
       ruleOfThreeModal.classList.add('show');
       setTimeout(() => document.getElementById('ruleOfThreePersonSelect').focus(), 100);
@@ -5823,6 +5825,10 @@ init();
           <option value="Mirat">Mirat</option>
           <option value="Chirag">Chirag</option>
         </select>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Date *</label>
+        <input id="ruleOfThreeDateInput" type="date" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.88rem;outline:none">
       </div>
       <div>
         <label style="font-size:0.78rem;font-family:'DM Mono',monospace;color:var(--text2);margin-bottom:4px;display:block">Task *</label>

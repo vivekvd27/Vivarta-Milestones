@@ -1402,18 +1402,22 @@ function initFutureEventsForm() {
 // RULE OF 3 WIDGET
 // ============================================
 
-function addRuleOfThreeTask(person, task) {
-  console.log("➕ addRuleOfThreeTask called:", { person, task });
+function addRuleOfThreeTask(person, task, date) {
+  console.log("➕ addRuleOfThreeTask called:", { person, task, date });
+  
+  // Use today's date if not provided
+  const taskDate = date || getTodayDate();
   
   const ruleTask = {
     id: generateId(),
     person: escapeHtml(person),
     task: escapeHtml(task),
+    date: taskDate,
     completed: false,
     createdAt: new Date().toISOString(),
   };
 
-  console.log("   🎯 New Team Task:", ruleTask);
+  console.log("   🎯 New Rule of 3 Task:", ruleTask);
   console.log("   📊 Before adding - appState.ruleOfThree length:", appState.ruleOfThree?.length || 0);
   appState.ruleOfThree.push(ruleTask);
   console.log("   ✅ Task added - appState.ruleOfThree length:", appState.ruleOfThree.length);
@@ -1422,7 +1426,7 @@ function addRuleOfThreeTask(person, task) {
   saveState();
   
   dispatchStateChange("ruleOfThree:add", ruleTask);
-  console.log("✓ addRuleOfThreeTask complete - Team Task queued for Supabase");
+  console.log("✓ addRuleOfThreeTask complete - Rule of 3 Task queued for Supabase");
   return ruleTask;
 }
 
@@ -1441,7 +1445,12 @@ function deleteRuleOfThreeTask(taskId) {
   dispatchStateChange("ruleOfThree:delete", taskId);
 }
 
-function getRuleOfThreeByPerson(person) {
+function getRuleOfThreeByPerson(person, date) {
+  // If date is provided, filter by both person and date
+  if (date) {
+    return appState.ruleOfThree.filter((t) => t.person === person && t.date === date);
+  }
+  // Otherwise return all tasks for this person (for backward compatibility)
   return appState.ruleOfThree.filter((t) => t.person === person);
 }
 
@@ -1845,9 +1854,12 @@ function renderRuleOfThree() {
   const people = ["Vivek", "Mirat", "Chirag"];
   console.log("📋 About to render tasks for", people.length, "people");
   
+  const today = getTodayDate();
+  console.log("📅 Dashboard showing tasks for today:", today);
+  
   people.forEach((person) => {
-    const tasks = getRuleOfThreeByPerson(person);
-    console.log(`🎯 Rendering for ${person}:`, tasks.length, "tasks");
+    const tasks = getRuleOfThreeByPerson(person, today);
+    console.log(`🎯 Rendering for ${person} on ${today}:`, tasks.length, "tasks");
     
     const card = document.createElement("div");
     card.style.cssText = `
@@ -2018,12 +2030,14 @@ function initRuleOfThreeForm() {
   console.log("✓ Form modal found");
 
   const personSelect = document.getElementById("ruleOfThreePersonSelect");
+  const dateInput = document.getElementById("ruleOfThreeDateInput");
   const taskInput = document.getElementById("ruleOfThreeTaskInput");
   const saveBtn = document.getElementById("btnRuleOfThreeSave");
   const cancelBtn = document.getElementById("btnRuleOfThreeCancel");
 
   console.log("Form element check:", {
     personSelect: !!personSelect,
+    dateInput: !!dateInput,
     taskInput: !!taskInput,
     saveBtn: !!saveBtn,
     cancelBtn: !!cancelBtn
@@ -2039,19 +2053,20 @@ function initRuleOfThreeForm() {
       e.stopPropagation();
 
       const person = personSelect.value.trim();
+      const date = dateInput.value.trim();
       const task = taskInput.value.trim();
 
-      console.log("   📋 Form values:", { person, task });
+      console.log("   📋 Form values:", { person, date, task });
 
-      if (!person || !task) {
-        console.warn("❌ VALIDATION FAILED - person or task empty");
-        console.log("   person:", JSON.stringify(person), "| task:", JSON.stringify(task));
-        alert("Please select a person and enter a task");
+      if (!person || !date || !task) {
+        console.warn("❌ VALIDATION FAILED - person, date, or task empty");
+        console.log("   person:", JSON.stringify(person), "| date:", JSON.stringify(date), "| task:", JSON.stringify(task));
+        alert("Please select a person, date, and enter a task");
         return;
       }
 
-      console.log("✅ VALIDATION PASSED - calling addRuleOfThreeTask");
-      addRuleOfThreeTask(person, task);
+      console.log("✅ VALIDATION PASSED - calling addRuleOfThreeTask with date");
+      addRuleOfThreeTask(person, task, date);
       console.log("✓ addRuleOfThreeTask completed");
       
       console.log("Calling renderRuleOfThree()");
@@ -2059,6 +2074,7 @@ function initRuleOfThreeForm() {
       console.log("✓ Re-render complete");
 
       personSelect.value = "";
+      dateInput.value = "";
       taskInput.value = "";
       closeRuleOfThreeModal();
       console.log("✅ Modal closed and form cleared");
@@ -2095,7 +2111,17 @@ function openRuleOfThreeModal() {
     console.log("   ✅ Modal should be visible now");
     
     const personSelect = document.getElementById("ruleOfThreePersonSelect");
+    const dateInput = document.getElementById("ruleOfThreeDateInput");
     console.log("   personSelect found:", !!personSelect);
+    console.log("   dateInput found:", !!dateInput);
+    
+    // Set date input to today's date
+    if (dateInput) {
+      const today = getTodayDate();
+      dateInput.value = today;
+      console.log("   ✅ Date input set to today:", today);
+    }
+    
     if (personSelect) {
       personSelect.focus();
       console.log("   ✅ Focused on personSelect");
