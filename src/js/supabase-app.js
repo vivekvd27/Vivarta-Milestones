@@ -66,6 +66,12 @@ class SupabaseAppBridge {
       // Fetch user's data from Supabase
       await this.loadStateFromSupabase();
       
+      // CRITICAL: Copy to window.appState so bundle.js sees it
+      if (window.appState) {
+        Object.assign(window.appState, this.appState);
+        console.log("✓ State synced to window.appState for bundle.js");
+      }
+      
       // Set up real-time subscription
       this.setupRealtimeSync();
 
@@ -146,6 +152,7 @@ class SupabaseAppBridge {
   setupRealtimeSync() {
     if (!this.supabase) return;
 
+    const self = this;
     try {
       // Supabase v2 uses .realtime.on() instead of .on()
       const channel = this.supabase
@@ -162,7 +169,7 @@ class SupabaseAppBridge {
             console.log("🔄 Real-time update received from Supabase");
             if (payload.new) {
               const state = JSON.parse(payload.new.state_json || "{}");
-              this.appState = {
+              self.appState = {
                 timeline: state.timeline || [],
                 meetings: state.meetings || [],
                 contacts: state.contacts || [],
@@ -170,9 +177,16 @@ class SupabaseAppBridge {
                 ruleOfThree: state.ruleOfThree || [],
                 affirmations: state.affirmations || []
               };
+              
+              // CRITICAL: Update window.appState so bundle.js sees the changes
+              if (window.appState) {
+                Object.assign(window.appState, self.appState);
+                console.log("✓ window.appState updated with Supabase changes");
+              }
+              
               // Trigger UI update
               window.dispatchEvent(new CustomEvent("stateChange", {
-                detail: { type: "sync:updated", data: this.appState }
+                detail: { type: "sync:updated", data: self.appState }
               }));
             }
           }
