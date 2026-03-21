@@ -15,6 +15,7 @@ const appState = {
   futureEvents: [],
   ruleOfThree: [],
   affirmations: [],
+  announcements: [], // Dashboard announcements from Supabase
   habitCompletions: {}, // Multi-person habit data: { "YYYY-MM-DD": { "Vivek": { habitId: true } } }
   teamTasks: {}, // Team Tasks by person: { "Vivek": [{ id, text, done }], ... }
 };
@@ -50,6 +51,7 @@ function loadState() {
     if (data.futureEvents) appState.futureEvents = data.futureEvents;
     if (data.ruleOfThree) appState.ruleOfThree = data.ruleOfThree;
     if (data.affirmations) appState.affirmations = data.affirmations;
+    if (data.announcements) appState.announcements = data.announcements;
   } catch (error) {
     console.error("Error loading state:", error);
   }

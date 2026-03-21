@@ -159,8 +159,9 @@ class SupabaseAppBridge {
             futureEvents: state.futureEvents || [],
             ruleOfThree: state.ruleOfThree || [],
             affirmations: state.affirmations || [],
+            announcements: state.announcements || [],
             habitCompletions: state.habitCompletions || {},
-            teamTasks: teamTasks
+            teamTasks: state.teamTasks || {}
           };
           
           // CRITICAL: Sync to window.appState so bundle.js sees the data
@@ -192,6 +193,13 @@ class SupabaseAppBridge {
         console.log("🔄 Re-rendering Team Tasks kanban with merged Supabase data...");
         renderTasksKanban();
         console.log("✅ Team Tasks kanban re-rendered with merged data");
+      }
+      
+      // Also trigger re-render of announcements with Supabase data
+      if (typeof renderAnnouncements === 'function') {
+        console.log("🔄 Re-rendering Announcements with Supabase data...");
+        renderAnnouncements();
+        console.log("✅ Announcements re-rendered with Supabase data");
       }
 
       // Set up data sync (interceptLocalStorage will handle saves)

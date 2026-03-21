@@ -4816,11 +4816,39 @@ function initManifestations() {
 //  DASHBOARD MODULE
 // ═══════════════════════════════════════════════════
 
-const ANN_KEY        = 'habitforge_announcements';
 const MILESTONE_KEY  = 'habitforge_milestones';
 
-function loadAnn()       { try { return JSON.parse(localStorage.getItem(ANN_KEY))       || []; } catch { return []; } }
-function saveAnn(d)      { localStorage.setItem(ANN_KEY, JSON.stringify(d)); }
+function loadAnn() {
+  console.log("📋 loadAnn() called - loading from Supabase (window.appState)");
+  const anns = window.appState?.announcements || [];
+  console.log("   Data:", anns);
+  return anns;
+}
+function saveAnn(d) {
+  console.log("💾 saveAnn() called");
+  if (!Array.isArray(d)) {
+    console.error("❌ Invalid data structure for saveAnn:", d);
+    return;
+  }
+  
+  // Sync to window.appState
+  if (window.appState && window.supabaseReady) {
+    console.log("☁️  Saving Announcements to Supabase (window.appState)");
+    window.appState.announcements = JSON.parse(JSON.stringify(d));
+    
+    // Also sync to local appState if it exists
+    if (typeof appState !== 'undefined' && appState) {
+      appState.announcements = JSON.parse(JSON.stringify(d));
+      console.log("   Synced to appState.announcements:", d.length, "items");
+    }
+    
+    // Trigger save through bundle.js
+    if (typeof saveState === 'function') {
+      console.log("   Calling saveState() to sync to Supabase");
+      saveState();
+    }
+  }
+}
 function loadMilestones(){ try { return JSON.parse(localStorage.getItem(MILESTONE_KEY)) || []; } catch { return []; } }
 function saveMilestones(d){ localStorage.setItem(MILESTONE_KEY, JSON.stringify(d)); }
 function loadTasks() {
