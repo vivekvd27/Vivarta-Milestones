@@ -157,8 +157,8 @@ class SupabaseAppBridge {
             if (localStorageTasks) {
               const localData = JSON.parse(localStorageTasks);
               console.log("📚 Found localStorage Team Tasks, merging with Supabase data");
-              console.log("   Supabase data before merge:", JSON.stringify(teamTasks, null, 2));
-              console.log("   localStorage data:", JSON.stringify(localData, null, 2));
+              console.log("   Supabase data before merge:", teamTasks);
+              console.log("   localStorage data:", localData);
               console.log("   Supabase has:", Object.keys(teamTasks).length, "people");
               console.log("   localStorage has:", Object.keys(localData).length, "people");
               
@@ -169,12 +169,15 @@ class SupabaseAppBridge {
                 const oldCount = teamTasks[person]?.length || 0;
                 const newCount = localData[person]?.length || 0;
                 console.log(`   Merging ${person}: replacing ${oldCount} old tasks with ${newCount} localStorage tasks`);
+                if (newCount > 0) {
+                  console.log(`      Tasks: ${localData[person].map(t => t?.text || '[no text]').join(', ')}`);
+                }
                 teamTasks[person] = localData[person];
               });
               
               console.log("   ✅ Merged result has:", Object.keys(teamTasks).length, "people");
               console.log("   Merged people:", Object.keys(teamTasks).join(", "));
-              console.log("   ✅ MERGED DATA FINAL:", JSON.stringify(teamTasks, null, 2));
+              console.log("   ✅ MERGED DATA FINAL:", teamTasks);
             } else {
               console.log("   ℹ️  No localStorage tasks found, using Supabase data only");
             }
