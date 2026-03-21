@@ -226,6 +226,13 @@ class SupabaseAppBridge {
         console.log("✅ Goals Summary re-rendered with Supabase data");
       }
 
+      // Also trigger re-render of habit mini preview with Supabase data
+      if (typeof renderHabitMiniPreview === 'function') {
+        console.log("🔄 Re-rendering Habit Mini Preview with Supabase data...");
+        renderHabitMiniPreview();
+        console.log("✅ Habit Mini Preview re-rendered with Supabase data");
+      }
+
       // Set up data sync (interceptLocalStorage will handle saves)
       this.interceptLocalStorageForSync();
       
