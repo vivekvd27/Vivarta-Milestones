@@ -2053,7 +2053,15 @@ function initializeDefaultAffirmations() {
 }
 
 function initializeApp() {
-  loadState();
+  // Only load from localStorage if NOT using Supabase cloud mode
+  // (Supabase already loaded data into window.appState)
+  if (!window.supabaseReady) {
+    console.log("📂 Loading state from localStorage...");
+    loadState();
+  } else {
+    console.log("☁️  Using Supabase-loaded state (skipping localStorage)");
+  }
+  
   initializeDefaultAffirmations();
   initializeWidgets();
   window.addEventListener("stateChange", handleStateChange);
