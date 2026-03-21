@@ -64,7 +64,9 @@ class SupabaseAppBridge {
       console.log("✓ Supabase mode initialized for user: " + this.currentUser);
       
       // Fetch user's data from Supabase
+      console.log("📥 About to call loadStateFromSupabase()...");
       await this.loadStateFromSupabase();
+      console.log("✅ loadStateFromSupabase() completed");
       
       // CRITICAL: Copy to window.appState so bundle.js sees it
       if (window.appState) {
@@ -75,6 +77,8 @@ class SupabaseAppBridge {
       // CRITICAL: Set flag to indicate Supabase is ready
       window.supabaseReady = true;
       console.log("✓ SUPABASE READY - flag set for bundle.js");
+      console.log("  window.supabaseReady:", window.supabaseReady);
+      console.log("  Interceptor active, all localStorage saves will sync to Supabase");
       
       // Set up real-time subscription
       this.setupRealtimeSync();
@@ -201,12 +205,18 @@ class SupabaseAppBridge {
   interceptLocalStorageForSync() {
     const self = this;
     const originalSetItem = Storage.prototype.setItem;
+    
+    console.log("🔧 Installing localStorage interceptor...");
+    console.log("   currentUser:", self.currentUser);
+    console.log("   supabase available:", !!self.supabase);
 
     Storage.prototype.setItem = function(key, value) {
       // For vivartaState, sync to Supabase
       if (key === "vivartaState") {
         try {
+          console.log(`🔄 ====== INTERCEPTOR TRIGGERED ======`);
           console.log(`🔄 Saving state for user: "${self.currentUser}"`);
+          console.log(`🔄 window.supabaseReady:`, window.supabaseReady);
           
           if (!self.currentUser) {
             console.warn("⚠️  currentUser not set! Cannot sync to Supabase. Data will be lost!");
