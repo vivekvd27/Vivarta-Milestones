@@ -5003,6 +5003,7 @@ function renderTasksKanban() {
   let totalDone = 0, totalAll = 0;
   kanban.innerHTML = PERSONS.map(person => {
     const tasks = getTasksForPerson(person);
+    console.log(`🎨 Rendering kanban for ${person}:`, tasks);
     const pClass = person.toLowerCase();
     totalDone += tasks.filter(t => t.done).length;
     totalAll  += tasks.length;
@@ -5010,12 +5011,17 @@ function renderTasksKanban() {
       <div class="task-col">
         <div class="task-col-header ${pClass}-h">👤 ${person} <span style="font-size:0.68rem;opacity:0.7">(${tasks.filter(t=>t.done).length}/${tasks.length})</span></div>
         <div class="task-list" id="taskList_${person}">
-          ${tasks.map((t, i) => `
+          ${tasks.map((t, i) => {
+            // Safety: Ensure task has text property
+            const text = t?.text || '[no text]';
+            console.log(`   Task ${i} for ${person}: "${text}" (done: ${t?.done})`);
+            return `
             <div class="task-item">
               <div class="task-cb ${t.done ? 'done-'+pClass : ''}" data-task-person="${person}" data-task-idx="${i}">${t.done ? '✓' : ''}</div>
-              <div class="task-text ${t.done ? 'done' : ''}">${escapeHtml(t.text)}</div>
+              <div class="task-text ${t.done ? 'done' : ''}">${escapeHtml(text)}</div>
               <button class="task-del" data-del-person="${person}" data-del-idx="${i}">✕</button>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>
         <div class="task-add-row">
           <input class="task-add-input" id="taskInput_${person}" placeholder="Add task…" maxlength="80">

@@ -151,17 +151,27 @@ class SupabaseAppBridge {
           
           let teamTasks = state.teamTasks || {};
           
-          // MIGRATION: If teamTasks is empty, check localStorage for old habitforge_tasks
-          if (Object.keys(teamTasks).length === 0) {
-            try {
-              const oldTasks = localStorage.getItem("habitforge_tasks");
-              if (oldTasks) {
-                teamTasks = JSON.parse(oldTasks);
-                console.log("📚 Migrated legacy teamTasks from localStorage");
-              }
-            } catch (e) {
-              console.warn("Could not migrate old tasks:", e);
+          // MERGE LOGIC: Always merge localStorage data with Supabase data to avoid losing tasks
+          try {
+            const localStorageTasks = localStorage.getItem("habitforge_tasks");
+            if (localStorageTasks) {
+              const localData = JSON.parse(localStorageTasks);
+              console.log("📚 Found localStorage Team Tasks, merging with Supabase data");
+              console.log("   Supabase has:", Object.keys(teamTasks).length, "people");
+              console.log("   localStorage has:", Object.keys(localData).length, "people");
+              
+              // Merge: localStorage data takes priority for existing people, add missing people
+              teamTasks = { ...teamTasks };  // Start with Supabase data
+              Object.keys(localData).forEach(person => {
+                // Always use localStorage version - it's the most recent from this device
+                teamTasks[person] = localData[person];
+              });
+              
+              console.log("   ✅ Merged result has:", Object.keys(teamTasks).length, "people");
+              console.log("   Merged people:", Object.keys(teamTasks).join(", "));
             }
+          } catch (e) {
+            console.warn("Could not merge localStorage tasks:", e);
           }
           
           this.appState = {
@@ -187,6 +197,7 @@ class SupabaseAppBridge {
           console.log("  - ruleOfThree:", window.appState.ruleOfThree?.length || 0, "tasks");
           console.log("  - habitCompletions keys:", Object.keys(window.appState.habitCompletions || {}).length);
           console.log("  - teamTasks:", Object.keys(window.appState.teamTasks || {}).length, "people with tasks");
+          console.log("  - teamTasks detail:", Object.entries(window.appState.teamTasks || {}).map(([person, tasks]) => `${person}: ${tasks.length} tasks`).join(", "));
         } catch (parseErr) {
           console.error("Error parsing state_json:", parseErr);
           this.createDefaultAppState();

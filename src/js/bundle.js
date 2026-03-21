@@ -23,6 +23,8 @@ function saveState() {
   try {
     console.log("📝 saveState() called - saving appState to localStorage");
     console.log("   appState.ruleOfThree.length:", appState.ruleOfThree?.length || 0);
+    console.log("   appState.teamTasks:", appState.teamTasks || {});
+    console.log("   teamTasks detail:", Object.entries(appState.teamTasks || {}).map(([p, t]) => `${p}: ${t?.length || 0} tasks`).join(", "));
     localStorage.setItem("vivartaState", JSON.stringify(appState));
     console.log("✓ setItem called successfully");
   } catch (error) {
