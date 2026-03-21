@@ -14,6 +14,7 @@ const appState = {
   contacts: [],
   futureEvents: [],
   ruleOfThree: [],
+  affirmations: [],
 };
 
 function saveState() {
@@ -32,6 +33,7 @@ function loadState() {
     if (data.contacts) appState.contacts = data.contacts;
     if (data.futureEvents) appState.futureEvents = data.futureEvents;
     if (data.ruleOfThree) appState.ruleOfThree = data.ruleOfThree;
+    if (data.affirmations) appState.affirmations = data.affirmations;
   } catch (error) {
     console.error("Error loading state:", error);
   }
@@ -1410,6 +1412,392 @@ function getRuleOfThreeByPerson(person) {
   return appState.ruleOfThree.filter((t) => t.person === person);
 }
 
+// ============================================
+// AFFIRMATIONS FUNCTIONS
+// ============================================
+
+function addAffirmation(text, category) {
+  const affirmation = {
+    id: generateId(),
+    text: escapeHtml(text),
+    category: category,
+    createdAt: new Date().toISOString(),
+  };
+  appState.affirmations.push(affirmation);
+  saveState();
+  dispatchStateChange("affirmations:add", affirmation);
+  return affirmation;
+}
+
+function deleteAffirmation(affirmationId) {
+  appState.affirmations = appState.affirmations.filter((a) => a.id !== affirmationId);
+  saveState();
+  dispatchStateChange("affirmations:delete", affirmationId);
+}
+
+function moveAffirmationUp(affirmationId) {
+  const index = appState.affirmations.findIndex((a) => a.id === affirmationId);
+  if (index > 0) {
+    [appState.affirmations[index - 1], appState.affirmations[index]] = [
+      appState.affirmations[index],
+      appState.affirmations[index - 1],
+    ];
+    saveState();
+    dispatchStateChange("affirmations:move", affirmationId);
+  }
+}
+
+function moveAffirmationDown(affirmationId) {
+  const index = appState.affirmations.findIndex((a) => a.id === affirmationId);
+  if (index < appState.affirmations.length - 1) {
+    [appState.affirmations[index + 1], appState.affirmations[index]] = [
+      appState.affirmations[index],
+      appState.affirmations[index + 1],
+    ];
+    saveState();
+    dispatchStateChange("affirmations:move", affirmationId);
+  }
+}
+
+function getAffirmations() {
+  return appState.affirmations;
+}
+
+function renderAffirmationsFullPage() {
+  const container = document.getElementById("affirmationsFullPageContent");
+  if (!container) return;
+
+  clearChildren(container);
+  const affirmations = getAffirmations();
+
+  // Add new affirmation form
+  const formContainer = document.createElement("div");
+  formContainer.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+  `;
+
+  const inputWrapper = document.createElement("div");
+  inputWrapper.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  `;
+
+  const inputLabel = document.createElement("label");
+  inputLabel.textContent = "New Affirmation:";
+  inputLabel.style.cssText = `
+    font-size: 0.85rem;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  `;
+  inputWrapper.appendChild(inputLabel);
+
+  const textInput = document.createElement("textarea");
+  textInput.id = "affirmationInput";
+  textInput.placeholder = "Enter your affirmation...";
+  textInput.style.cssText = `
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: 'DM Mono', monospace;
+    resize: vertical;
+    min-height: 60px;
+    max-height: 120px;
+  `;
+  inputWrapper.appendChild(textInput);
+
+  const categoryLabel = document.createElement("label");
+  categoryLabel.textContent = "Category:";
+  categoryLabel.style.cssText = `
+    font-size: 0.85rem;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  `;
+  inputWrapper.appendChild(categoryLabel);
+
+  const categorySelect = document.createElement("select");
+  categorySelect.id = "affirmationCategory";
+  categorySelect.style.cssText = `
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: 'DM Mono', monospace;
+  `;
+
+  ["Startup Guidelines", "Mindset & Focus", "Daily Execution"].forEach((cat) => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categorySelect.appendChild(option);
+  });
+  inputWrapper.appendChild(categorySelect);
+  formContainer.appendChild(inputWrapper);
+
+  const addBtn = document.createElement("button");
+  addBtn.textContent = "➕ Add Affirmation";
+  addBtn.style.cssText = `
+    padding: 10px 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    align-self: flex-start;
+  `;
+  addBtn.addEventListener("click", () => {
+    const text = textInput.value.trim();
+    const category = categorySelect.value;
+
+    if (!text) {
+      showToast("Please enter an affirmation", "error");
+      return;
+    }
+
+    addAffirmation(text, category);
+    textInput.value = "";
+    renderAffirmationsFullPage();
+    showToast("Affirmation added!", "success");
+  });
+  formContainer.appendChild(addBtn);
+  container.appendChild(formContainer);
+
+  // Content area
+  if (affirmations.length === 0) {
+    const emptyState = document.createElement("div");
+    emptyState.style.cssText = `
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+    `;
+    emptyState.innerHTML = `<p>No affirmations yet. Add your first one above!</p>`;
+    container.appendChild(emptyState);
+  } else {
+    // Group by category
+    const categories = ["Startup Guidelines", "Mindset & Focus", "Daily Execution"];
+    
+    categories.forEach((category) => {
+      const catAffirmations = affirmations.filter((a) => a.category === category);
+      
+      if (catAffirmations.length === 0) return;
+
+      const categorySection = document.createElement("div");
+      categorySection.style.cssText = `
+        margin-bottom: 24px;
+      `;
+
+      const categoryTitle = document.createElement("div");
+      categoryTitle.style.cssText = `
+        font-family: 'DM Serif Display', serif;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--border);
+      `;
+
+      const icons = {
+        "Startup Guidelines": "🚀",
+        "Mindset & Focus": "🧠",
+        "Daily Execution": "⚡",
+      };
+      categoryTitle.textContent = `${icons[category]} ${category}`;
+      categorySection.appendChild(categoryTitle);
+
+      const itemsContainer = document.createElement("div");
+      itemsContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      `;
+
+      catAffirmations.forEach((aff, idx) => {
+        const item = document.createElement("div");
+        item.style.cssText = `
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 12px 14px;
+          background: var(--surface2);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          transition: all 0.2s;
+        `;
+
+        const numberBadge = document.createElement("div");
+        numberBadge.style.cssText = `
+          min-width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--accent);
+          color: white;
+          border-radius: 50%;
+          font-size: 0.75rem;
+          font-weight: 700;
+          font-family: 'DM Mono', monospace;
+        `;
+        numberBadge.textContent = idx + 1;
+        item.appendChild(numberBadge);
+
+        const textContainer = document.createElement("div");
+        textContainer.style.cssText = `
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        `;
+
+        const text = document.createElement("div");
+        text.style.cssText = `
+          font-size: 0.9rem;
+          color: var(--text);
+          line-height: 1.5;
+        `;
+        text.textContent = aff.text;
+        textContainer.appendChild(text);
+
+        const meta = document.createElement("div");
+        meta.style.cssText = `
+          font-size: 0.72rem;
+          color: var(--text3);
+          font-family: 'DM Mono', monospace;
+        `;
+        meta.textContent = `Added ${new Date(aff.createdAt).toLocaleDateString()}`;
+        textContainer.appendChild(meta);
+
+        item.appendChild(textContainer);
+
+        const buttonGroup = document.createElement("div");
+        buttonGroup.style.cssText = `
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        `;
+
+        // Move up button
+        const upBtn = document.createElement("button");
+        upBtn.textContent = "↑";
+        upBtn.title = "Move up";
+        upBtn.style.cssText = `
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          color: var(--text2);
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+        upBtn.addEventListener("click", () => {
+          moveAffirmationUp(aff.id);
+          renderAffirmationsFullPage();
+        });
+        buttonGroup.appendChild(upBtn);
+
+        // Move down button
+        const downBtn = document.createElement("button");
+        downBtn.textContent = "↓";
+        downBtn.title = "Move down";
+        downBtn.style.cssText = `
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          color: var(--text2);
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+        downBtn.addEventListener("click", () => {
+          moveAffirmationDown(aff.id);
+          renderAffirmationsFullPage();
+        });
+        buttonGroup.appendChild(downBtn);
+
+        // Delete button
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "✕";
+        deleteBtn.title = "Delete";
+        deleteBtn.style.cssText = `
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          border: 1px solid var(--accent-light);
+          background: var(--surface);
+          color: var(--accent);
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          font-size: 1rem;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (confirm("Delete this affirmation?")) {
+            deleteAffirmation(aff.id);
+            renderAffirmationsFullPage();
+            showToast("Affirmation deleted", "success");
+          }
+        });
+        buttonGroup.appendChild(deleteBtn);
+
+        item.appendChild(buttonGroup);
+        itemsContainer.appendChild(item);
+      });
+
+      categorySection.appendChild(itemsContainer);
+      container.appendChild(categorySection);
+    });
+  }
+}
+
+function openAffirmationsFullPage() {
+  renderAffirmationsFullPage();
+  document.getElementById("affirmationsFullPageModal").style.display = "block";
+  document.body.style.overflow = "hidden";
+}
+
+function closeAffirmationsFullPage() {
+  document.getElementById("affirmationsFullPageModal").style.display = "none";
+  document.body.style.overflow = "auto";
+}
+
 function renderRuleOfThree() {
   const container = document.getElementById("ruleOfThreeWidget");
   if (!container) return;
@@ -1580,8 +1968,43 @@ function closeRuleOfThreeModal() {
 // APP INITIALIZATION (from app.js)
 // ============================================
 
+function initializeDefaultAffirmations() {
+  if (appState.affirmations.length > 0) return;
+
+  const defaultAffirmations = [
+    { text: "Spend 30 min in library — new ideas & latest happenings", category: "Startup Guidelines" },
+    { text: "Focus on Government Schemes for Grants — knowledge + due dates", category: "Startup Guidelines" },
+    { text: "Watch Shark Tank videos — study pitches and business models", category: "Startup Guidelines" },
+    { text: "Study business case studies — learn from successes and failures", category: "Startup Guidelines" },
+    { text: "Maintain a learning notebook — startup learnings, AI tools, Design Thinking", category: "Startup Guidelines" },
+    { text: "Maintain a networking notebook — contacts, conversations, follow-ups", category: "Startup Guidelines" },
+    { text: "3 Factors of Success (3M's) — Money, Market, Mindset", category: "Startup Guidelines" },
+    { text: "Use TRIZ & LEAN model effectively", category: "Startup Guidelines" },
+    { text: "If product fails during testing → Empathize and iterate", category: "Startup Guidelines" },
+    { text: "Everything happens twice — first in mind, then in reality → Power of visualization", category: "Mindset & Focus" },
+    { text: "Apart from what you want to achieve, everything else is noise", category: "Mindset & Focus" },
+    { text: "Watch your thoughts — keep what matters, remove noise", category: "Mindset & Focus" },
+    { text: "Read one CAD/CAE article daily", category: "Daily Execution" },
+    { text: "Post one article weekly on LinkedIn", category: "Daily Execution" },
+    { text: "Explore guest lecture opportunities", category: "Daily Execution" },
+    { text: "Read NVIDIA blogs", category: "Daily Execution" },
+  ];
+
+  defaultAffirmations.forEach((aff) => {
+    appState.affirmations.push({
+      id: generateId(),
+      text: aff.text,
+      category: aff.category,
+      createdAt: new Date().toISOString(),
+    });
+  });
+
+  saveState();
+}
+
 function initializeApp() {
   loadState();
+  initializeDefaultAffirmations();
   initializeWidgets();
   window.addEventListener("stateChange", handleStateChange);
   console.log("✓ Vivarta dashboard initialized");
@@ -1997,6 +2420,7 @@ function initializeFullPageModals() {
   document.getElementById("closeMeetingsModal")?.addEventListener("click", closeMeetingsFullPage);
   document.getElementById("closeNetworkingModal")?.addEventListener("click", closeNetworkingFullPage);
   document.getElementById("closeFutureEventsModal")?.addEventListener("click", closeFutureEventsFullPage);
+  document.getElementById("closeAffirmationsModal")?.addEventListener("click", closeAffirmationsFullPage);
 
   document.getElementById("timelineFullPageModal")?.addEventListener("click", (e) => {
     if (e.target === document.getElementById("timelineFullPageModal")) closeTimelineFullPage();
@@ -2009,6 +2433,9 @@ function initializeFullPageModals() {
   });
   document.getElementById("futureEventsFullPageModal")?.addEventListener("click", (e) => {
     if (e.target === document.getElementById("futureEventsFullPageModal")) closeFutureEventsFullPage();
+  });
+  document.getElementById("affirmationsFullPageModal")?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("affirmationsFullPageModal")) closeAffirmationsFullPage();
   });
 }
 

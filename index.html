@@ -2569,6 +2569,7 @@
         <div class="db-card-title">Daily Affirmations</div>
         <div style="display:flex;align-items:center;gap:10px">
           <div id="dbAffReviewedBadge" style="display:none;padding:3px 10px;background:var(--accent2-light);border:1px solid var(--accent2);border-radius:20px;font-size:0.72rem;color:var(--accent2);font-family:'DM Mono',monospace;font-weight:600">✔ Reviewed</div>
+          <button class="db-card-btn" id="btnManageAffirmations" title="Manage affirmations" style="background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:6px 10px;font-size:0.8rem">⚙️</button>
           <button class="db-card-btn" id="dbAffToggleBtn" style="display:flex;align-items:center;gap:5px">
             <span id="dbAffBtnLabel">Show All</span><span id="dbAffArrow" style="display:inline-block;transition:transform 0.3s">▼</span>
           </button>
@@ -5489,6 +5490,31 @@ function initWidgetModals() {
   if (btnViewFutureEvents) {
     btnViewFutureEvents.addEventListener('click', () => openFutureEventsFullPage());
   }
+
+  // Manage Affirmations Button
+  const btnManageAffirmations = document.getElementById('btnManageAffirmations');
+  if (btnManageAffirmations) {
+    btnManageAffirmations.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openAffirmationsFullPage();
+    });
+  }
+
+  // Close Affirmations Modal Button
+  const closeAffirmationsModal = document.getElementById('closeAffirmationsModal');
+  if (closeAffirmationsModal) {
+    closeAffirmationsModal.addEventListener('click', closeAffirmationsFullPage);
+  }
+
+  // Click outside to close Affirmations Modal
+  const affirmationsFullPageModal = document.getElementById('affirmationsFullPageModal');
+  if (affirmationsFullPageModal) {
+    affirmationsFullPageModal.addEventListener('click', (e) => {
+      if (e.target === affirmationsFullPageModal) {
+        closeAffirmationsFullPage();
+      }
+    });
+  }
 }
 
 // Run immediately - script is at end of body so DOM is ready
@@ -5565,6 +5591,17 @@ init();
       <button id="closeFutureEventsModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text3)">&times;</button>
     </div>
     <div id="futureEventsFullPageContent"></div>
+  </div>
+</div>
+
+<!-- AFFIRMATIONS FULL PAGE MODAL -->
+<div class="fullpage-modal" id="affirmationsFullPageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:1000;overflow-y:auto;padding:20px">
+  <div style="max-width:900px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h1 style="font-family:'DM Serif Display',serif;font-size:2rem">💡 Manage Affirmations</h1>
+      <button id="closeAffirmationsModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text3)">&times;</button>
+    </div>
+    <div id="affirmationsFullPageContent"></div>
   </div>
 </div>
 
