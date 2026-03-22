@@ -5477,6 +5477,12 @@ function buildGoalItem(level, g) {
     if (priority === 'medium') return '🟡';
     return '🔵';
   }
+  // Find index and list length for disabling arrows
+  const goals = loadGoals();
+  const list = goals[level] || [];
+  const idx = list.findIndex(item => item.id === g.id);
+  const isFirst = idx === 0;
+  const isLast = idx === list.length - 1;
   div.innerHTML = `
     <span class="goal-priority-icon" title="Priority: ${g.priority || 'medium'}">${getPriorityIcon(g.priority || 'medium')}</span>
     <div class="goal-cb ${doneClass}" data-goal-level="${level}" data-goal-id="${g.id}">${g.completed ? '✓' : ''}</div>
@@ -5485,15 +5491,15 @@ function buildGoalItem(level, g) {
       <div class="goal-meta">Added ${dateLabel}</div>
     </div>
     <div class="goal-move-controls">
-      <button class="goal-move-btn" data-goal-move="up" title="Move up">↑</button>
-      <button class="goal-move-btn" data-goal-move="down" title="Move down">↓</button>
+      <button class="goal-move-btn" data-goal-move="up" title="Move up"${isFirst ? ' disabled style=\"opacity:0.3;cursor:not-allowed;\"' : ''}>↑</button>
+      <button class="goal-move-btn" data-goal-move="down" title="Move down"${isLast ? ' disabled style=\"opacity:0.3;cursor:not-allowed;\"' : ''}>↓</button>
     </div>
     <button class="goal-del" data-del-level="${level}" data-del-id="${g.id}" title="Delete">✕</button>
   `;
   // Move controls
   const moveBtns = div.querySelectorAll('.goal-move-btn');
-  moveBtns[0].onclick = () => moveGoal(level, g.id, 'up');
-  moveBtns[1].onclick = () => moveGoal(level, g.id, 'down');
+  if (!isFirst) moveBtns[0].onclick = () => moveGoal(level, g.id, 'up');
+  if (!isLast) moveBtns[1].onclick = () => moveGoal(level, g.id, 'down');
   // Checkbox
   div.querySelector('.goal-cb').addEventListener('click', () => {
     const item = toggleGoal(level, g.id);
