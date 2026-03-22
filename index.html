@@ -2900,6 +2900,13 @@
     <div class="modal-title">Add Milestone</div>
     <div class="modal-sub">Define a key milestone for Vivarta Tech.</div>
     <input id="milestoneInput" type="text" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.9rem;outline:none" placeholder="e.g. ₹10L revenue, First international client…" maxlength="100">
+    <div style="margin:12px 0 0 0;display:flex;align-items:center;gap:10px">
+      <span style="font-size:0.85rem;color:var(--text2);">Priority:</span>
+      <button type="button" class="priority-icon-btn" id="milestonePriorityHigh" title="High Priority" style="font-size:1.3rem">🔴</button>
+      <button type="button" class="priority-icon-btn" id="milestonePriorityMedium" title="Medium Priority" style="font-size:1.3rem">🟡</button>
+      <button type="button" class="priority-icon-btn" id="milestonePriorityLow" title="Low Priority" style="font-size:1.3rem">🔵</button>
+      <input type="hidden" id="milestonePriorityValue" value="medium">
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnMilestoneCancel">Cancel</button>
       <button class="btn btn-primary" id="btnMilestoneSave">Add Milestone</button>
@@ -3012,6 +3019,13 @@
     <div class="modal-sub" id="goalAddModalSub">Define what you want to achieve.</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <textarea id="goalAddText" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'Figtree',sans-serif;font-size:0.9rem;outline:none;resize:vertical" placeholder="Describe your goal…"></textarea>
+      <div style="margin:8px 0 0 0;display:flex;align-items:center;gap:10px">
+        <span style="font-size:0.85rem;color:var(--text2);">Priority:</span>
+        <button type="button" class="priority-icon-btn" id="goalPriorityHigh" title="High Priority" style="font-size:1.3rem">🔴</button>
+        <button type="button" class="priority-icon-btn" id="goalPriorityMedium" title="Medium Priority" style="font-size:1.3rem">🟡</button>
+        <button type="button" class="priority-icon-btn" id="goalPriorityLow" title="Low Priority" style="font-size:1.3rem">🔵</button>
+        <input type="hidden" id="goalPriorityValue" value="medium">
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnGoalAddCancel">Cancel</button>
@@ -4930,12 +4944,37 @@ function renderMilestones() {
     el.innerHTML = '<div style="color:var(--text3);font-size:0.82rem">No milestones yet</div>';
     return;
   }
+  function getPriorityIcon(priority) {
+    if (priority === 'high') return '🔴';
+    if (priority === 'medium') return '🟡';
+    return '🔵';
+  }
   el.innerHTML = ms.map((m, i) => `
     <div class="milestone-item">
+      <span class="milestone-priority-icon" title="Priority: ${m.priority || 'medium'}">${getPriorityIcon(m.priority || 'medium')}</span>
       <div class="milestone-cb ${m.done ? 'done' : ''}" data-ms-idx="${i}">${m.done ? '✓' : ''}</div>
       <div class="milestone-text ${m.done ? 'done' : ''}">${escapeHtml(m.text)}</div>
+      <div class="milestone-move-controls">
+        <button class="milestone-move-btn" data-ms-move="up" data-ms-idx="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="milestone-move-btn" data-ms-move="down" data-ms-idx="${i}" ${i === ms.length - 1 ? 'disabled' : ''}>↓</button>
+      </div>
       <button class="milestone-delete" data-ms-del="${i}">✕</button>
     </div>`).join('');
+  // Move controls
+  el.querySelectorAll('.milestone-move-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.msIdx);
+      const dir = btn.dataset.msMove;
+      const ms2 = loadMilestones();
+      if (dir === 'up' && idx > 0) {
+        [ms2[idx - 1], ms2[idx]] = [ms2[idx], ms2[idx - 1]];
+      } else if (dir === 'down' && idx < ms2.length - 1) {
+        [ms2[idx + 1], ms2[idx]] = [ms2[idx], ms2[idx + 1]];
+      }
+      saveMilestones(ms2);
+      renderMilestones();
+    });
+  });
   el.querySelectorAll('.milestone-cb').forEach(btn => {
     btn.addEventListener('click', () => {
       const ms2 = loadMilestones();
@@ -5129,25 +5168,52 @@ function initDashboard() {
   });
 
   // Milestone modal
-  document.getElementById('btnAddMilestone').addEventListener('click', () => {
-    document.getElementById('milestoneInput').value = '';
-    document.getElementById('milestoneModal').classList.add('show');
-    setTimeout(() => document.getElementById('milestoneInput').focus(), 100);
-  });
-  document.getElementById('btnMilestoneCancel').addEventListener('click', () => document.getElementById('milestoneModal').classList.remove('show'));
-  document.getElementById('btnMilestoneSave').addEventListener('click', () => {
-    const text = document.getElementById('milestoneInput').value.trim();
-    if (!text) { showToast('Milestone text is required.', 'error'); return; }
-    const ms = loadMilestones();
-    ms.push({ id: Date.now(), text, done: false });
-    saveMilestones(ms);
-    document.getElementById('milestoneModal').classList.remove('show');
-    renderMilestones();
-    showToast('Milestone added!', 'success');
-  });
-  document.getElementById('milestoneInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('btnMilestoneSave').click();
-  });
+  const btnAddMilestone = document.getElementById('btnAddMilestone');
+  const btnMilestoneCancel = document.getElementById('btnMilestoneCancel');
+  const btnMilestoneSave = document.getElementById('btnMilestoneSave');
+  const milestoneInput = document.getElementById('milestoneInput');
+  const milestonePriorityValue = document.getElementById('milestonePriorityValue');
+  if (btnAddMilestone && btnMilestoneCancel && btnMilestoneSave && milestoneInput && milestonePriorityValue) {
+    btnAddMilestone.addEventListener('click', () => {
+      milestoneInput.value = '';
+      document.getElementById('milestoneModal').classList.add('show');
+      setTimeout(() => milestoneInput.focus(), 100);
+    });
+    btnMilestoneCancel.addEventListener('click', () => document.getElementById('milestoneModal').classList.remove('show'));
+    btnMilestoneSave.addEventListener('click', () => {
+      const text = milestoneInput.value.trim();
+      const priority = milestonePriorityValue.value || 'medium';
+      if (!text) { showToast('Milestone text is required.', 'error'); return; }
+      const ms = loadMilestones();
+      ms.push({ id: Date.now(), text, done: false, priority });
+      saveMilestones(ms);
+      document.getElementById('milestoneModal').classList.remove('show');
+      renderMilestones();
+      showToast('Milestone added!', 'success');
+    });
+    // Priority picker logic for milestone modal
+    const prioBtns = [
+      { id: 'milestonePriorityHigh', value: 'high' },
+      { id: 'milestonePriorityMedium', value: 'medium' },
+      { id: 'milestonePriorityLow', value: 'low' }
+    ];
+    prioBtns.forEach(btn => {
+      const el = document.getElementById(btn.id);
+      if (el) {
+        el.onclick = () => {
+          milestonePriorityValue.value = btn.value;
+          prioBtns.forEach(b2 => {
+            const el2 = document.getElementById(b2.id);
+            if (el2) el2.style.outline = b2.id === btn.id ? '2px solid var(--accent)' : 'none';
+          });
+        };
+      }
+    });
+    milestoneInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') btnMilestoneSave.click();
+    });
+  }
+  };
 
   // Open habit tracker from dashboard
   document.getElementById('btnOpenHabits').addEventListener('click', () => {
@@ -5312,7 +5378,7 @@ function initDashboard() {
     showToast(`Custom habit added for ${person}! 🌟`, 'success');
     if (currentView === 'day') renderView();
   });
-}
+
 
 // ═══════════════════════════════════════════════════
 //  GOALS MODULE (Yearly / Monthly / Weekly)
@@ -5320,18 +5386,18 @@ function initDashboard() {
 
 const GOAL_DEFAULTS = {
   yearly: [
-    { id: 1001, text: 'Build Vivarta Tech to ₹1 Crore Revenue', completed: false, date: '2026-01-01' },
-    { id: 1002, text: 'Launch 3 products with real market traction', completed: false, date: '2026-01-01' },
-    { id: 1003, text: 'Get incubated at IIM Ahmedabad', completed: false, date: '2026-01-01' },
+    { id: 1001, text: 'Build Vivarta Tech to ₹1 Crore Revenue', completed: false, date: '2026-01-01', position: 0 },
+    { id: 1002, text: 'Launch 3 products with real market traction', completed: false, date: '2026-01-01', position: 1 },
+    { id: 1003, text: 'Get incubated at IIM Ahmedabad', completed: false, date: '2026-01-01', position: 2 },
   ],
   monthly: [
-    { id: 2001, text: 'Close 2 new client deals', completed: false, date: today() },
-    { id: 2002, text: 'Complete product prototype v1', completed: false, date: today() },
+    { id: 2001, text: 'Close 2 new client deals', completed: false, date: today(), position: 0 },
+    { id: 2002, text: 'Complete product prototype v1', completed: false, date: today(), position: 1 },
   ],
   weekly: [
-    { id: 3001, text: 'Finalize product roadmap', completed: false, date: today() },
-    { id: 3002, text: 'Publish 1 LinkedIn article', completed: false, date: today() },
-    { id: 3003, text: 'Complete Rule of 1-1-1 every day this week', completed: false, date: today() },
+    { id: 3001, text: 'Finalize product roadmap', completed: false, date: today(), position: 0 },
+    { id: 3002, text: 'Publish 1 LinkedIn article', completed: false, date: today(), position: 1 },
+    { id: 3003, text: 'Complete Rule of 1-1-1 every day this week', completed: false, date: today(), position: 2 },
   ]
 };
 
@@ -5343,6 +5409,14 @@ function loadGoals() {
     goals = GOAL_DEFAULTS;
     saveGoals(goals);
   }
+  // Ensure all items have a position property
+  ['yearly', 'monthly', 'weekly'].forEach(level => {
+    if (goals && goals[level]) {
+      goals[level].forEach((g, idx) => {
+        if (typeof g.position !== 'number') g.position = idx;
+      });
+    }
+  });
   return goals || { yearly: [], monthly: [], weekly: [] };
 }
 function saveGoals(data) {
@@ -5361,7 +5435,11 @@ function saveGoals(data) {
 function addGoal(level, text) {
   const goals = loadGoals();
   if (!goals[level]) goals[level] = [];
-  goals[level].push({ id: Date.now(), text, completed: false, date: today() });
+  // Accepts optional priority as third argument
+  let priority = arguments.length > 2 ? arguments[2] : 'medium';
+  // Assign position as the next index
+  const position = goals[level].length;
+  goals[level].push({ id: Date.now(), text, completed: false, date: today(), priority, position });
   saveGoals(goals);
 }
 function toggleGoal(level, id) {
@@ -5394,14 +5472,28 @@ function buildGoalItem(level, g) {
   div.className = 'goal-item';
   const doneClass = g.completed ? `done-${level}` : '';
   const dateLabel = parseDate(g.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  function getPriorityIcon(priority) {
+    if (priority === 'high') return '🔴';
+    if (priority === 'medium') return '🟡';
+    return '🔵';
+  }
   div.innerHTML = `
+    <span class="goal-priority-icon" title="Priority: ${g.priority || 'medium'}">${getPriorityIcon(g.priority || 'medium')}</span>
     <div class="goal-cb ${doneClass}" data-goal-level="${level}" data-goal-id="${g.id}">${g.completed ? '✓' : ''}</div>
     <div class="goal-item-body">
       <div class="goal-text ${g.completed ? 'done' : ''}">${escapeHtml(g.text)}</div>
       <div class="goal-meta">Added ${dateLabel}</div>
     </div>
+    <div class="goal-move-controls">
+      <button class="goal-move-btn" data-goal-move="up" title="Move up">↑</button>
+      <button class="goal-move-btn" data-goal-move="down" title="Move down">↓</button>
+    </div>
     <button class="goal-del" data-del-level="${level}" data-del-id="${g.id}" title="Delete">✕</button>
   `;
+  // Move controls
+  const moveBtns = div.querySelectorAll('.goal-move-btn');
+  moveBtns[0].onclick = () => moveGoal(level, g.id, 'up');
+  moveBtns[1].onclick = () => moveGoal(level, g.id, 'down');
   // Checkbox
   div.querySelector('.goal-cb').addEventListener('click', () => {
     const item = toggleGoal(level, g.id);
@@ -5466,7 +5558,12 @@ function renderGoalsPage() {
       listEl.innerHTML = `<div class="goals-empty">No ${level} goals yet — add one above!</div>`;
       return;
     }
-    list.forEach(g => listEl.appendChild(buildGoalItem(level, g)));
+    // Sort by position if present, else by id
+    list.sort((a, b) => (a.position ?? a.id) - (b.position ?? b.id));
+    list.forEach((g, idx) => {
+      g.position = idx;
+      listEl.appendChild(buildGoalItem(level, g));
+    });
   });
 }
 
@@ -5514,6 +5611,25 @@ let _goalAddLevel = 'yearly';
 
 // ── Init Goals ──
 function initGoals() {
+    // Priority picker logic for goal modal
+    const goalPrioBtns = [
+      { id: 'goalPriorityHigh', value: 'high' },
+      { id: 'goalPriorityMedium', value: 'medium' },
+      { id: 'goalPriorityLow', value: 'low' }
+    ];
+    const goalPriorityValue = document.getElementById('goalPriorityValue');
+    goalPrioBtns.forEach(btn => {
+      const el = document.getElementById(btn.id);
+      if (el) {
+        el.onclick = () => {
+          goalPriorityValue.value = btn.value;
+          goalPrioBtns.forEach(b2 => {
+            const el2 = document.getElementById(b2.id);
+            if (el2) el2.style.outline = b2.id === btn.id ? '2px solid var(--accent)' : 'none';
+          });
+        };
+      }
+    });
   // Back button
   document.getElementById('btnBackFromGoals').addEventListener('click', hideGoalsPage);
 
@@ -5544,14 +5660,35 @@ function initGoals() {
   });
   document.getElementById('btnGoalAddSave').addEventListener('click', () => {
     const text = document.getElementById('goalAddText').value.trim();
+    const priority = document.getElementById('goalPriorityValue').value || 'medium';
     if (!text) { showToast('Please enter a goal.', 'error'); return; }
-    addGoal(_goalAddLevel, text);
+    addGoal(_goalAddLevel, text, priority);
     document.getElementById('goalAddModal').classList.remove('show');
     const lvlLabel = _goalAddLevel.charAt(0).toUpperCase() + _goalAddLevel.slice(1);
     showToast(`${lvlLabel} goal added! 🎯`, 'success');
     renderGoalsPage();
     renderGoalsSummary();
   });
+  // ...existing code...
+}
+
+// Move goal up/down (must be global for onclick handlers)
+function moveGoal(level, id, dir) {
+  const goals = loadGoals();
+  const list = goals[level] || [];
+  const idx = list.findIndex(g => g.id === id);
+  if (idx === -1) return;
+  if (dir === 'up' && idx > 0) {
+    [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+  } else if (dir === 'down' && idx < list.length - 1) {
+    [list[idx + 1], list[idx]] = [list[idx], list[idx + 1]];
+  }
+  // Update positions
+  list.forEach((g, i) => g.position = i);
+  saveGoals(goals);
+  renderGoalsPage();
+  renderGoalsSummary();
+}
   document.getElementById('goalAddText').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('btnGoalAddSave').click(); }
   });
@@ -5567,7 +5704,7 @@ function initGoals() {
 
   // Initial dashboard render
   renderGoalsSummary();
-}
+
 
 // ═══════════════════════════════════════════════════
 //  INIT
