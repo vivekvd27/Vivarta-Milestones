@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Vivartam Founder OS</title>
+
+<!-- Match the app's fonts + colour tokens -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="styles/theme.css">
+
+<!-- Restore saved theme before paint -->
+<script>try{if(localStorage.getItem('peopleos_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:var(--font-sans);-webkit-font-smoothing:antialiased;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .wrap{width:100%;max-width:420px;}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;justify-content:center;}
+  .brand .mark{
+    width:42px;height:42px;border-radius:12px;background:var(--surface-brand);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-family:var(--font-display);font-weight:700;font-size:22px;
+  }
+  .brand .wm{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:1;}
+  .brand .mod{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-subtle);margin-top:3px;}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    padding:26px 24px;box-shadow:0 18px 50px -28px rgba(0,0,0,.35);
+  }
+  h1{font-family:var(--font-display);font-weight:600;font-size:23px;margin:0 0 4px;}
+  .sub{color:var(--text-muted);font-size:13.5px;margin:0 0 20px;}
+
+  .tabs{display:flex;gap:4px;background:var(--surface-sunken);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:20px;}
+  .tabs button{
+    flex:1;border:0;background:transparent;color:var(--text-muted);
+    font-family:var(--font-sans);font-weight:600;font-size:13.5px;padding:9px 10px;border-radius:9px;cursor:pointer;
+  }
+  .tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06);}
+
+  label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin:14px 0 6px;}
+  input{
+    width:100%;padding:11px 13px;border:1px solid var(--border-strong);border-radius:10px;
+    background:var(--surface-sunken);color:var(--text);font-family:var(--font-sans);font-size:14.5px;
+  }
+  input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent);}
+
+  .btn{
+    width:100%;margin-top:20px;padding:12px;border:0;border-radius:11px;cursor:pointer;
+    background:var(--primary);color:var(--on-primary);font-family:var(--font-sans);font-weight:700;font-size:14.5px;
+  }
+  .btn:hover{background:var(--primary-hover);}
+  .btn:disabled{opacity:.6;cursor:default;}
+
+  .msg{margin-top:16px;font-size:13px;padding:10px 12px;border-radius:10px;display:none;}
+  .msg.err{display:block;background:color-mix(in srgb,#C0392B 14%,transparent);color:#C0392B;border:1px solid color-mix(in srgb,#C0392B 30%,transparent);}
+  .msg.ok{display:block;background:color-mix(in srgb,var(--navy) 14%,transparent);color:var(--navy);border:1px solid color-mix(in srgb,var(--navy) 30%,transparent);}
+
+  .hint{margin-top:18px;text-align:center;font-size:12px;color:var(--text-subtle);}
+  .foot{margin-top:18px;text-align:center;font-size:11.5px;color:var(--text-subtle);font-family:var(--font-mono);letter-spacing:.04em;}
+  [data-mode="signin"] .signup-only{display:none;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">V</div>
+      <div>
+        <div class="wm">Vivartam</div>
+        <div class="mod">Founder OS</div>
+      </div>
+    </div>
+
+    <div class="card" id="card" data-mode="signin">
+      <div class="tabs">
+        <button type="button" id="tabSignin" class="on" onclick="setMode('signin')">Sign in</button>
+        <button type="button" id="tabSignup" onclick="setMode('signup')">Sign up</button>
+      </div>
+
+      <h1 id="title">Welcome back</h1>
+      <p class="sub" id="subtitle">Sign in to your Vivartam workspace.</p>
+
+      <form id="form" autocomplete="on">
+        <div class="signup-only">
+          <label for="name">Full name</label>
+          <input id="name" type="text" placeholder="e.g. Priya Sharma" autocomplete="name">
+        </div>
+
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="you@vivartam.com" autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required>
+
+        <button class="btn" id="submit" type="submit">Sign in</button>
+      </form>
+
+      <div class="msg" id="msg"></div>
+
+      <div class="hint signup-only">
+        New accounts are created as <b>Employee</b> access. Founders are recognised automatically.
+      </div>
+    </div>
+
+    <div class="foot">Vivartam Tech Private Limited · Internal</div>
+  </div>
+
+  <!-- Supabase client + shared config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth/supabase-config.js"></script>
+  <script>
+    var supa = window.VV_SUPA.createClient();
+    var APP_URL = "Vivartam Milestones.dc.html";
+
+    var card = document.getElementById("card");
+    var titleEl = document.getElementById("title");
+    var subEl = document.getElementById("subtitle");
+    var submitBtn = document.getElementById("submit");
+    var pwInput = document.getElementById("password");
+    var msgEl = document.getElementById("msg");
+
+    function setMode(mode) {
+      card.setAttribute("data-mode", mode);
+      document.getElementById("tabSignin").classList.toggle("on", mode === "signin");
+      document.getElementById("tabSignup").classList.toggle("on", mode === "signup");
+      if (mode === "signin") {
+        titleEl.textContent = "Welcome back";
+        subEl.textContent = "Sign in to your Vivartam workspace.";
+        submitBtn.textContent = "Sign in";
+        pwInput.setAttribute("autocomplete", "current-password");
+      } else {
+        titleEl.textContent = "Create your account";
+        subEl.textContent = "Join the Vivartam workspace.";
+        submitBtn.textContent = "Create account";
+        pwInput.setAttribute("autocomplete", "new-password");
+      }
+      hideMsg();
+    }
+
+    function showMsg(text, ok) {
+      msgEl.textContent = text;
+      msgEl.className = "msg " + (ok ? "ok" : "err");
+    }
+    function hideMsg() { msgEl.className = "msg"; }
+
+    function goToApp() { location.replace(APP_URL); }
+
+    // If already signed in, skip straight to the app.
+    if (window.VV_SUPA.readStoredSession()) { goToApp(); }
+
+    document.getElementById("form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      hideMsg();
+      var mode = card.getAttribute("data-mode");
+      var email = document.getElementById("email").value.trim();
+      var password = pwInput.value;
+      var name = document.getElementById("name").value.trim();
+
+      submitBtn.disabled = true;
+      var original = submitBtn.textContent;
+      submitBtn.textContent = mode === "signin" ? "Signing in…" : "Creating…";
+
+      try {
+        if (mode === "signin") {
+          var res = await supa.auth.signInWithPassword({ email: email, password: password });
+          if (res.error) throw res.error;
+          goToApp();
+          return;
+        }
+
+        // Sign up — new accounts default to the "employee" role.
+        var signup = await supa.auth.signUp({
+          email: email,
+          password: password,
+          options: { data: { full_name: name || email.split("@")[0], role: "employee" } },
+        });
+        if (signup.error) throw signup.error;
+
+        // If the project has email confirmation OFF, a session is returned → go in.
+        if (signup.data && signup.data.session) {
+          goToApp();
+          return;
+        }
+        // Otherwise the user must confirm their email first.
+        showMsg("Account created. Check your inbox to confirm your email, then sign in.", true);
+        setMode("signin");
+      } catch (err) {
+        showMsg(err && err.message ? err.message : "Something went wrong. Please try again.", false);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -24,6 +24,7 @@ It's a "Design Component": markup + a `Component` logic class wired up by `suppo
 
 ```
 index.html                    ← redirect → opens the app (for npm start / localhost root)
+Vivartam Login.dc.html        ← login / auth page (sign in · sign up · reset) — split-screen, both themes
 Vivartam Milestones.dc.html   ← the app: markup + Component logic class (behaviour & layout)
 support.js                    ← runtime (do not edit)
 
