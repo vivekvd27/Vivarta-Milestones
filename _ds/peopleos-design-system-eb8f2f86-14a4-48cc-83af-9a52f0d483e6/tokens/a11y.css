@@ -1,0 +1,53 @@
+/* ============================================================
+   PeopleOS — Accessibility baseline
+   Ships to every page via styles.css. Provides a consistent,
+   visible keyboard-focus ring on all interactive elements, a
+   reduced-motion safety net, and an sr-only utility.
+   ============================================================ */
+
+/* ---- Visible keyboard focus (only for keyboard nav, not mouse) ----
+   Applies everywhere — including vanilla pages whose custom buttons,
+   tabs and chips have no focus style of their own. DS components that
+   set their own box-shadow focus ring still get this outline too,
+   which is additive and safe. */
+:where(a, button, input, select, textarea, summary, [tabindex], [role="button"], [role="tab"], [role="switch"], [role="link"]):focus-visible {
+  outline: 2px solid var(--primary, #143A66);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Never show the focus ring for pointer interactions. */
+:where(a, button, [role="button"], [role="tab"]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ---- Reduced-motion safety net ----
+   Honors the OS "reduce motion" setting across all pages. Animations
+   collapse to their end-state (fill-mode preserved) and transitions
+   become instant, so nothing stays mid-animation or hidden. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Screen-reader-only utility ---- */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}

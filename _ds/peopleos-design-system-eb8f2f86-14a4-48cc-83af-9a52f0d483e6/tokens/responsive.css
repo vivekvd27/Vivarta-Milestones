@@ -1,0 +1,21 @@
+/* ============================================================
+   PeopleOS — Responsive baseline for app screens
+   Ships via styles.css. The product screens are desktop-first with a
+   fixed nav rail; these rules make them genuinely usable on phones.
+   Targets the consistent shell class suffixes (-side / -main / -app /
+   -kpis / -top) so every screen benefits with no per-file edits.
+   ============================================================ */
+
+/* ---- Phone: hide the fixed nav rail; let content fill ---- */
+@media (max-width: 680px) {
+  [class$="-side"] { display: none !important; }
+  [class$="-main"] { width: 100% !important; }
+  /* top bars hold many actions — let them scroll instead of clipping */
+  [class$="-top"] { overflow-x: auto; }
+  [class$="-top"]::-webkit-scrollbar { height: 0; }
+}
+
+/* ---- Small phone: collapse dense KPI grids to a single column ---- */
+@media (max-width: 480px) {
+  [class$="-kpis"] { grid-template-columns: 1fr !important; }
+}

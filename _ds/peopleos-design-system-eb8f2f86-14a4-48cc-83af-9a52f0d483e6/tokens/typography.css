@@ -1,0 +1,135 @@
+/* ============================================================
+   PeopleOS — Typography
+   Display: Poppins (geometric, rounded, warm)
+   Text/UI: Hanken Grotesk (humanist, calm, legible)
+   ============================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-sans:    'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+  --font-serif:   'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* ---- Weights ---- */
+  --fw-regular:  400; /* @kind font */
+  --fw-medium:   500; /* @kind font */
+  --fw-semibold: 600; /* @kind font */
+  --fw-bold:     700; /* @kind font */
+
+  /* ---- Type scale (rem, 16px base) ---- */
+  --text-2xs: 0.6875rem; /* 11px — micro labels, badges */
+  --text-xs:  0.75rem;   /* 12px — captions, meta */
+  --text-sm:  0.8125rem; /* 13px — secondary UI */
+  --text-base:0.9375rem; /* 15px — body / default UI */
+  --text-md:  1rem;      /* 16px — emphasized body */
+  --text-lg:  1.125rem;  /* 18px — card titles */
+  --text-xl:  1.375rem;  /* 22px — section headers */
+  --text-2xl: 1.75rem;   /* 28px — page titles */
+  --text-3xl: 2.25rem;   /* 36px — display */
+  --text-4xl: 3rem;      /* 48px — hero */
+  --text-5xl: 4rem;      /* 64px — marketing hero */
+
+  /* ---- Line heights ---- */
+  --lh-tight:   1.1;  /* @kind other */
+  --lh-snug:    1.25; /* @kind other */
+  --lh-normal:  1.5;  /* @kind other */
+  --lh-relaxed: 1.65; /* @kind other */
+
+  /* ---- Letter spacing ---- */
+  --ls-tighter: -0.02em;  /* large display */
+  --ls-tight:   -0.011em; /* headings */
+  --ls-normal:  0em;
+  --ls-wide:    0.04em;   /* small caps labels */
+  --ls-wider:   0.12em;   /* eyebrow / overline */
+
+  /* ---- Semantic roles ---- */
+  --title-font:   var(--font-display);
+  --title-weight: var(--fw-bold);
+  --body-font:    var(--font-sans);
+  --num-font:     var(--font-display); /* big stat numerals are geometric */
+  --accent-serif: var(--font-serif); /* one reflective italic beat */
+}
+
+/* Base element defaults (opt-in: applied by consumers on body) */
+.peopleos-type {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--lh-normal);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Heading helpers ---- */
+.ds-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-2xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+  color: var(--text);
+}
+.ds-display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-4xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tighter);
+  color: var(--text);
+}
+.ds-h1 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-2xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+  color: var(--text);
+}
+.ds-h2 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+  color: var(--text);
+}
+.ds-h3 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-lg);
+  line-height: var(--lh-snug);
+  color: var(--text);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: var(--text-base);
+  line-height: var(--lh-normal);
+  color: var(--text);
+}
+.ds-meta {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-medium);
+  font-size: var(--text-xs);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+.ds-eyebrow {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xs);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.ds-stat {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-3xl);
+  line-height: 1;
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}

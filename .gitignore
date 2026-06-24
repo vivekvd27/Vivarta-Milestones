@@ -1,27 +1,17 @@
-# Environment variables (never commit!)
-.env
-.env.local
-.env.*.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
+# OS / editor
 .DS_Store
 Thumbs.db
+*.swp
+.idea/
+.vscode/
 
-# Node (if you ever add it)
+# Node
 node_modules/
-dist/
-build/
-
-# Logs
-*.log
 npm-debug.log*
 
-# Dependencies
-/vendor/
-composer.lock
+# Local env / secrets
+.env
+.env.local
+
+# Build output (none today — placeholder)
+dist/

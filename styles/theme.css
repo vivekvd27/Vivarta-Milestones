@@ -1,0 +1,25 @@
+  /* Vivartam Tech — warm editorial identity (distinct from PeopleOS) */
+  :root{
+    --font-display:'Fraunces',Georgia,serif;
+    --font-sans:'Hanken Grotesk',system-ui,sans-serif;
+    --font-serif:'Fraunces',Georgia,serif;
+    --font-mono:'Space Mono','IBM Plex Mono',monospace;
+    --paper:#F6F2EC; --bg:#F6F2EC;
+    --surface:#FFFFFF; --surface-sunken:#FBF7F1; --surface-raised:#FFFFFF;
+    --ink:#2A241F; --text:#2A241F; --text-muted:#6B6157; --text-subtle:#9A8F82;
+    --navy:#33503F; --navy-deep:#22382B; --navy-surface:#3C5C49;
+    --primary:#33503F; --primary-hover:#294233; --primary-press:#1F3327; --on-primary:#FFFFFF;
+    --surface-brand:#33503F;
+    --border:#ECE5DA; --border-strong:#DCD3C5;
+    --navy-tint:#E5EBE3; --navy-tint-2:#D3DECF;
+    --focus-ring:rgba(51,80,63,.32);
+  }
+  [data-theme="dark"]{
+    --bg:#1A1612; --night:#1A1612;
+    --surface:#1F2922; --surface-sunken:#131A15; --surface-raised:#26322A; --surface-brand:#2C4A39;
+    --text:#F1EAE0; --text-muted:#B3A899; --text-subtle:#7E7468;
+    --border:rgba(255,255,255,.09); --border-strong:rgba(255,255,255,.16);
+    --navy-tint:rgba(120,180,140,.16); --navy-tint-2:rgba(120,180,140,.26);
+    --primary:var(--orange); --primary-hover:#FFB23E; --primary-press:#DC8E12; --on-primary:#1A1612;
+    --on-accent:#1A1612;
+  }

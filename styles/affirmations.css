@@ -1,0 +1,35 @@
+/* ============================================================
+   Vivartam — Affirmations tab (sections, rows, editor)
+   ============================================================ */
+/* affirmations */
+.vv-aff{max-width:880px;}
+.vv-affintro{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--pa) 9%,transparent);color:var(--pa-strong);border-radius:12px;padding:11px 15px;font-size:12.5px;font-weight:600;margin-bottom:20px;line-height:1.4;}
+.vv-affintro svg{flex:none;}
+.vv-affsec{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:18px;}
+.vv-affhd{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);}
+.vv-affic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;}
+.vv-affhd h3{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:-.01em;margin:0;flex:1;color:var(--text);}
+.vv-affcount{font-family:var(--font-mono);font-size:11px;color:var(--text-subtle);background:var(--surface-sunken);border:1px solid var(--border);border-radius:9px;min-width:22px;height:20px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;}
+.vv-affadd{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-sans);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer;padding:5px 8px;border-radius:8px;transition:background .15s;}
+.vv-affadd:hover{background:var(--surface-sunken);}
+.vv-affbody{padding:6px 10px 10px;}
+.vv-affrow{display:flex;align-items:flex-start;gap:13px;padding:12px 10px;border-radius:12px;transition:background .15s;}
+.vv-affrow:hover{background:var(--surface-sunken);}
+.vv-affrow:hover .vv-affactions{opacity:1;}
+.vv-affnum{font-family:var(--font-mono);font-weight:700;font-size:13px;min-width:24px;padding-top:1px;flex:none;}
+.vv-affc{flex:1;min-width:0;cursor:text;}
+.vv-afftitle{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.4;}
+.vv-affsubs{margin-top:7px;display:flex;flex-direction:column;gap:5px;}
+.vv-affsub{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--text-muted);line-height:1.45;}
+.vv-affsub .d{width:5px;height:5px;border-radius:50%;flex:none;margin-top:7px;opacity:.7;}
+.vv-affactions{display:flex;gap:4px;flex:none;opacity:0;transition:opacity .15s;}
+.vv-affedbtn,.vv-affx{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-subtle);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s;}
+.vv-affedbtn:hover{background:color-mix(in srgb,var(--pa) 12%,transparent);color:var(--pa-strong);}
+.vv-affx:hover{background:var(--danger-tint);color:var(--danger-text);}
+.vv-affrow.editing{background:var(--surface-sunken);}
+.vv-affedit{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+.vv-affedithint{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-subtle);flex-wrap:wrap;}
+.vv-afffoot{margin-top:4px;}
+.vv-afffootin{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.vv-afffoott{display:flex;align-items:center;gap:12px;}
+.vv-afffoott .ic{flex:none;display:flex;}

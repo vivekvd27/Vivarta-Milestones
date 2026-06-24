@@ -1,0 +1,34 @@
+/* ============================================================
+   PeopleOS — Dark-theme ambiance
+   `.pos-darkcanvas` paints the signature dark backdrop seen in the
+   brand's social carousels: a faint blueprint grid + a soft warm glow
+   with the PeopleOS mark fading out of the bottom-left corner.
+
+   Add the class to a page's main surface (body, or an app's main
+   content region). It is INERT in light theme — only paints under
+   [data-theme="dark"] — so it's always safe to leave on.
+   ============================================================ */
+
+.pos-darkcanvas { position: relative; }
+
+[data-theme="dark"] .pos-darkcanvas {
+  background-color: var(--bg);
+  background-image:
+    /* warm corner glow (orange, then steel-blue) — the "lit logo" aura */
+    radial-gradient(125% 95% at 6% 104%, rgba(242, 160, 36, 0.13) 0%, rgba(242, 160, 36, 0) 46%),
+    radial-gradient(95% 75% at 0% 100%, rgba(78, 134, 196, 0.10) 0%, rgba(78, 134, 196, 0) 52%),
+    /* faded PeopleOS Pulse mark, bleeding off the bottom-left */
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='36 36 82 82'><path d='M76 112 A36 36 0 1 1 112 76' fill='none' stroke='%23FFFFFF' stroke-width='6' stroke-opacity='.5'/><path d='M50 76 A26 26 0 0 1 102 76' fill='none' stroke='%23AEBBCD' stroke-width='6' stroke-opacity='.4'/><path d='M76 60 A16 16 0 0 1 92 76' fill='none' stroke='%2393A1B4' stroke-width='6' stroke-opacity='.4'/><circle cx='76' cy='76' r='7' fill='%23F2A024' fill-opacity='.7'/></svg>"),
+    /* blueprint grid */
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-position: left bottom, left bottom, -70px calc(100% + 70px), 0 0, 0 0;
+  background-size: auto, auto, 340px 340px, 48px 48px, 48px 48px;
+}
+
+/* A larger, more present mark for full-bleed splash-style screens. */
+[data-theme="dark"] .pos-darkcanvas--hero {
+  background-size: auto, auto, 460px 460px, 54px 54px, 54px 54px;
+  background-position: left bottom, left bottom, -120px calc(100% + 110px), 0 0, 0 0;
+}

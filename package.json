@@ -1,0 +1,16 @@
+{
+  "name": "vivartam-founder-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vivartam Tech Private Limited — internal Founder OS dashboard (Habits, Vision board, Affirmations, Milestones, Meetings, Network CRM, Future events).",
+  "scripts": {
+    "start": "npx --yes serve -l 8000 .",
+    "dev": "npx --yes serve -l 8000 ."
+  },
+  "keywords": [
+    "dashboard",
+    "founder-os",
+    "vivartam"
+  ],
+  "license": "UNLICENSED"
+}

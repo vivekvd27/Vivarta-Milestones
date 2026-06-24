@@ -1,0 +1,38 @@
+/* ============================================================
+   Vivartam — Vision board tab (manifestation cards + modal)
+   ============================================================ */
+/* vision board */
+.vv-vwrap{max-width:1180px;}
+.vv-vhero{position:relative;overflow:hidden;margin-bottom:20px;}
+.vv-vhero-in{position:relative;z-index:1;text-align:center;padding:16px 0 6px;}
+.vv-veyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-on-brand-muted);margin-bottom:14px;}
+.vv-vtitle{font-family:var(--font-display);font-weight:700;font-size:34px;letter-spacing:-.02em;color:#fff;margin:0 0 10px;}
+.vv-vsub{font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;color:var(--text-on-brand-muted);margin-bottom:24px;}
+.vv-vstats{display:flex;justify-content:center;gap:44px;flex-wrap:wrap;}
+.vv-vstat .n{font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--pa);line-height:1;}
+.vv-vstat .l{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-on-brand-muted);margin-top:6px;}
+.vv-vmark{position:absolute;right:-26px;bottom:-44px;opacity:.1;z-index:0;}
+.vv-vfilter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.vv-fpill{font-family:var(--font-sans);font-weight:600;font-size:12.5px;color:var(--text-muted);background:var(--surface);border:1.5px solid var(--border-strong);border-radius:var(--radius-pill);padding:7px 15px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+.vv-fpill:hover{border-color:var(--text-subtle);}
+.vv-fpill.on{background:var(--pa);color:#fff;border-color:transparent;}
+[data-theme="dark"] .vv-fpill.on{background:var(--pa);color:#1A1612;}
+.vv-vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:18px;}
+.vv-vcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .2s var(--ease-soft),box-shadow .2s;}
+.vv-vcard:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);}
+.vv-vimg{position:relative;width:100%;aspect-ratio:16/10;background:var(--surface-sunken);}
+.vv-vnum{position:absolute;top:11px;left:11px;width:28px;height:28px;border-radius:50%;background:rgba(10,28,51,.78);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:13px;z-index:2;}
+.vv-vtag{display:inline-flex;align-items:center;padding:4px 11px;border-radius:var(--radius-pill);color:#fff;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-family:var(--font-mono);}
+.vv-vimg .vv-vtag{position:absolute;top:11px;right:11px;z-index:2;}
+.vv-vbody{padding:15px 16px 17px;cursor:pointer;}
+.vv-vtext{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:10px;}
+.vv-vaff{font-family:var(--font-serif);font-style:italic;font-size:14px;color:var(--text-muted);line-height:1.45;}
+.vv-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(7,16,28,.72);display:flex;align-items:center;justify-content:center;padding:24px;animation:vvfade .2s ease;}
+@keyframes vvfade{from{opacity:0}to{opacity:1}}
+.vv-modal{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:22px;max-width:480px;width:100%;padding:36px 36px 30px;box-shadow:var(--shadow-xl);text-align:center;}
+.vv-modal-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface-sunken);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s;}
+.vv-modal-x:hover{background:var(--danger-tint);color:var(--danger-text);}
+.vv-modal .vv-vtag{margin-bottom:18px;}
+.vv-modal-text{font-family:var(--font-display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.25;color:var(--text);margin-bottom:14px;}
+.vv-modal-aff{font-family:var(--font-serif);font-style:italic;font-size:17px;color:var(--text-muted);line-height:1.5;margin-bottom:20px;}
+.vv-modal-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-subtle);}

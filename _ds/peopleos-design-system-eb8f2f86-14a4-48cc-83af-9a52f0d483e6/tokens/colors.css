@@ -1,0 +1,199 @@
+/* ============================================================
+   PeopleOS — Colors  ·  "PeopleOS Pulse" identity (v2.0)
+   Navy authority + Orange energy + cool Slate neutrals.
+   Mark: white/navy speedometer C-ring, gray inner arcs, orange core.
+
+   Canonical token names: --navy, --orange, --steel, --yellow, --slate-*,
+   and the *-tint scales. Legacy names (--people-green, --amber, --leaf …)
+   are kept at the bottom as DEPRECATED aliases for back-compat.
+   ============================================================ */
+
+:root {
+  /* ---- Pulse brand cores (canonical) ---- */
+  --navy:        #143A66; /* primary brand · "People" · ring · sidebar */
+  --navy-deep:   #0A1C33; /* darkest navy · dark-mode bg · ink on energy */
+  --navy-surface:#0E2747; /* dark brand panel */
+  --orange:      #F2A024; /* the core dot · "OS" · energy / accent */
+  --orange-deep: #D9850C; /* links · pressed accent on light */
+  --orange-soft: #F8C679; /* soft orange */
+  --steel:       #4E86C4; /* steel-blue — data / positive */
+  --steel-deep:  #1E5FA8; /* deep steel — top of score scale */
+  --yellow:      #F4C152; /* warm signal yellow */
+  --slate-arc-1: #8694A8; /* mark middle arc */
+  --slate-arc-2: #62728A; /* mark inner arc */
+
+  --ink:          #122436; /* navy-tinted body ink */
+  --paper:        #F1F4F8; /* cool off-white light bg */
+  --night:        #0A1C33; /* dark-mode background */
+
+  /* ---- Cool slate neutral scale ---- */
+  --gray-50:  #F5F7FA;
+  --gray-100: #E9EDF3;
+  --gray-200: #DCE2EB;
+  --gray-300: #C7D0DD;
+  --gray-400: #9BA7B8;
+  --gray-500: #74808F;
+  --gray-600: #586577;
+  --gray-700: #3E4A5C;
+  --gray-800: #26303F;
+  --gray-900: #161E2A;
+  --white:    #FFFFFF;
+
+  /* ---- Tints (soft fills, hovers, chips) ---- */
+  --navy-tint:     #E4EBF4;
+  --navy-tint-2:   #D2DDED;
+  --orange-tint:   #FCEDD3;
+  --orange-tint-2: #F8DBAC;
+  --steel-tint:    #E3ECF7;
+  --yellow-tint:   #FBF2D2;
+
+  /* ---- Surfaces & lines (light, default) ---- */
+  --bg:             var(--paper);
+  --surface:        var(--white);
+  --surface-sunken: #FAFBFD;
+  --surface-raised: var(--white);
+  --surface-brand:  var(--navy);          /* navy sidebar / hero */
+  --overlay:        rgba(10, 28, 51, 0.5);
+
+  --border:        #E3E8EF;
+  --border-strong: #D2D9E3;
+  --border-brand:  rgba(255, 255, 255, 0.16);
+
+  /* ---- Text ---- */
+  --text:          var(--ink);
+  --text-muted:    #5A6678;
+  --text-subtle:   #8A95A5;
+  --text-inverse:  #F1F4F8;
+  --text-on-brand: #FFFFFF;
+  --text-on-brand-muted: rgba(255, 255, 255, 0.66);
+
+  /* ---- Interactive ---- */
+  --primary:        var(--navy);
+  --primary-hover:  #0F2E52;
+  --primary-press:  #0A2444;
+  --on-primary:     #FFFFFF;
+
+  --accent:         var(--orange);
+  --accent-hover:   #E0921A;
+  --accent-press:   #C77E0C;
+  --on-accent:      #0A1C33;
+
+  --link:           var(--orange-deep);
+  --focus-ring:     rgba(20, 58, 102, 0.32);
+
+  /* ---- Status / data ---- */
+  --success:      #2F9E5B;
+  --success-text: #237A46;
+  --warning:      var(--orange);
+  --warning-text: #B06E00;
+  --danger:       #D2493B;
+  --danger-text:  #B23123;
+  --danger-tint:  #F7E0DC;
+
+  /* Fit-score scale (high→low): steel-blue → orange */
+  --score-high: var(--steel-deep);
+  --score-good: var(--steel);
+  --score-mid:  var(--orange);
+  --score-low:  var(--orange-deep);
+
+  /* Pipeline / chart stage colors */
+  --stage-applied:    var(--steel);
+  --stage-screened:   #6E9BCB;
+  --stage-shortlist:  var(--yellow);
+  --stage-interview:  var(--orange);
+  --stage-offer:      var(--navy);
+
+  /* Candidate avatar palette (cool, varied) */
+  --avatar-1: #5B6BD6;
+  --avatar-2: #D6699A;
+  --avatar-3: #3E86CC;
+  --avatar-4: #E0883C;
+  --avatar-5: #4FA3A0;
+  --avatar-6: var(--navy);
+
+  /* ---- Logo / mark (theme-aware, exact reference values) ---- */
+  --logo-ink:    #0B2A4A;     /* "People" + outer ring (light) */
+  --logo-os:     #E08A0E;     /* "OS" + core (light) */
+  --mark-arc-1:  #8694A8;     /* mark middle arc (lighter slate) */
+  --mark-arc-2:  #62728A;     /* mark inner arc (darker slate) */
+  --mark-core:   #E08A0E;     /* core dot (light) */
+
+  /* ============================================================
+     DEPRECATED legacy aliases — kept so older references resolve.
+     Prefer the canonical names above in all new work.
+     ============================================================ */
+  --people-green: var(--navy);
+  --mint-green:   var(--orange);
+  --leaf:         var(--steel);
+  --sunbeam:      var(--yellow);
+  --amber:        var(--orange);
+  --deep-amber:   var(--orange-deep);
+  --green-tint:   var(--navy-tint);
+  --green-tint-2: var(--navy-tint-2);
+  --mint-tint:    var(--orange-tint);
+  --amber-tint:   var(--orange-tint);
+  --amber-tint-2: var(--orange-tint-2);
+  --sunbeam-tint: var(--yellow-tint);
+  --leaf-tint:    var(--steel-tint);
+}
+
+/* ============================================================
+   Dark mode — Navy-900 surfaces, Orange energy, white mark.
+   Apply with <html data-theme="dark"> or .theme-dark.
+   The orange core never changes; the ring goes white on dark.
+   ============================================================ */
+[data-theme="dark"], .theme-dark {
+  --bg:             var(--navy-deep);
+  --surface:        #102B4D;
+  --surface-sunken: #07172B;
+  --surface-raised: #14365F;
+  --surface-brand:  #0E2747;
+  --overlay:        rgba(0, 0, 0, 0.6);
+
+  --border:        rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-brand:  rgba(255, 255, 255, 0.12);
+
+  --text:          #E8EEF6;
+  --text-muted:    #9DAABD;
+  --text-subtle:   #6E7C90;
+  --text-inverse:  var(--ink);
+  --text-on-brand: #E8EEF6;
+  --text-on-brand-muted: rgba(232, 238, 246, 0.6);
+
+  --primary:        var(--orange);   /* energy CTA on navy */
+  --primary-hover:  #FFB23E;
+  --primary-press:  #DC8E12;
+  --on-primary:     #0A1C33;
+
+  --accent:         var(--orange);
+  --accent-hover:   #FFB23E;
+  --accent-press:   #DC8E12;
+  --on-accent:      #0A1C33;
+
+  --link:           var(--orange);
+  --focus-ring:     rgba(242, 160, 36, 0.4);
+
+  /* tint scales for dark */
+  --navy-tint:     rgba(120, 160, 220, 0.16);
+  --navy-tint-2:   rgba(120, 160, 220, 0.24);
+  --orange-tint:   rgba(242, 160, 36, 0.16);
+  --orange-tint-2: rgba(242, 160, 36, 0.26);
+  --yellow-tint:   rgba(244, 193, 82, 0.16);
+  --steel-tint:    rgba(78, 134, 196, 0.20);
+
+  --success-text: #5FC489;
+  --warning-text: var(--orange);
+  --danger:       #E2685B;
+  --danger-text:  #ED8276;
+
+  --score-high: var(--steel);
+  --score-good: #6E9BCB;
+
+  /* mark goes white-ring on dark; core + OS go bright orange */
+  --logo-ink:   #FFFFFF;
+  --logo-os:    #F2A024;
+  --mark-arc-1: #93A1B4;
+  --mark-arc-2: #66768E;
+  --mark-core:  #F2A024;
+}

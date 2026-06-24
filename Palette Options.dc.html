@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#EDE7DD;font-family:'Hanken Grotesk',sans-serif;padding:40px;}
+</style>
+</helmet>
+<div style="max-width:1180px;margin:0 auto;">
+  <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#9A8F82;margin-bottom:8px;">Vivartam Tech · Primary color options</div>
+  <h1 style="font-family:'Fraunces',serif;font-weight:700;font-size:30px;letter-spacing:-.02em;color:#2A241F;margin-bottom:6px;">Pick the brand primary</h1>
+  <p style="font-size:15px;color:#6B6157;margin-bottom:30px;max-width:620px;">Each is a warm dark that sits on the cream paper and pairs with the orange energy accent. The sidebar, headings, primary buttons and the wordmark all take this color.</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">{{ swatches }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const h = React.createElement;
+    const ORANGE = '#F2A024', ORANGE_DEEP = '#D9850C';
+    const opts = [
+      { n: 1, name: 'Espresso', sub: 'Current · warm near-black', primary: '#2A241F', tintText: '#6B6157' },
+      { n: 2, name: 'Walnut', sub: 'Richer milk-chocolate brown', primary: '#3B2C1E', tintText: '#6E6053' },
+      { n: 3, name: 'Cocoa', sub: 'Lighter, friendlier brown', primary: '#4A3526', tintText: '#6E6053' },
+      { n: 4, name: 'Forest ink', sub: 'Deep warm evergreen', primary: '#26342A', tintText: '#5E665C' },
+      { n: 5, name: 'Oxblood', sub: 'Deep wine · editorial, bold', primary: '#43221F', tintText: '#6E5A54' },
+      { n: 6, name: 'Ink slate', sub: 'Cool charcoal-plum', primary: '#2B2A33', tintText: '#65626E' },
+    ];
+    const card = (o) => h('div', { key: o.n, style: { background: '#fff', borderRadius: '18px', overflow: 'hidden', border: '1px solid #ECE5DA', boxShadow: '0 2px 14px rgba(42,36,31,.06)' } }, [
+      // mini app preview
+      h('div', { key: 'prev', style: { display: 'flex', height: '150px', borderBottom: '1px solid #ECE5DA' } }, [
+        // sidebar
+        h('div', { key: 'sb', style: { width: '40px', flex: 'none', background: o.primary, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '12px', gap: '9px' } }, [
+          h('div', { key: 'm', style: { width: '16px', height: '16px', borderRadius: '50%', border: '2.5px solid #fff', borderRightColor: 'transparent', position: 'relative' } }, h('div', { style: { position: 'absolute', inset: '4px', borderRadius: '50%', background: ORANGE } })),
+          h('div', { key: 'a', style: { width: '20px', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,.85)' } }),
+          h('div', { key: 'b', style: { width: '20px', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,.3)' } }),
+          h('div', { key: 'c', style: { width: '20px', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,.3)' } }),
+        ]),
+        // paper
+        h('div', { key: 'pp', style: { flex: 1, background: '#FBF7F1', padding: '14px 15px' } }, [
+          h('div', { key: 'h', style: { fontFamily: "'Fraunces',serif", fontWeight: 700, fontSize: '15px', color: o.primary, letterSpacing: '-.01em' } }, 'Good morning'),
+          h('div', { key: 's', style: { fontSize: '10px', color: o.tintText, marginTop: '3px' } }, 'Two founders, one routine'),
+          h('div', { key: 'row', style: { display: 'flex', gap: '7px', marginTop: '12px' } }, [
+            h('div', { key: 'btn', style: { background: ORANGE, color: '#1A1612', fontWeight: 700, fontSize: '9px', padding: '6px 11px', borderRadius: '999px' } }, '+ New'),
+            h('div', { key: 'pill', style: { background: o.primary, color: '#fff', fontSize: '9px', fontWeight: 600, padding: '6px 11px', borderRadius: '999px' } }, 'Active'),
+          ]),
+          h('div', { key: 'tag', style: { display: 'inline-flex', marginTop: '9px', alignItems: 'center', gap: '5px', background: 'color-mix(in srgb,' + ORANGE + ' 16%, transparent)', color: ORANGE_DEEP, fontSize: '9px', fontWeight: 700, padding: '5px 9px', borderRadius: '999px' } }, 'North star · ₹1 Cr'),
+        ]),
+      ]),
+      // label + swatches
+      h('div', { key: 'lbl', style: { padding: '14px 16px 16px' } }, [
+        h('div', { key: 'top', style: { display: 'flex', alignItems: 'baseline', gap: '8px' } }, [
+          h('span', { key: 'num', style: { fontFamily: "'Space Mono',monospace", fontSize: '11px', color: '#B5AB9D' } }, String(o.n).padStart(2, '0')),
+          h('span', { key: 'nm', style: { fontFamily: "'Fraunces',serif", fontWeight: 700, fontSize: '17px', color: '#2A241F' } }, o.name),
+        ]),
+        h('div', { key: 'sub', style: { fontSize: '12px', color: '#6B6157', marginTop: '2px' } }, o.sub),
+        h('div', { key: 'sw', style: { display: 'flex', gap: '6px', marginTop: '12px', alignItems: 'center' } }, [
+          h('div', { key: 'p', style: { width: '30px', height: '30px', borderRadius: '8px', background: o.primary } }),
+          h('div', { key: 'o', style: { width: '30px', height: '30px', borderRadius: '8px', background: ORANGE } }),
+          h('div', { key: 'pa', style: { width: '30px', height: '30px', borderRadius: '8px', background: '#FBF7F1', border: '1px solid #E3DCCF' } }),
+          h('span', { key: 'hex', style: { fontFamily: "'Space Mono',monospace", fontSize: '11px', color: '#9A8F82', marginLeft: '4px' } }, o.primary.toUpperCase()),
+        ]),
+      ]),
+    ]);
+    return { swatches: opts.map(card) };
+  }
+}
+</script>
+</body>
+</html>

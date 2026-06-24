@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/colors.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/typography.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/effects.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/a11y.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/tokens/responsive.css">
+<link rel="stylesheet" href="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/styles.css">
+<script src="_ds/peopleos-design-system-eb8f2f86-14a4-48cc-83af-9a52f0d483e6/_ds_bundle.js"></script>
+<script src="image-slot.js"></script>
+<script src="data/network-data.js"></script>
+<script src="data/content.js"></script>
+<script>try{if(localStorage.getItem('peopleos_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-sans);-webkit-font-smoothing:antialiased;}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="styles/theme.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/habits.css">
+<link rel="stylesheet" href="styles/network.css">
+<link rel="stylesheet" href="styles/affirmations.css">
+<link rel="stylesheet" href="styles/meetings.css">
+<link rel="stylesheet" href="styles/future.css">
+<link rel="stylesheet" href="styles/vision.css">
+</helmet>
+<div style="height:100vh;width:100%;overflow:hidden">{{ app }}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    layout: (() => { try { return localStorage.getItem('vivarta_layout') || 'A'; } catch (e) { return 'A'; } })(),
+    nav: 'habits',
+    dark: false,
+    q: '',
+    meetingDone: {},
+    habitDone: { 'vivek:workout': true, 'vivek:meditation': true, 'vivek:reading': true, 'vivek:pranayama': true, 'vivek:diary': true, 'vivek:cad': true, 'vivek:nvidia': true, 'mirat:workout': true, 'mirat:reading': true, 'mirat:diary': true, 'mirat:nvidia': true, 'mirat:events': true },
+    rule3Done: { 'vivek:0': true, 'mirat:0': true, 'mirat:1': true },
+    habitRange: 'day',
+    visionFilter: 'All',
+    visionFocus: null,
+    contactDone: {},
+    netStatus: 'all',
+    netInterest: 'All',
+    contactDetail: null,
+    futureTab: 'mine',
+    discoverRing: 'all',
+    showAddEvent: false,
+    newEvent: { title: '', date: '', location: 'Ahmedabad', priority: 'medium', prep: '', owner: 'both' },
+    userEvents: (() => { try { return JSON.parse(localStorage.getItem('vivartam_events') || '[]'); } catch (e) { return []; } })(),
+    savedDiscover: (() => { try { return JSON.parse(localStorage.getItem('vivartam_saved_events') || '{}'); } catch (e) { return {}; } })(),
+    mentorNotes: (() => { try { return JSON.parse(localStorage.getItem('vivartam_mentor_notes') || '{}'); } catch (e) { return {}; } })(),
+    editSession: null,
+    draftNotes: '',
+    draftLearning: '',
+    draftTitle: '',
+    showAllSessions: false,
+    meetTrack: 'rohan',
+    tracks: (() => { try { return JSON.parse(localStorage.getItem('vivartam_tracks') || '[]'); } catch (e) { return []; } })(),
+    meetingNotes: (() => { try { return JSON.parse(localStorage.getItem('vivartam_meeting_notes') || '{}'); } catch (e) { return {}; } })(),
+    editKey: null,
+    showAddTrack: false,
+    newTrack: { name: '', role: '', kind: 'person', cadence: '14', anchor: '' },
+    showLogMeeting: false,
+    newMeeting: { date: '', title: '', notes: '', learning: '' },
+    affirmItems: (() => { try { return JSON.parse(localStorage.getItem('vivartam_affirmations') || '{}'); } catch (e) { return {}; } })(),
+    editAff: null,
+    draftAff: '',
+    affirmReviewed: (() => { try { return localStorage.getItem('vivartam_affirm_reviewed') || ''; } catch (e) { return ''; } })(),
+    dsReady: false,
+  };
+
+  componentDidMount() {
+    this.setState({ dark: document.documentElement.getAttribute('data-theme') === 'dark' });
+    if (window.PeopleOSDesignSystem_eb8f2f) { this.setState({ dsReady: true }); }
+    else { this._poll = setInterval(() => { if (window.PeopleOSDesignSystem_eb8f2f) { clearInterval(this._poll); this.setState({ dsReady: true }); } }, 40); }
+  }
+  componentWillUnmount() { if (this._poll) clearInterval(this._poll); }
+
+  /* ---------------- data ---------------- */
+  get data() { return window.VIVARTAM.data; }
+  get TODAY() { return new Date('2026-06-24T00:00:00'); }
+
+  /* ---------------- helpers ---------------- */
+  fmt(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  fmtShort(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }); }
+  daysUntil(d) { return Math.ceil((new Date(d + 'T00:00:00') - this.TODAY) / 86400000); }
+  isDone(m) { const o = this.state.meetingDone[m.id]; return o === undefined ? m.status === 'completed' : o; }
+  toggleMeeting(m) { this.setState(s => ({ meetingDone: Object.assign({}, s.meetingDone, { [m.id]: !this.isDone(m) }) })); }
+  setLayout(l) { this.setState({ layout: l }); try { localStorage.setItem('vivarta_layout', l); } catch (e) {} }
+  toggleTheme() {
+    const next = !this.state.dark; this.setState({ dark: next });
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+    try { localStorage.setItem('peopleos_theme', next ? 'dark' : 'light'); } catch (e) {}
+  }
+
+  /* ---------------- icons ---------------- */
+  get I() {
+    const h = React.createElement;
+    const p = (d, k) => h('path', { d, key: k });
+    const ci = (cx, cy, r, k) => h('circle', { cx, cy, r, key: k });
+    const svg = (kids, s) => h('svg', { viewBox: '0 0 24 24', width: s || 18, height: s || 18, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, kids);
+    return {
+      overview: (s) => svg([h('rect', { x: 3, y: 3, width: 7.5, height: 7.5, rx: 1.6, key: 1 }), h('rect', { x: 13.5, y: 3, width: 7.5, height: 7.5, rx: 1.6, key: 2 }), h('rect', { x: 3, y: 13.5, width: 7.5, height: 7.5, rx: 1.6, key: 3 }), h('rect', { x: 13.5, y: 13.5, width: 7.5, height: 7.5, rx: 1.6, key: 4 })], s),
+      timeline: (s) => svg([p('M5 22V3', 1), p('M5 4h11.5l-2.2 3.2L16.5 10.5H5', 2)], s),
+      meetings: (s) => svg([h('rect', { x: 3, y: 4.5, width: 18, height: 16, rx: 2, key: 1 }), p('M3 9h18M8 2.5v4M16 2.5v4', 2)], s),
+      network: (s) => svg([ci(9, 8, 3.2, 1), p('M3.5 20a5.5 5.5 0 0 1 11 0', 2), p('M16 5.2a3.2 3.2 0 0 1 0 6.2', 3), p('M17.5 20a5.5 5.5 0 0 0-2.3-4.5', 4)], s),
+      future: (s) => svg([ci(12, 12, 9, 1), ci(12, 12, 5, 2), ci(12, 12, 1.4, 3)], s),
+      settings: (s) => svg([ci(12, 12, 3, 1), p('M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.3 1a7 7 0 0 0-2-1.2L16.2 2h-4l-.4 2.4a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.6A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.4h4l.4-2.4a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.6A7 7 0 0 0 19 12Z', 2)], s),
+      bell: (s) => svg([p('M10.3 21a2 2 0 0 0 3.4 0', 1), p('M3.3 15.4a1 1 0 0 0 .7 1.6h16a1 1 0 0 0 .7-1.6C19.4 14 18 12.4 18 8A6 6 0 0 0 6 8c0 4.4-1.4 6-2.7 7.4', 2)], s),
+      search: (s) => svg([ci(11, 11, 7, 1), p('m21 21-4.3-4.3', 2)], s),
+      plus: (s) => svg([p('M12 5v14M5 12h14', 1)], s),
+      check: (s) => svg([p('M5 12.5 10 17l9-10', 1)], s),
+      chevron: (s) => svg([p('m9 6 6 6-6 6', 1)], s),
+      bolt: (s) => svg([p('M13 2 4 14h7l-1 8 9-12h-7l1-8Z', 1)], s),
+      clock: (s) => svg([ci(12, 12, 9, 1), p('M12 7v5l3 2', 2)], s),
+      sun: (s) => svg([ci(12, 12, 4.3, 1), p('M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7', 2)], s),
+      moon: (s) => svg([p('M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z', 1)], s),
+      habits: (s) => svg([ci(12, 12, 9, 1), p('M8.4 12.4 11 15l4.6-5.2', 2)], s),
+      vision: (s) => svg([p('M12 3l1.7 5.1 5.3.1-4.3 3.1 1.6 5.1L12 14.4 7.7 16.5l1.6-5.1-4.3-3.1 5.3-.1z', 1)], s),
+      bulbNav: (s) => svg([p('M9 18h6M10 21h4', 1), p('M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3Z', 2)], s),
+    };
+  }
+
+
+  /* ---------------- pieces ---------------- */
+  mark(s) {
+    const h = React.createElement;
+    s = s || 30;
+    return h('svg', { width: s, height: s, viewBox: '36 36 82 82', fill: 'none', style: { flex: 'none' } }, [
+      h('path', { d: 'M76 112 A36 36 0 1 1 112 76', stroke: '#fff', strokeWidth: 5.5, strokeLinecap: 'round', key: 1 }),
+      h('path', { d: 'M50 76 A26 26 0 0 1 102 76', stroke: '#93A1B4', strokeWidth: 5.5, strokeLinecap: 'round', key: 2 }),
+      h('path', { d: 'M76 60 A16 16 0 0 1 92 76', stroke: '#66768E', strokeWidth: 5.5, strokeLinecap: 'round', key: 3 }),
+      h('circle', { cx: 76, cy: 76, r: 7, fill: '#F2A024', key: 4 }),
+    ]);
+  }
+
+  priColor(p) { return p === 'high' ? 'var(--danger)' : p === 'medium' ? 'var(--orange)' : 'var(--steel)'; }
+  priLabel(p) { return p === 'high' ? 'Critical' : p === 'medium' ? 'Important' : 'Upcoming'; }
+
+  sectionHead(DS, icon, title, count, accent) {
+    const h = React.createElement;
+    return h('div', { className: 'vv-sec-h' }, [
+      h('div', { className: 'vv-sec-ic', style: { background: accent.bg, color: accent.fg }, key: 'i' }, icon),
+      h('h2', { key: 'h' }, title),
+      count != null ? h('span', { className: 'cnt', key: 'c' }, count) : null,
+    ]);
+  }
+
+  /* ---------------- widgets ---------------- */
+  timelineCard(DS, opts) {
+    const h = React.createElement, I = this.I;
+    const events = [...this.data.timeline].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const list = (opts && opts.full) ? events : events.slice(0, 5);
+    const rows = list.map(ev => {
+      const major = ev.type === 'major';
+      return h('div', { className: 'ev', key: ev.id }, [
+        h('div', { className: 'dot', style: { background: major ? 'var(--orange)' : 'var(--gray-400)' }, key: 'd' }),
+        h('div', { className: 'card' + (major ? ' major' : ''), key: 'c' }, [
+          h('div', { className: 't', key: 1 }, ev.title),
+          h('div', { className: 'meta', key: 2 }, [
+            h('span', { className: 'date', key: 'a' }, this.fmt(ev.date)),
+            h(DS.Badge, { tone: major ? 'amber' : 'neutral', size: 'sm', key: 'b' }, major ? 'Major' : 'Minor'),
+          ]),
+          ev.desc ? h('div', { className: 'desc', key: 3 }, ev.desc) : null,
+        ]),
+      ]);
+    });
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, I.timeline(18), 'Milestone timeline', events.length + ' events', { bg: 'var(--orange-tint)', fg: 'var(--orange-deep)' }),
+      h('div', { className: 'vv-tl', key: 'tl' }, [h('div', { className: 'line', key: 'l' }), ...rows]),
+    ]);
+  }
+
+  /* ---------------- future events: discovery feed ---------------- */
+  get discoverRings() { return window.VIVARTAM.discoverRings; }
+  get discoverEvents() { return window.VIVARTAM.discoverEvents; }
+  get incubators() { return window.VIVARTAM.incubators; }
+  isSaved(id) { return !!this.state.savedDiscover[id]; }
+  toggleSave(ev) {
+    const id = ev.id;
+    this.setState(s => {
+      const sv = Object.assign({}, s.savedDiscover);
+      if (sv[id]) delete sv[id]; else sv[id] = { title: ev.title, date: ev.date, location: ev.city, org: ev.org };
+      try { localStorage.setItem('vivartam_saved_events', JSON.stringify(sv)); } catch (e) {}
+      return { savedDiscover: sv };
+    });
+  }
+  allMyEvents() {
+    const saved = Object.keys(this.state.savedDiscover).map(id => {
+      const s = this.state.savedDiscover[id];
+      return { id: 'sv-' + id, title: s.title, date: s.date, location: s.location, owner: 'both', priority: 'medium', prep: 'Saved from Discover \u00b7 ' + (s.org || ''), saved: true };
+    });
+    return [...this.data.future, ...this.state.userEvents, ...saved];
+  }
+  addEvent() {
+    const n = this.state.newEvent;
+    if (!n.title.trim() || !n.date) return;
+    const ev = { id: 'u' + Date.now(), title: n.title.trim(), date: n.date, priority: n.priority, location: n.location || 'Ahmedabad', owner: n.owner, prep: n.prep.trim(), custom: true };
+    this.setState(s => {
+      const ue = [...s.userEvents, ev];
+      try { localStorage.setItem('vivartam_events', JSON.stringify(ue)); } catch (e) {}
+      return { userEvents: ue, showAddEvent: false, newEvent: { title: '', date: '', location: 'Ahmedabad', priority: 'medium', prep: '', owner: 'both' } };
+    });
+  }
+  removeUserEvent(id) {
+    this.setState(s => { const ue = s.userEvents.filter(e => e.id !== id); try { localStorage.setItem('vivartam_events', JSON.stringify(ue)); } catch (e) {} return { userEvents: ue }; });
+  }
+  setNE(k, v) { this.setState(s => ({ newEvent: Object.assign({}, s.newEvent, { [k]: v }) })); }
+  ownerMeta(o) { return o === 'vivek' ? { name: 'Vivek Dagur', color: 'var(--steel)', label: 'Vivek' } : o === 'mirat' ? { name: 'Mirat Soni', color: '#8A5CC4', label: 'Mirat' } : { name: 'Both', color: 'var(--pa)', label: 'Both' }; }
+
+  renderFuture(DS) {
+    const h = React.createElement, I = this.I;
+    const tabs = [['mine', 'Our events'], ['discover', 'Discover'], ['incubators', 'Incubation centres']];
+    const tab = this.state.futureTab;
+    return h('div', { className: 'vv-fut' }, [
+      h('div', { className: 'vv-futtabs', key: 'tabs' }, tabs.map(t => h('button', { key: t[0], className: 'vv-futtab' + (tab === t[0] ? ' on' : ''), onClick: () => this.setState({ futureTab: t[0] }) }, t[1]))),
+      tab === 'mine' ? this.futMine(DS) : tab === 'discover' ? this.futDiscover(DS) : this.futIncubators(DS),
+    ]);
+  }
+
+  futMine(DS) {
+    const h = React.createElement, I = this.I;
+    const events = this.allMyEvents().sort((a, b) => this.daysUntil(a.date) - this.daysUntil(b.date));
+    const groups = ['high', 'medium', 'low'].map(pr => {
+      const g = events.filter(e => (e.priority || 'medium') === pr);
+      if (!g.length) return null;
+      return h('div', { className: 'vv-fgroup', key: pr }, [
+        h('div', { className: 'vv-fglabel', style: { color: this.priColor(pr) }, key: 'l' }, [h('span', { className: 'b', style: { background: this.priColor(pr) }, key: 'b' }), this.priLabel(pr)]),
+        ...g.map(ev => this.myEventRow(DS, ev)),
+      ]);
+    });
+    return h('div', { key: 'mine' }, [
+      h(DS.Card, { padding: 'lg', key: 'add' }, this.state.showAddEvent ? this.addEventForm(DS) : h('div', { className: 'vv-addbar' }, [
+        h('div', { key: 't' }, [
+          h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', letterSpacing: '-.01em' }, key: 1 }, 'Plan a new event'),
+          h('div', { style: { fontSize: '13px', color: 'var(--text-muted)', marginTop: '3px' }, key: 2 }, 'Add anything you or Mirat want to attend, host or prep for.'),
+        ]),
+        h(DS.Button, { variant: 'accent', size: 'md', leadingIcon: I.plus(16), onClick: () => this.setState({ showAddEvent: true }), key: 'b' }, 'Add event'),
+      ])),
+      h('div', { style: { marginTop: '18px' }, key: 'list' }, groups),
+    ]);
+  }
+  addEventForm(DS) {
+    const h = React.createElement;
+    const n = this.state.newEvent;
+    const owners = [['both', 'Both'], ['vivek', 'Vivek'], ['mirat', 'Mirat']];
+    const pris = [['high', 'Critical'], ['medium', 'Important'], ['low', 'Upcoming']];
+    const field = (label, node) => h('div', { className: 'vv-field', key: label }, [h('label', { className: 'vv-flabel', key: 'l' }, label), node]);
+    return h('div', { className: 'vv-form' }, [
+      h('div', { className: 'vv-formhd', key: 'hd' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px' }, key: 1 }, 'New event'),
+        h('button', { className: 'vv-modal-x', style: { position: 'static' }, onClick: () => this.setState({ showAddEvent: false }), key: 2 }, this.hi('x', 16)),
+      ]),
+      field('Event title', h('input', { className: 'vv-input', value: n.title, placeholder: 'e.g. Coffee with a CHRO', onChange: e => this.setNE('title', e.target.value), key: 'i' })),
+      h('div', { className: 'vv-form2', key: 'r1' }, [
+        field('Date', h('input', { type: 'date', className: 'vv-input', value: n.date, onChange: e => this.setNE('date', e.target.value), key: 'i' })),
+        field('Location', h('input', { className: 'vv-input', value: n.location, placeholder: 'Ahmedabad', onChange: e => this.setNE('location', e.target.value), key: 'i' })),
+      ]),
+      h('div', { className: 'vv-form2', key: 'r2' }, [
+        field('Who', h('div', { className: 'vv-pickrow', key: 'p' }, owners.map(o => h('button', { key: o[0], className: 'vv-pick' + (n.owner === o[0] ? ' on' : ''), onClick: () => this.setNE('owner', o[0]) }, o[1])))),
+        field('Priority', h('div', { className: 'vv-pickrow', key: 'p' }, pris.map(o => h('button', { key: o[0], className: 'vv-pick' + (n.priority === o[0] ? ' on' : ''), style: n.priority === o[0] ? { borderColor: this.priColor(o[0]), color: this.priColor(o[0]) } : null, onClick: () => this.setNE('priority', o[0]) }, o[1])))),
+      ]),
+      field('Prep notes (optional)', h('textarea', { className: 'vv-input', rows: 2, value: n.prep, placeholder: 'What to prepare beforehand\u2026', onChange: e => this.setNE('prep', e.target.value), key: 'i' })),
+      h('div', { className: 'vv-formactions', key: 'a' }, [
+        h(DS.Button, { variant: 'ghost', size: 'md', onClick: () => this.setState({ showAddEvent: false }), key: 'c' }, 'Cancel'),
+        h(DS.Button, { variant: 'accent', size: 'md', onClick: () => this.addEvent(), key: 's' }, 'Add to our events'),
+      ]),
+    ]);
+  }
+  myEventRow(DS, ev) {
+    const h = React.createElement;
+    const days = this.daysUntil(ev.date);
+    let tone = 'neutral', label;
+    if (days < 0) { tone = 'danger'; label = Math.abs(days) + 'd ago'; }
+    else if (days === 0) { tone = 'danger'; label = 'Today'; }
+    else if (days <= 3) { tone = 'amber'; label = 'In ' + days + ' days'; }
+    else if (days <= 7) { tone = 'warning'; label = 'In ' + days + ' days'; }
+    else { tone = 'neutral'; label = 'In ' + days + ' days'; }
+    const om = this.ownerMeta(ev.owner);
+    return h('div', { className: 'vv-fe', key: ev.id }, [
+      h('div', { className: 'bar', style: { background: this.priColor(ev.priority || 'medium') }, key: 'bar' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'bd' }, [
+        h('div', { style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }, key: 'top' }, [
+          h('div', { className: 't', key: 1 }, ev.title),
+          ev.custom ? h('button', { className: 'vv-xmini', onClick: () => this.removeUserEvent(ev.id), key: 'x' }, this.hi('x', 13)) : null,
+        ]),
+        h('div', { className: 'mrow', key: 2 }, [
+          h(DS.Badge, { tone, size: 'sm', key: 'b' }, label),
+          h('span', { className: 'date', key: 'd' }, this.fmt(ev.date)),
+          ev.location ? h('span', { className: 'vv-mchip', key: 'loc', style: { padding: '2px 8px' } }, [this.netIcon('pin', 11), ev.location]) : null,
+          h('span', { className: 'vv-owntag', style: { background: 'color-mix(in srgb,' + om.color + ' 16%,transparent)', color: om.color }, key: 'o' }, om.label),
+        ]),
+        ev.prep ? h('div', { className: 'prep', key: 3 }, [h('strong', { style: { color: 'var(--text-subtle)', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.08em', textTransform: 'uppercase' }, key: 's' }, 'Prep \u00b7 '), ev.prep]) : null,
+      ]),
+    ]);
+  }
+
+  futDiscover(DS) {
+    const h = React.createElement, I = this.I;
+    const ring = this.state.discoverRing;
+    const rings = this.discoverRings;
+    const evs = [...this.discoverEvents].sort((a, b) => this.daysUntil(a.date) - this.daysUntil(b.date));
+    const ringPills = [['all', 'All regions']].concat(rings.map(r => [r.key, r.label]));
+    const sections = (ring === 'all' ? rings : rings.filter(r => r.key === ring)).map(r => {
+      const g = evs.filter(e => e.ring === r.key);
+      if (!g.length) return null;
+      return h('div', { className: 'vv-dsec', key: r.key }, [
+        h('div', { className: 'vv-dsechd', key: 'hd' }, [
+          h('span', { className: 'vv-dring', key: 'r' }, [this.netIcon('pin', 13), r.label]),
+          h('span', { className: 'vv-dsub', key: 's' }, r.sub),
+          h('span', { className: 'vv-dcount', key: 'c' }, g.length + ' event' + (g.length > 1 ? 's' : '')),
+        ]),
+        h('div', { className: 'vv-dgrid', key: 'g' }, g.map(e => this.discoverCard(DS, e))),
+      ]);
+    });
+    return h('div', { key: 'disc' }, [
+      h('div', { className: 'vv-dfeed', key: 'note' }, [this.netIcon('refer', 14), 'Curated feed \u2014 latest startup & HR events near you, ordered Ahmedabad first, then outward across Gujarat and India.']),
+      h('div', { className: 'vv-dfilters', key: 'flt' }, ringPills.map(p => h('button', { key: p[0], className: 'vv-fpill' + (ring === p[0] ? ' on' : ''), onClick: () => this.setState({ discoverRing: p[0] }) }, p[1]))),
+      ...sections,
+    ]);
+  }
+  discoverCard(DS, e) {
+    const h = React.createElement;
+    const days = this.daysUntil(e.date);
+    const tone = days < 0 ? 'neutral' : days <= 3 ? 'amber' : days <= 7 ? 'warning' : 'neutral';
+    const label = days < 0 ? 'Passed' : days === 0 ? 'Today' : 'In ' + days + 'd';
+    const saved = this.isSaved(e.id);
+    return h('div', { className: 'vv-dcard', key: e.id }, [
+      h('div', { className: 'vv-dtop', key: 'top' }, [
+        h(DS.Badge, { tone: 'steel', size: 'sm', key: 'ty' }, e.type),
+        h(DS.Badge, { tone, size: 'sm', key: 'd' }, label),
+      ]),
+      h('div', { className: 'vv-dtitle', key: 't' }, e.title),
+      h('div', { className: 'vv-dmeta', key: 'm' }, [this.netIcon('building', 12), e.org, h('span', { className: 'vv-ddot', key: 'dot' }, '\u00b7'), this.netIcon('pin', 12), e.city]),
+      e.desc ? h('div', { className: 'vv-ddesc', key: 'ds' }, e.desc) : null,
+      h('div', { className: 'vv-dfoot', key: 'f' }, [
+        h('span', { className: 'vv-ddate', key: 'dt' }, this.fmt(e.date)),
+        h('button', { className: 'vv-savebtn' + (saved ? ' on' : ''), onClick: () => this.toggleSave(e), key: 'sv' }, saved ? [this.hi('check', 13), ' Saved'] : [this.hi('plus', 13), ' Add to our events']),
+      ]),
+    ]);
+  }
+
+  futIncubators(DS) {
+    const h = React.createElement;
+    return h('div', { key: 'inc' }, [
+      h('div', { className: 'vv-dfeed', key: 'note' }, [this.netIcon('building', 14), 'Incubation & innovation centres across Ahmedabad \u2014 cohorts, demo days and office hours to tap into.']),
+      h('div', { className: 'vv-incgrid', key: 'g' }, this.incubators.map(c => this.incubatorCard(DS, c))),
+    ]);
+  }
+  incubatorCard(DS, c) {
+    const h = React.createElement;
+    const days = this.daysUntil(c.next.date);
+    const tone = days < 0 ? 'neutral' : days <= 7 ? 'amber' : 'neutral';
+    const label = days < 0 ? 'Passed' : days === 0 ? 'Today' : 'In ' + days + 'd';
+    return h('div', { className: 'vv-inccard', key: c.id }, [
+      h('div', { className: 'vv-inchd', key: 'hd' }, [
+        h('div', { className: 'vv-incmark', key: 'm' }, this.netIcon('building', 18)),
+        h('div', { style: { minWidth: 0 }, key: 'n' }, [
+          h('div', { className: 'vv-incname', key: 1 }, c.name),
+          h('div', { className: 'vv-incorg', key: 2 }, c.org),
+        ]),
+      ]),
+      h('div', { className: 'vv-incfocus', key: 'f' }, c.focus),
+      h('div', { className: 'vv-incnext', key: 'nx' }, [
+        h('div', { style: { minWidth: 0, flex: 1 }, key: 't' }, [
+          h('div', { className: 'vv-incnlbl', key: 1 }, 'Next'),
+          h('div', { className: 'vv-incntitle', key: 2 }, c.next.title),
+          h('div', { className: 'vv-incndate', key: 3 }, this.fmt(c.next.date)),
+        ]),
+        h(DS.Badge, { tone, size: 'sm', key: 'b' }, label),
+      ]),
+    ]);
+  }
+
+  futureCard(DS) {
+    const h = React.createElement, I = this.I;
+    const events = [...this.data.future].sort((a, b) => this.daysUntil(a.date) - this.daysUntil(b.date));
+    const groups = ['high', 'medium', 'low'].map(pr => {
+      const g = events.filter(e => e.priority === pr);
+      if (!g.length) return null;
+      return h('div', { className: 'vv-fgroup', key: pr }, [
+        h('div', { className: 'vv-fglabel', style: { color: this.priColor(pr) }, key: 'l' }, [
+          h('span', { className: 'b', style: { background: this.priColor(pr) }, key: 'b' }), this.priLabel(pr),
+        ]),
+        ...g.map(ev => this.futureRow(DS, ev)),
+      ]);
+    });
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, I.future(18), 'Future events', events.length + ' planned', { bg: 'var(--steel-tint)', fg: 'var(--steel-deep)' }),
+      ...groups,
+    ]);
+  }
+  futureRow(DS, ev) {
+    const h = React.createElement;
+    const days = this.daysUntil(ev.date);
+    let tone = 'neutral', label = this.fmtShort(ev.date);
+    if (days < 0) { tone = 'danger'; label = Math.abs(days) + 'd overdue'; }
+    else if (days === 0) { tone = 'danger'; label = 'Today'; }
+    else if (days <= 3) { tone = 'amber'; label = 'In ' + days + ' days'; }
+    else if (days <= 7) { tone = 'warning'; label = 'In ' + days + ' days'; }
+    else { tone = 'neutral'; label = 'In ' + days + ' days'; }
+    return h('div', { className: 'vv-fe', key: ev.id }, [
+      h('div', { className: 'bar', style: { background: this.priColor(ev.priority) }, key: 'bar' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'bd' }, [
+        h('div', { className: 't', key: 1 }, ev.title),
+        h('div', { className: 'mrow', key: 2 }, [
+          h(DS.Badge, { tone, size: 'sm', key: 'b' }, label),
+          h('span', { className: 'date', key: 'd' }, this.fmt(ev.date)),
+        ]),
+        ev.prep ? h('div', { className: 'prep', key: 3 }, [h('strong', { style: { color: 'var(--text-subtle)', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.08em', textTransform: 'uppercase' }, key: 's' }, 'Prep · '), ev.prep]) : null,
+      ]),
+    ]);
+  }
+
+  /* ---------------- mentorship (Meetings tab) ---------------- */
+  get mentor() { return window.VIVARTAM.mentor; }
+  get mentorSeeds() { return window.VIVARTAM.mentorSeeds; }
+  get mentorSchedule() {
+    const anchor = new Date(this.mentor.anchor + 'T00:00:00');
+    const end = new Date(anchor); end.setMonth(end.getMonth() + 18);
+    const out = [];
+    // start 5 sessions before the anchor for a little history
+    let d = new Date(anchor); d.setDate(d.getDate() - 5 * 14);
+    let n = 1;
+    while (d <= end) {
+      out.push({ date: this.dstr(d), n });
+      d = new Date(d); d.setDate(d.getDate() + 14); n++;
+    }
+    return out;
+  }
+  getMentorNote(date) {
+    const s = this.state.mentorNotes[date];
+    if (s !== undefined) return s;
+    return this.mentorSeeds[date] || null;
+  }
+  nextSession() {
+    const today = this.dstr(this.TODAY);
+    return this.mentorSchedule.find(s => s.date >= today) || null;
+  }
+  startEditSession(date) {
+    const cur = this.getMentorNote(date) || {};
+    this.setState({ editSession: date, draftNotes: cur.notes || '', draftLearning: cur.learning || '' });
+  }
+  saveMentorNote() {
+    const date = this.state.editSession;
+    this.setState(s => {
+      const mn = Object.assign({}, s.mentorNotes, { [date]: { notes: s.draftNotes.trim(), learning: s.draftLearning.trim() } });
+      try { localStorage.setItem('vivartam_mentor_notes', JSON.stringify(mn)); } catch (e) {}
+      return { mentorNotes: mn, editSession: null, draftNotes: '', draftLearning: '' };
+    });
+  }
+
+  renderMentorship(DS) {
+    const h = React.createElement, I = this.I;
+    const sched = this.mentorSchedule;
+    const todayStr = this.dstr(this.TODAY);
+    const past = sched.filter(s => s.date < todayStr).sort((a, b) => b.date.localeCompare(a.date));
+    const upcoming = sched.filter(s => s.date >= todayStr);
+    const next = upcoming[0];
+    const logged = sched.filter(s => { const nt = this.getMentorNote(s.date); return nt && (nt.notes || nt.learning); }).length;
+    return h('div', { className: 'vv-ment' }, [
+      this.mentorHero(DS, next, past.length, logged),
+      h('div', { className: 'vv-mentcols', key: 'cols' }, [
+        h('div', { key: 'log' }, [
+          h('div', { className: 'vv-sec-h', key: 'h', style: { marginBottom: '14px' } }, [
+            h('div', { className: 'vv-sec-ic', style: { background: 'var(--pa-tint, color-mix(in srgb,var(--pa) 14%,transparent))', color: 'var(--pa-strong)' }, key: 'i' }, I.meetings(18)),
+            h('h2', { key: 'h2' }, 'Session log'),
+            h('span', { className: 'cnt', key: 'c' }, logged + ' logged'),
+          ]),
+          next ? this.sessionCard(DS, next, true) : null,
+          ...past.map(s => this.sessionCard(DS, s, false)),
+        ]),
+        h('div', { key: 'sched' }, [
+          h('div', { className: 'vv-sec-h', key: 'h', style: { marginBottom: '14px' } }, [
+            h('div', { className: 'vv-sec-ic', style: { background: 'color-mix(in srgb,var(--pa) 14%,transparent)', color: 'var(--pa-strong)' }, key: 'i' }, I.future(18)),
+            h('h2', { key: 'h2' }, 'Upcoming schedule'),
+            h('span', { className: 'cnt', key: 'c' }, upcoming.length + ' planned'),
+          ]),
+          h(DS.Card, { padding: 'lg', key: 'card' }, [
+            h('div', { className: 'vv-schednote', key: 'n' }, 'Auto-planned every alternate Saturday through ' + this.fmt(sched[sched.length - 1].date) + '.'),
+            ...(this.state.showAllSessions ? upcoming : upcoming.slice(0, 8)).map(s => this.scheduleRow(DS, s)),
+            upcoming.length > 8 ? h('button', { className: 'vv-showall', onClick: () => this.setState({ showAllSessions: !this.state.showAllSessions }), key: 'more' }, this.state.showAllSessions ? 'Show less' : 'Show all ' + upcoming.length + ' sessions') : null,
+          ]),
+        ]),
+      ]),
+    ]);
+  }
+  mentorHero(DS, next, doneCount, logged) {
+    const h = React.createElement;
+    const days = next ? this.daysUntil(next.date) : null;
+    const stats = [[String(doneCount), 'sessions done'], [String(logged), 'logs written'], ['2wk', 'cadence']];
+    return h(DS.Card, { brand: true, padding: 'lg', key: 'hero' }, h('div', { className: 'vv-menthero' }, [
+      h('div', { className: 'vv-menthero-l', key: 'l' }, [
+        h('div', { className: 'eyebrow', key: 'e', style: { fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--text-on-brand-muted)', marginBottom: '12px' } }, 'Mentorship'),
+        h('div', { className: 'vv-menthd', key: 'hd' }, [
+          h(DS.Avatar, { name: this.mentor.name, color: 'var(--orange)', size: 'lg', key: 'av' }),
+          h('div', { key: 'n', style: { minWidth: 0 } }, [
+            h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '22px', letterSpacing: '-.01em', color: '#fff' }, key: 1 }, this.mentor.name),
+            h('div', { style: { fontSize: '13px', color: 'var(--text-on-brand-muted)', marginTop: '3px' }, key: 2 }, this.mentor.role + ' \u00b7 ' + this.mentor.cadence),
+          ]),
+        ]),
+        h('div', { className: 'vv-mentstats', key: 'st' }, stats.map((s, i) => h('div', { className: 'vv-mentstat', key: i }, [h('div', { className: 'n', key: 1 }, s[0]), h('div', { className: 'l', key: 2 }, s[1])]))),
+      ]),
+      next ? h('div', { className: 'vv-mentnext', key: 'r' }, [
+        h('div', { className: 'l', key: 1 }, 'Next session'),
+        h('div', { className: 'd', key: 2 }, this.fmtShort(next.date)),
+        h('div', { className: 'cd', key: 3 }, days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : 'in ' + days + ' days'),
+        h('div', { className: 'sat', key: 4 }, 'Saturday \u00b7 ' + this.mentor.location),
+      ]) : null,
+    ]));
+  }
+  sessionCard(DS, s, isNext) {
+    const h = React.createElement;
+    const nt = this.getMentorNote(s.date);
+    const editing = this.state.editSession === s.date;
+    const has = nt && (nt.notes || nt.learning);
+    const days = this.daysUntil(s.date);
+    return h(DS.Card, { padding: 'lg', key: s.date, className: 'vv-scard' + (isNext ? ' next' : '') }, [
+      h('div', { className: 'vv-shd', key: 'hd' }, [
+        h('div', { key: 'l', style: { minWidth: 0 } }, [
+          h('div', { className: 'vv-stitle', key: 1 }, [
+            'Session ' + s.n,
+            isNext ? h(DS.Badge, { tone: days === 0 ? 'danger' : 'amber', size: 'sm', key: 'b' }, days === 0 ? 'Today' : 'Next \u00b7 in ' + days + 'd') : null,
+          ]),
+          h('div', { className: 'vv-sdate', key: 2 }, this.fmt(s.date) + ' \u00b7 with ' + this.mentor.name),
+        ]),
+        h('button', { className: 'vv-editbtn', onClick: () => this.startEditSession(s.date), key: 'e' }, [this.hi('edit', 13), has ? ' Edit' : ' Add notes']),
+      ]),
+      editing ? h('div', { className: 'vv-sedit', key: 'ed' }, [
+        h('div', { className: 'vv-field', key: 'n' }, [h('label', { className: 'vv-flabel', key: 'l' }, 'Meeting notes'), h('textarea', { className: 'vv-input', rows: 3, value: this.state.draftNotes, placeholder: 'What did you discuss?', onChange: e => this.setState({ draftNotes: e.target.value }), key: 'i' })]),
+        h('div', { className: 'vv-field', key: 'le' }, [h('label', { className: 'vv-flabel', key: 'l' }, 'Key learning'), h('textarea', { className: 'vv-input', rows: 2, value: this.state.draftLearning, placeholder: 'The one thing to remember\u2026', onChange: e => this.setState({ draftLearning: e.target.value }), key: 'i' })]),
+        h('div', { className: 'vv-formactions', key: 'a' }, [
+          h(DS.Button, { variant: 'ghost', size: 'sm', onClick: () => this.setState({ editSession: null }), key: 'c' }, 'Cancel'),
+          h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.saveMentorNote(), key: 's' }, 'Save log'),
+        ]),
+      ]) : (has ? h('div', { key: 'body' }, [
+        nt.notes ? h('div', { className: 'vv-snotes', key: 'n' }, nt.notes) : null,
+        nt.learning ? h('div', { className: 'vv-slearn', key: 'l' }, [h('span', { className: 'lk', key: 'k' }, [this.hi('bolt', 12), 'Learning']), h('span', { className: 'lv', key: 'v' }, nt.learning)]) : null,
+      ]) : h('div', { className: 'vv-sempty', key: 'empty' }, isNext ? 'Prep your questions \u2014 add notes after you meet.' : 'No notes logged for this session yet.')),
+    ]);
+  }
+  scheduleRow(DS, s) {
+    const h = React.createElement;
+    const days = this.daysUntil(s.date);
+    const soon = days <= 14;
+    return h('div', { className: 'vv-schedrow', key: s.date }, [
+      h('div', { className: 'vv-scheddot', style: { background: soon ? 'var(--pa)' : 'var(--border-strong)' }, key: 'd' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'b' }, [
+        h('div', { className: 'vv-schedt', key: 1 }, 'Session ' + s.n),
+        h('div', { className: 'vv-schedd', key: 2 }, this.fmt(s.date) + ' \u00b7 Saturday'),
+      ]),
+      h('span', { className: 'vv-schedwhen', key: 'w' }, days === 0 ? 'Today' : 'in ' + days + 'd'),
+    ]);
+  }
+
+  /* ---------------- meetings: generalized tracks ---------------- */
+  get rohanTrack() { return { id: 'rohan', name: 'Rohan Shah', role: 'Startup mentor', kind: 'mentor', cadenceDays: 14, cadenceLabel: 'Every alternate Saturday', anchor: '2026-06-20', location: 'Ahmedabad', color: 'var(--orange)' }; }
+  allTracks() { return [this.rohanTrack, ...this.state.tracks]; }
+  currentTrack() { return this.allTracks().find(t => t.id === this.state.meetTrack) || this.rohanTrack; }
+  trackColor(t) { return t.color || (t.kind === 'recurring' ? '#8A5CC4' : 'var(--steel)'); }
+  cadenceLabel(t) { const d = t.cadenceDays || 14; return d === 7 ? 'Weekly' : d === 14 ? 'Every alternate week' : d === 30 ? 'Monthly' : 'Every ' + d + ' days'; }
+  scheduleFor(t) {
+    if (!(t.kind === 'mentor' || t.kind === 'recurring') || !t.anchor) return [];
+    const cad = t.cadenceDays || 14;
+    const anchor = new Date(t.anchor + 'T00:00:00');
+    const end = new Date(anchor); end.setMonth(end.getMonth() + (t.kind === 'mentor' ? 18 : 12));
+    const back = t.kind === 'mentor' ? 5 : 2;
+    let d = new Date(anchor); d.setDate(d.getDate() - back * cad);
+    const out = []; let n = 1; let guard = 0;
+    while (d <= end && guard++ < 200) { out.push({ date: this.dstr(d), n }); d = new Date(d); d.setDate(d.getDate() + cad); n++; }
+    return out;
+  }
+  trackNoteKey(t, date) { return t.id + '|' + date; }
+  getTrackNote(t, date) {
+    const v = this.state.meetingNotes[this.trackNoteKey(t, date)];
+    if (v !== undefined) return v;
+    if (t.id === 'rohan') { const m = this.state.mentorNotes[date]; if (m !== undefined) return m; return this.mentorSeeds[date] || null; }
+    return null;
+  }
+  loggedDatesFor(t) {
+    const pre = t.id + '|';
+    return Object.keys(this.state.meetingNotes).filter(k => k.indexOf(pre) === 0).map(k => k.slice(pre.length)).sort((a, b) => b.localeCompare(a));
+  }
+  saveTrackNote() {
+    const key = this.state.editKey;
+    this.setState(s => {
+      const mn = Object.assign({}, s.meetingNotes, { [key]: { notes: s.draftNotes.trim(), learning: s.draftLearning.trim(), title: (s.draftTitle || '').trim() } });
+      try { localStorage.setItem('vivartam_meeting_notes', JSON.stringify(mn)); } catch (e) {}
+      return { meetingNotes: mn, editKey: null, draftNotes: '', draftLearning: '', draftTitle: '' };
+    });
+  }
+  startEditKey(t, date) {
+    const cur = this.getTrackNote(t, date) || {};
+    this.setState({ editKey: this.trackNoteKey(t, date), draftNotes: cur.notes || '', draftLearning: cur.learning || '', draftTitle: cur.title || '' });
+  }
+  setNT(k, v) { this.setState(s => ({ newTrack: Object.assign({}, s.newTrack, { [k]: v }) })); }
+  setNM(k, v) { this.setState(s => ({ newMeeting: Object.assign({}, s.newMeeting, { [k]: v }) })); }
+  addTrack() {
+    const n = this.state.newTrack;
+    if (!n.name.trim()) return;
+    const recurring = n.kind === 'recurring';
+    const t = { id: 't' + Date.now(), name: n.name.trim(), role: n.role.trim() || (recurring ? 'Recurring series' : 'Contact'), kind: recurring ? 'recurring' : 'person', cadenceDays: recurring ? parseInt(n.cadence, 10) : null, anchor: recurring ? (n.anchor || this.dstr(this.TODAY)) : null, color: recurring ? '#8A5CC4' : 'var(--steel)' };
+    this.setState(s => {
+      const ts = [...s.tracks, t];
+      try { localStorage.setItem('vivartam_tracks', JSON.stringify(ts)); } catch (e) {}
+      return { tracks: ts, meetTrack: t.id, showAddTrack: false, newTrack: { name: '', role: '', kind: 'person', cadence: '14', anchor: '' } };
+    });
+  }
+  removeTrack(id) {
+    this.setState(s => {
+      const ts = s.tracks.filter(t => t.id !== id);
+      const mn = Object.assign({}, s.meetingNotes);
+      Object.keys(mn).forEach(k => { if (k.indexOf(id + '|') === 0) delete mn[k]; });
+      try { localStorage.setItem('vivartam_tracks', JSON.stringify(ts)); localStorage.setItem('vivartam_meeting_notes', JSON.stringify(mn)); } catch (e) {}
+      return { tracks: ts, meetingNotes: mn, meetTrack: 'rohan' };
+    });
+  }
+  saveLoggedMeeting(t) {
+    const m = this.state.newMeeting;
+    if (!m.date) return;
+    const key = this.trackNoteKey(t, m.date);
+    this.setState(s => {
+      const mn = Object.assign({}, s.meetingNotes, { [key]: { notes: m.notes.trim(), learning: m.learning.trim(), title: m.title.trim() } });
+      try { localStorage.setItem('vivartam_meeting_notes', JSON.stringify(mn)); } catch (e) {}
+      return { meetingNotes: mn, showLogMeeting: false, newMeeting: { date: '', title: '', notes: '', learning: '' } };
+    });
+  }
+
+  renderMeetings(DS) {
+    const h = React.createElement, I = this.I;
+    const track = this.currentTrack();
+    return h('div', { className: 'vv-meet' }, [
+      h('div', { className: 'vv-meetrail', key: 'rail' }, [
+        h('div', { className: 'vv-railhd', key: 'h' }, 'People & series'),
+        ...this.allTracks().map(t => this.trackRailItem(DS, t)),
+        h('button', { className: 'vv-railadd', onClick: () => this.setState({ showAddTrack: true, meetTrack: '' }), key: 'add' }, [I.plus(15), 'Add person or series']),
+      ]),
+      h('div', { className: 'vv-meetbody', key: 'body' }, this.state.showAddTrack ? this.addTrackForm(DS) : (track.id === 'rohan' ? this.renderMentorship(DS) : this.trackDetail(DS, track))),
+    ]);
+  }
+  trackRailItem(DS, t) {
+    const h = React.createElement;
+    const active = !this.state.showAddTrack && this.state.meetTrack === t.id;
+    let meta;
+    if (t.kind === 'mentor' || t.kind === 'recurring') {
+      const today = this.dstr(this.TODAY);
+      const next = this.scheduleFor(t).find(s => s.date >= today);
+      meta = next ? 'Next \u00b7 ' + this.fmtShort(next.date) : 'No upcoming';
+    } else {
+      const dates = this.loggedDatesFor(t);
+      meta = dates.length ? 'Last \u00b7 ' + this.fmtShort(dates[0]) : 'No meetings yet';
+    }
+    return h('div', { className: 'vv-railitem' + (active ? ' on' : ''), onClick: () => this.setState({ meetTrack: t.id, showAddTrack: false, showLogMeeting: false, editKey: null }), key: t.id }, [
+      h(DS.Avatar, { name: t.name, color: this.trackColor(t), size: 'sm', key: 'av' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'b' }, [
+        h('div', { className: 'vv-railname', key: 1 }, t.name),
+        h('div', { className: 'vv-railmeta', key: 2 }, meta),
+      ]),
+      t.kind === 'mentor' ? h('span', { className: 'vv-railpin', key: 'p', title: 'Mentor' }, this.hi('bolt', 12)) : null,
+    ]);
+  }
+  addTrackForm(DS) {
+    const h = React.createElement;
+    const n = this.state.newTrack;
+    const recurring = n.kind === 'recurring';
+    const field = (label, node) => h('div', { className: 'vv-field', key: label }, [h('label', { className: 'vv-flabel', key: 'l' }, label), node]);
+    return h(DS.Card, { padding: 'lg' }, h('div', { className: 'vv-form' }, [
+      h('div', { className: 'vv-formhd', key: 'hd' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '18px', letterSpacing: '-.01em' }, key: 1 }, 'Add person or series'),
+        h('button', { className: 'vv-modal-x', style: { position: 'static' }, onClick: () => this.setState({ showAddTrack: false, meetTrack: 'rohan' }), key: 2 }, this.hi('x', 16)),
+      ]),
+      field('Name', h('input', { className: 'vv-input', value: n.name, placeholder: 'e.g. Priya Sharma, or "Weekly team sync"', onChange: e => this.setNT('name', e.target.value), key: 'i' })),
+      field('Role / context (optional)', h('input', { className: 'vv-input', value: n.role, placeholder: 'e.g. Design partner \u00b7 Swiggy', onChange: e => this.setNT('role', e.target.value), key: 'i' })),
+      field('Type', h('div', { className: 'vv-pickrow', key: 'p' }, [['person', 'One-off / as needed'], ['recurring', 'Recurring series']].map(o => h('button', { key: o[0], className: 'vv-pick' + (n.kind === o[0] ? ' on' : ''), onClick: () => this.setNT('kind', o[0]) }, o[1])))),
+      recurring ? h('div', { className: 'vv-form2', key: 'rec' }, [
+        field('Cadence', h('div', { className: 'vv-pickrow', key: 'c' }, [['7', 'Weekly'], ['14', 'Bi-weekly'], ['30', 'Monthly']].map(o => h('button', { key: o[0], className: 'vv-pick' + (n.cadence === o[0] ? ' on' : ''), onClick: () => this.setNT('cadence', o[0]) }, o[1])))),
+        field('Start / last met', h('input', { type: 'date', className: 'vv-input', value: n.anchor, onChange: e => this.setNT('anchor', e.target.value), key: 'i' })),
+      ]) : null,
+      h('div', { className: 'vv-formactions', key: 'a' }, [
+        h(DS.Button, { variant: 'ghost', size: 'md', onClick: () => this.setState({ showAddTrack: false, meetTrack: 'rohan' }), key: 'c' }, 'Cancel'),
+        h(DS.Button, { variant: 'accent', size: 'md', onClick: () => this.addTrack(), key: 's' }, 'Add'),
+      ]),
+    ]));
+  }
+  trackDetail(DS, t) {
+    const h = React.createElement, I = this.I;
+    const recurring = t.kind === 'recurring';
+    const today = this.dstr(this.TODAY);
+    const logged = this.loggedDatesFor(t);
+    const upcoming = recurring ? this.scheduleFor(t).filter(s => s.date >= today).slice(0, 4) : [];
+    const next = upcoming[0];
+    return h('div', { key: t.id }, [
+      h(DS.Card, { brand: true, padding: 'lg', key: 'hero' }, h('div', { className: 'vv-menthero' }, [
+        h('div', { key: 'l' }, [
+          h('div', { style: { fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--text-on-brand-muted)', marginBottom: '12px' }, key: 'e' }, recurring ? 'Recurring series' : 'Contact'),
+          h('div', { className: 'vv-menthd', key: 'hd' }, [
+            h(DS.Avatar, { name: t.name, color: this.trackColor(t), size: 'lg', key: 'av' }),
+            h('div', { key: 'n', style: { minWidth: 0 } }, [
+              h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '22px', letterSpacing: '-.01em', color: '#fff' }, key: 1 }, t.name),
+              h('div', { style: { fontSize: '13px', color: 'var(--text-on-brand-muted)', marginTop: '3px' }, key: 2 }, t.role + (recurring ? ' \u00b7 ' + this.cadenceLabel(t) : '')),
+            ]),
+          ]),
+          h('div', { className: 'vv-mentstats', key: 'st' }, [[String(logged.length), 'meetings logged'], recurring && next ? [this.fmtShort(next.date), 'next planned'] : ['\u2014', recurring ? 'no date' : 'as needed']].map((s, i) => h('div', { className: 'vv-mentstat', key: i }, [h('div', { className: 'n', key: 1 }, s[0]), h('div', { className: 'l', key: 2 }, s[1])]))),
+        ]),
+        h('div', { className: 'vv-mentnext', key: 'r', style: { display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch', justifyContent: 'center' } }, [
+          h(DS.Button, { variant: 'accent', size: 'md', leadingIcon: I.plus(16), onClick: () => this.setState({ showLogMeeting: true, newMeeting: { date: this.dstr(this.TODAY), title: '', notes: '', learning: '' } }), key: 'log' }, 'Log a meeting'),
+          this.state.tracks.some(x => x.id === t.id) ? h('button', { className: 'vv-rmtrack', onClick: () => this.removeTrack(t.id), key: 'rm' }, 'Remove') : null,
+        ]),
+      ])),
+      this.state.showLogMeeting ? h('div', { style: { marginTop: '18px' }, key: 'logform' }, this.logMeetingForm(DS, t)) : null,
+      recurring && upcoming.length ? h('div', { style: { marginTop: '18px' }, key: 'sug' }, h(DS.Card, { padding: 'lg' }, [
+        h('div', { className: 'vv-schednote', key: 'n', style: { borderBottom: 'none', marginBottom: '8px', paddingBottom: 0 } }, 'Suggested upcoming \u00b7 ' + this.cadenceLabel(t).toLowerCase()),
+        ...upcoming.map(s => { const days = this.daysUntil(s.date); const has = !!this.getTrackNote(t, s.date); return h('div', { className: 'vv-schedrow', key: s.date }, [
+          h('div', { className: 'vv-scheddot', style: { background: days <= (t.cadenceDays || 14) ? 'var(--pa)' : 'var(--border-strong)' }, key: 'd' }),
+          h('div', { style: { flex: 1, minWidth: 0 }, key: 'b' }, [h('div', { className: 'vv-schedt', key: 1 }, this.fmt(s.date)), h('div', { className: 'vv-schedd', key: 2 }, days === 0 ? 'Today' : 'in ' + days + ' days')]),
+          h('button', { className: 'vv-editbtn', onClick: () => this.setState({ showLogMeeting: true, newMeeting: { date: s.date, title: '', notes: '', learning: '' } }), key: 'l' }, has ? [this.hi('check', 12), ' Logged'] : [this.hi('edit', 12), ' Log']),
+        ]); }),
+      ])) : null,
+      h('div', { className: 'vv-sec-h', key: 'logh', style: { margin: '22px 0 14px' } }, [
+        h('div', { className: 'vv-sec-ic', style: { background: 'color-mix(in srgb,var(--pa) 14%,transparent)', color: 'var(--pa-strong)' }, key: 'i' }, I.meetings(18)),
+        h('h2', { key: 'h2' }, 'Meeting log'),
+        h('span', { className: 'cnt', key: 'c' }, logged.length + ' logged'),
+      ]),
+      logged.length ? h('div', { className: 'vv-stack', key: 'list', style: { gap: '14px' } }, logged.map(date => this.logCard(DS, t, date))) : h(DS.Card, { padding: 'lg', key: 'empty' }, h('div', { className: 'vv-sempty' }, 'No meetings logged yet \u2014 hit “Log a meeting” after you meet ' + t.name + '.')),
+    ]);
+  }
+  logMeetingForm(DS, t) {
+    const h = React.createElement;
+    const m = this.state.newMeeting;
+    const field = (label, node) => h('div', { className: 'vv-field', key: label }, [h('label', { className: 'vv-flabel', key: 'l' }, label), node]);
+    return h(DS.Card, { padding: 'lg' }, h('div', { className: 'vv-form' }, [
+      h('div', { className: 'vv-formhd', key: 'hd' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px' }, key: 1 }, 'Log a meeting with ' + t.name),
+        h('button', { className: 'vv-modal-x', style: { position: 'static' }, onClick: () => this.setState({ showLogMeeting: false }), key: 2 }, this.hi('x', 16)),
+      ]),
+      h('div', { className: 'vv-form2', key: 'r1' }, [
+        field('Date', h('input', { type: 'date', className: 'vv-input', value: m.date, onChange: e => this.setNM('date', e.target.value), key: 'i' })),
+        field('Title (optional)', h('input', { className: 'vv-input', value: m.title, placeholder: 'e.g. Catch-up, demo, intro call', onChange: e => this.setNM('title', e.target.value), key: 'i' })),
+      ]),
+      field('Meeting notes', h('textarea', { className: 'vv-input', rows: 3, value: m.notes, placeholder: 'What did you discuss?', onChange: e => this.setNM('notes', e.target.value), key: 'i' })),
+      field('Key learning (optional)', h('textarea', { className: 'vv-input', rows: 2, value: m.learning, placeholder: 'The one thing to remember\u2026', onChange: e => this.setNM('learning', e.target.value), key: 'i' })),
+      h('div', { className: 'vv-formactions', key: 'a' }, [
+        h(DS.Button, { variant: 'ghost', size: 'sm', onClick: () => this.setState({ showLogMeeting: false }), key: 'c' }, 'Cancel'),
+        h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.saveLoggedMeeting(t), key: 's' }, 'Save meeting'),
+      ]),
+    ]));
+  }
+  logCard(DS, t, date) {
+    const h = React.createElement;
+    const nt = this.getTrackNote(t, date) || {};
+    const editing = this.state.editKey === this.trackNoteKey(t, date);
+    const has = nt.notes || nt.learning;
+    return h(DS.Card, { padding: 'lg', key: date, className: 'vv-scard' }, [
+      h('div', { className: 'vv-shd', key: 'hd' }, [
+        h('div', { key: 'l', style: { minWidth: 0 } }, [
+          h('div', { className: 'vv-stitle', key: 1 }, nt.title || 'Meeting'),
+          h('div', { className: 'vv-sdate', key: 2 }, this.fmt(date) + ' \u00b7 with ' + t.name),
+        ]),
+        h('button', { className: 'vv-editbtn', onClick: () => this.startEditKey(t, date), key: 'e' }, [this.hi('edit', 13), ' Edit']),
+      ]),
+      editing ? h('div', { className: 'vv-sedit', key: 'ed' }, [
+        h('div', { className: 'vv-field', key: 'ti' }, [h('label', { className: 'vv-flabel', key: 'l' }, 'Title'), h('input', { className: 'vv-input', value: this.state.draftTitle, placeholder: 'Meeting title', onChange: e => this.setState({ draftTitle: e.target.value }), key: 'i' })]),
+        h('div', { className: 'vv-field', key: 'n' }, [h('label', { className: 'vv-flabel', key: 'l' }, 'Meeting notes'), h('textarea', { className: 'vv-input', rows: 3, value: this.state.draftNotes, onChange: e => this.setState({ draftNotes: e.target.value }), key: 'i' })]),
+        h('div', { className: 'vv-field', key: 'le' }, [h('label', { className: 'vv-flabel', key: 'l' }, 'Key learning'), h('textarea', { className: 'vv-input', rows: 2, value: this.state.draftLearning, onChange: e => this.setState({ draftLearning: e.target.value }), key: 'i' })]),
+        h('div', { className: 'vv-formactions', key: 'a' }, [
+          h(DS.Button, { variant: 'ghost', size: 'sm', onClick: () => this.setState({ editKey: null }), key: 'c' }, 'Cancel'),
+          h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.saveTrackNote(), key: 's' }, 'Save log'),
+        ]),
+      ]) : (has ? h('div', { key: 'body' }, [
+        nt.notes ? h('div', { className: 'vv-snotes', key: 'n' }, nt.notes) : null,
+        nt.learning ? h('div', { className: 'vv-slearn', key: 'l' }, [h('span', { className: 'lk', key: 'k' }, [this.hi('bolt', 12), 'Learning']), h('span', { className: 'lv', key: 'v' }, nt.learning)]) : null,
+      ]) : h('div', { className: 'vv-sempty', key: 'empty' }, 'No notes yet \u2014 tap Edit to add them.')),
+    ]);
+  }
+
+  meetingsCard(DS) {
+    const h = React.createElement, I = this.I;
+    const sched = this.mentorSchedule;
+    const todayStr = this.dstr(this.TODAY);
+    const next = sched.find(s => s.date >= todayStr);
+    const recent = sched.filter(s => s.date < todayStr).sort((a, b) => b.date.localeCompare(a.date)).find(s => { const n = this.getMentorNote(s.date); return n && n.learning; });
+    const recentNote = recent ? this.getMentorNote(recent.date) : null;
+    const days = next ? this.daysUntil(next.date) : null;
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, I.meetings(18), 'Mentorship', this.mentor.cadence, { bg: 'var(--yellow-tint)', fg: 'var(--warning-text)' }),
+      next ? h('div', { className: 'vv-mnextcard', key: 'next' }, [
+        h(DS.Avatar, { name: this.mentor.name, color: 'var(--orange)', size: 'md', key: 'av' }),
+        h('div', { style: { flex: 1, minWidth: 0 }, key: 'b' }, [
+          h('div', { className: 'vv-mnextt', key: 1 }, 'Next with ' + this.mentor.name),
+          h('div', { className: 'vv-mnextd', key: 2 }, this.fmt(next.date) + ' \u00b7 Saturday'),
+        ]),
+        h(DS.Badge, { tone: days <= 0 ? 'danger' : days <= 3 ? 'amber' : 'neutral', size: 'sm', key: 'b2' }, days === 0 ? 'Today' : 'in ' + days + 'd'),
+      ]) : null,
+      recentNote ? h('div', { className: 'vv-mlearn', key: 'learn' }, [
+        h('div', { className: 'vv-mlearnk', key: 'k' }, [this.hi('bolt', 12), 'Last learning \u00b7 ' + this.fmtShort(recent.date)]),
+        h('div', { className: 'vv-mlearnv', key: 'v' }, recentNote.learning),
+      ]) : null,
+    ]);
+  }
+  meetingRow(m) {
+    const h = React.createElement, I = this.I;
+    const done = this.isDone(m);
+    return h('div', { className: 'vv-mt', key: m.id }, [
+      h('div', { className: 'vv-check' + (done ? ' on' : ''), onClick: () => this.toggleMeeting(m), key: 'ck' }, done ? I.check(13) : null),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'bd' }, [
+        h('div', { className: 't' + (done ? ' done' : ''), key: 1 }, m.title),
+        h('div', { className: 'meta', key: 2 }, m.person + ' · ' + this.fmtShort(m.date)),
+        m.notes ? h('div', { className: 'nt', key: 3 }, m.notes) : null,
+      ]),
+    ]);
+  }
+
+  contactsCard(DS) {
+    const h = React.createElement, I = this.I;
+    const q = this.state.q.trim().toLowerCase();
+    let cs = [...this.data.contacts].sort((a, b) => new Date(b.last) - new Date(a.last));
+    if (q) cs = cs.filter(c => (c.name + c.company + c.role).toLowerCase().includes(q));
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, I.network(18), 'Network', this.data.contacts.length + ' contacts', { bg: 'var(--navy-tint)', fg: 'var(--navy)' }),
+      h('div', { className: 'vv-search', key: 'sr' }, [
+        I.search(16),
+        h('input', { placeholder: 'Search contacts…', value: this.state.q, onChange: e => this.setState({ q: e.target.value }), key: 'in' }),
+      ]),
+      cs.length ? cs.map(c => this.contactRow(DS, c)) : h('div', { className: 'vv-empty', key: 'e' }, 'No contacts match “' + this.state.q + '”'),
+    ]);
+  }
+  contactRow(DS, c) {
+    const h = React.createElement;
+    return h('div', { className: 'vv-ct', key: c.id }, [
+      h(DS.Avatar, { name: c.name, size: 'md', key: 'av' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'bd' }, [
+        h('div', { style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }, key: 'top' }, [
+          h('div', { style: { flex: 1, minWidth: 0 }, key: 'n' }, [h('div', { className: 'nm', style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, key: 1 }, c.name), h('div', { className: 'co', key: 2 }, c.company)]),
+          h('span', { style: { flex: 'none' }, key: 'r' }, h(DS.Badge, { tone: 'green', size: 'sm' }, c.role)),
+        ]),
+        h('div', { className: 'co', style: { marginTop: '6px' }, key: 'last' }, 'Last contact · ' + this.fmtShort(c.last)),
+        c.notes ? h('div', { className: 'nt', key: 'nt' }, c.notes) : null,
+      ]),
+    ]);
+  }
+
+  kpis(DS) {
+    const h = React.createElement;
+    const items = [
+      { label: 'Milestones logged', value: '12', delta: '+3 this quarter', deltaTone: 'up' },
+      { label: 'Meetings', value: '18', delta: '4 upcoming', deltaTone: 'accent' },
+      { label: 'Network', value: '24', unit: 'contacts', delta: '+5 this month', deltaTone: 'up' },
+      { label: 'Next milestone', value: '3', unit: 'd', valueTone: 'accent', delta: 'Blume Ventures call', deltaTone: 'accent' },
+    ];
+    return h('div', { className: 'vv-kpis' }, items.map((it, i) => h(DS.StatCard, Object.assign({ key: i }, it))));
+  }
+
+  /* ---------------- layout B hero + rail ---------------- */
+  bHero(DS) {
+    const h = React.createElement, I = this.I;
+    const next = [...this.data.future].sort((a, b) => this.daysUntil(a.date) - this.daysUntil(b.date))[0];
+    const days = this.daysUntil(next.date);
+    const prep = [
+      { t: 'Updated metrics one-pager', done: true },
+      { t: 'Rehearse the ask', done: true },
+      { t: 'Send agenda to Ananya', done: false },
+    ];
+    return h(DS.Card, { brand: true, padding: 'lg' }, [
+      h('div', { className: 'vv-bhero' }, [
+        h('div', { key: 'l' }, [
+          h('div', { className: 'eyebrow', key: 1 }, [I.bolt(12), '  Next up'].length ? 'Next up · highest priority' : ''),
+          h('h2', { key: 2 }, next.title),
+          h('div', { className: 'sub', key: 3 }, [
+            h(DS.Badge, { tone: 'amber', size: 'lg', key: 'b' }, days <= 0 ? 'Today' : 'In ' + days + ' days'),
+            h('span', { className: 'd', key: 'd' }, this.fmt(next.date) + ' · Bengaluru'),
+          ]),
+          h('div', { className: 'vv-prep', key: 4 }, prep.map((p, i) => h('span', { className: 'vv-prepchip' + (p.done ? ' done' : ''), key: i }, [
+            h('span', { className: 'pk', key: 'k' }, p.done ? I.check(10) : null), p.t,
+          ]))),
+        ]),
+        h('div', { className: 'vv-count', key: 'r' }, [
+          h('div', { className: 'n', key: 1 }, days), h('div', { className: 'l', key: 2 }, days === 1 ? 'day to go' : 'days to go'),
+        ]),
+      ]),
+    ]);
+  }
+  quarterCard(DS) {
+    const h = React.createElement;
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, this.I.bolt(18), 'This quarter', null, { bg: 'var(--orange-tint)', fg: 'var(--orange-deep)' }),
+      h('div', { className: 'vv-qring' }, [
+        h(DS.ScoreRing, { value: 62, size: 'xl', color: 'var(--steel)', key: 'r' }),
+        h('div', { key: 't' }, [
+          h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '15px' }, key: 1 }, '5 of 8 goals'),
+          h('div', { className: 'vv-qmut', key: 2 }, 'on track for the Q2 plan — fundraise and beta both ahead of schedule.'),
+        ]),
+      ]),
+    ]);
+  }
+  railMeetings(DS) {
+    const h = React.createElement, I = this.I;
+    const todayStr = this.dstr(this.TODAY);
+    const upcoming = this.mentorSchedule.filter(s => s.date >= todayStr).slice(0, 3);
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, I.meetings(18), 'Mentorship', this.mentor.name, { bg: 'var(--yellow-tint)', fg: 'var(--warning-text)' }),
+      ...upcoming.map(s => {
+        const days = this.daysUntil(s.date);
+        return h('div', { className: 'vv-schedrow', key: s.date }, [
+          h('div', { className: 'vv-scheddot', style: { background: days <= 14 ? 'var(--pa)' : 'var(--border-strong)' }, key: 'd' }),
+          h('div', { style: { flex: 1, minWidth: 0 }, key: 'b' }, [
+            h('div', { className: 'vv-schedt', key: 1 }, 'Session ' + s.n),
+            h('div', { className: 'vv-schedd', key: 2 }, this.fmt(s.date)),
+          ]),
+          h('span', { className: 'vv-schedwhen', key: 'w' }, days === 0 ? 'Today' : 'in ' + days + 'd'),
+        ]);
+      }),
+    ]);
+  }
+  railContacts(DS) {
+    const h = React.createElement, I = this.I;
+    const cs = [...this.data.contacts].sort((a, b) => new Date(b.last) - new Date(a.last)).slice(0, 3);
+    return h(DS.Card, { padding: 'lg' }, [
+      this.sectionHead(DS, I.network(18), 'Recently connected', null, { bg: 'var(--navy-tint)', fg: 'var(--navy)' }),
+      cs.map(c => this.contactRow(DS, c)),
+    ]);
+  }
+
+  /* ---------------- habits data + state ---------------- */
+  get habitsData() { return window.VIVARTAM.habitsData; }
+  isHabitDone(k, id) { return !!this.state.habitDone[k + ':' + id]; }
+  toggleHabit(k, id) { this.setState(s => ({ habitDone: Object.assign({}, s.habitDone, { [k + ':' + id]: !s.habitDone[k + ':' + id] }) })); }
+  isRule3Done(k, i) { return !!this.state.rule3Done[k + ':' + i]; }
+  toggleRule3(k, i) { this.setState(s => ({ rule3Done: Object.assign({}, s.rule3Done, { [k + ':' + i]: !s.rule3Done[k + ':' + i] }) })); }
+  founderToday(k) {
+    const p = this.habitsData.find(x => x.key === k);
+    const total = p.habits.length;
+    const done = p.habits.filter(x => this.isHabitDone(k, x.id)).length;
+    return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
+  }
+
+  hi(name, s) {
+    const h = React.createElement;
+    const p = (d, k) => h('path', { d, key: k });
+    const ci = (cx, cy, r, k) => h('circle', { cx, cy, r, key: k });
+    const M = {
+      workout: [p('M3.5 9v6M6 7v10M18 7v10M20.5 9v6M6 12h12', 1)],
+      meditation: [ci(12, 6, 2.2, 1), p('M5 18c0-3.6 3.1-6.2 7-6.2s7 2.6 7 6.2', 2), p('M5 18h14', 3)],
+      reading: [p('M12 6.4C10.4 5.2 8.4 4.5 6 4.5a2 2 0 0 0-2 2v9.5a2 2 0 0 1 2-2c2.4 0 4.4.7 6 1.9', 1), p('M12 6.4c1.6-1.2 3.6-1.9 6-1.9a2 2 0 0 1 2 2v9.5a2 2 0 0 0-2-2c-2.4 0-4.4.7-6 1.9', 2), p('M12 6.4V18', 3)],
+      breathe: [p('M3 8h10a2.5 2.5 0 1 0-2.5-2.5', 1), p('M3 12h14a2.5 2.5 0 1 1-2.5 2.5', 2), p('M3 16h8a2 2 0 1 1-2 2', 3)],
+      edit: [p('M4 20h4L19 9l-4-4L4 16v4Z', 1), p('M14 6l4 4', 2)],
+      news: [p('M4 6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v13H6a2 2 0 0 1-2-2Z', 1), p('M17 8h2a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2', 2), p('M7 9h6M7 12h6M7 15h4', 3)],
+      music: [p('M9 18V5l10-2v13', 1), ci(6.5, 18, 2.5, 2), ci(16.5, 16, 2.5, 3)],
+      gear: [ci(12, 12, 3, 1), p('M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.3 1a7 7 0 0 0-2-1.2L16.2 2h-4l-.4 2.4a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.6A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.4h4l.4-2.4a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.6A7 7 0 0 0 19 12Z', 2)],
+      monitor: [h('rect', { x: 3, y: 4, width: 18, height: 13, rx: 2, key: 1 }), p('M8 21h8M12 17v4', 2)],
+      calendar: [h('rect', { x: 3, y: 4.5, width: 18, height: 16, rx: 2, key: 1 }), p('M3 9h18M8 2.5v4M16 2.5v4', 2)],
+      flame: [p('M12 2.5c2.4 3 3.9 5 3.9 7.8a3.9 3.9 0 0 1-7.8 0c0-1 .3-1.8.8-2.5.3 1 1.1 1.6 2.1 1.6 1.4 0 1.7-1.4 1-3.4C12.5 4.3 12.3 3.4 12 2.5Z', 1)],
+      target: [ci(12, 12, 9, 1), ci(12, 12, 5, 2), ci(12, 12, 1.4, 3)],
+      bolt: [p('M13 2 4 14h7l-1 8 9-12h-7l1-8Z', 1)],
+      rocket: [p('M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.79-.78.8-2.07.09-2.91a2.18 2.18 0 0 0-3.09-.09z', 1), p('M12 15l-3-3a22 22 0 0 1 2-3.95A12.9 12.9 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z', 2), p('M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5', 3)],
+      bulb: [p('M12 3a6 6 0 0 0-4 10.5c.5.5 1 1.4 1 2.5h6c0-1.1.5-2 1-2.5A6 6 0 0 0 12 3Z', 1), p('M9.5 19h5M10.5 22h3', 2)],
+      check: [p('M5 12.5 10 17l9-10', 1)],
+      x: [p('M6 6l12 12M18 6 6 18', 1)],
+      doc: [p('M7 3h7l4 4v14H7z', 1), p('M14 3v4h4', 2), p('M10 13h5M10 17h5', 3)],
+      book: [p('M5 4.5A1.5 1.5 0 0 1 6.5 3H18v14H7a2 2 0 0 0-2 2z', 1), p('M9 7h6', 2)],
+      chart: [p('M4 20V4M4 20h16', 1), p('M8 16v-4M13 16V9M18 16v-7', 2)],
+      gift: [h('rect', { x: 4, y: 9, width: 16, height: 11, rx: 1, key: 1 }), p('M3 9h18v3H3zM12 9v11', 2), p('M12 9C10.5 5.5 6.5 6 6.5 8.2S9.5 9.4 12 9ZM12 9c1.5-3.5 5.5-3 5.5-.8S14.5 9.4 12 9Z', 3)],
+    };
+    return h('svg', { viewBox: '0 0 24 24', width: s || 16, height: s || 16, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, M[name] || M.check);
+  }
+
+  /* ---------------- habits screen ---------------- */
+  renderHabits(DS) {
+    const h = React.createElement;
+    const r = this.state.habitRange;
+    const view = r === 'week' ? this.weekView(DS) : r === 'month' ? this.monthView(DS) : r === 'year' ? this.yearView(DS) : this.dayView(DS);
+    return h('div', { className: 'vv-hwrap' }, [this.rangeBar(), view]);
+  }
+  rangeBar() {
+    const h = React.createElement;
+    const opts = [['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']];
+    return h('div', { className: 'vv-seg vv-hseg', key: 'rg' }, opts.map(o => h('button', { key: o[0], className: this.state.habitRange === o[0] ? 'on' : '', onClick: () => this.setState({ habitRange: o[0] }) }, o[1])));
+  }
+  dayView(DS) {
+    const h = React.createElement;
+    const persons = this.habitsData;
+    const dV = this.founderToday('vivek').done, dM = this.founderToday('mirat').done;
+    const diff = Math.abs(dV - dM);
+    const lead = dV >= dM ? 'Vivek' : 'Mirat';
+    const nudge = diff === 0 ? 'Neck and neck today \u2014 both founders matching habit for habit.'
+      : lead + ' is ' + diff + ' habit' + (diff > 1 ? 's' : '') + ' ahead today \u2014 keep each other honest.';
+    return h('div', { key: 'day' }, [
+      h('div', { className: 'vv-motiv', key: 'm' }, persons.map(pp => this.motivCard(DS, pp))),
+      h('div', { className: 'vv-nudge', key: 'n' }, [this.hi('flame', 15), nudge]),
+      h('div', { className: 'vv-hboard', key: 'b' }, persons.map(pp => this.habitColumn(DS, pp))),
+    ]);
+  }
+
+  /* ---- period helpers ---- */
+  dstr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  dayScore(pk, ds) {
+    let hsh = 0; const s = pk + '|' + ds; for (let i = 0; i < s.length; i++) hsh = (hsh * 31 + s.charCodeAt(i)) >>> 0;
+    const base = pk === 'vivek' ? 0.76 : 0.71;
+    const noise = ((hsh % 1000) / 1000 - 0.5) * 0.46;
+    const wd = new Date(ds + 'T00:00:00').getDay();
+    const wkend = (wd === 0 || wd === 6) ? -0.12 : 0;
+    return Math.max(0.05, Math.min(1, base + noise + wkend));
+  }
+  habitDoneOn(pk, id, ds) {
+    if (ds === this.dstr(this.TODAY)) return this.isHabitDone(pk, id);
+    const r = this.dayScore(pk, ds);
+    let hsh = 0; const s = pk + id + ds; for (let i = 0; i < s.length; i++) hsh = (hsh * 31 + s.charCodeAt(i)) >>> 0;
+    return (hsh % 1000) / 1000 < r;
+  }
+  ratioFor(pk, ds) {
+    if (ds === this.dstr(this.TODAY)) { const t = this.founderToday(pk); return t.total ? t.done / t.total : 0; }
+    return this.dayScore(pk, ds);
+  }
+  weekDates() {
+    const t = this.TODAY; const wd = (t.getDay() + 6) % 7;
+    const mon = this.addDays(t, -wd);
+    return Array.from({ length: 7 }, (_, i) => this.addDays(mon, i));
+  }
+  founderBar(DS, p, label, value) {
+    const h = React.createElement;
+    return h('div', { className: 'vv-hcolhead', style: { borderLeft: '3px solid ' + p.color, marginBottom: '16px' }, key: 'fb' }, [
+      h(DS.Avatar, { name: p.name, color: p.color, size: 'md', key: 'av' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'n' }, [h('div', { className: 'nm', key: 1 }, p.name), h('div', { className: 'rl', key: 2 }, p.role)]),
+      h('div', { style: { textAlign: 'right' }, key: 's' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', color: p.color, lineHeight: 1 }, key: 1 }, value),
+        h('div', { style: { fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-subtle)', marginTop: '4px' }, key: 2 }, label),
+      ]),
+    ]);
+  }
+  miniStat(p, val, label) {
+    const h = React.createElement;
+    return h('div', { className: 'vv-mstat', key: label }, [
+      h('div', { className: 'v', style: { color: p.color }, key: 1 }, val),
+      h('div', { className: 'l', key: 2 }, label),
+    ]);
+  }
+
+  /* ---- week view ---- */
+  weekView(DS) {
+    const h = React.createElement;
+    const dates = this.weekDates();
+    return h('div', { key: 'week', className: 'vv-stack' }, this.habitsData.map(p => this.weekCard(DS, p, dates)));
+  }
+  weekCard(DS, p, dates) {
+    const h = React.createElement;
+    const todayStr = this.dstr(this.TODAY);
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const kids = [h('div', { className: 'vv-wkhabit vv-wkcorner', key: 'corner' }, 'Habit')];
+    dates.forEach((d, i) => {
+      const future = this.dstr(d) > todayStr; const isToday = this.dstr(d) === todayStr;
+      kids.push(h('div', { className: 'vv-wkhead' + (isToday ? ' today' : ''), key: 'h' + i }, [
+        h('div', { key: 'a' }, dayLabels[i]), h('div', { className: 'dnum', key: 'b', style: future ? { opacity: .4 } : null }, d.getDate()),
+      ]));
+    });
+    p.habits.forEach(x => {
+      kids.push(h('div', { className: 'vv-wkhabit', key: x.id + '-n' }, [h('span', { className: 'hicmini', key: 'i' }, this.hi(x.icon, 14)), x.name]));
+      dates.forEach((d, i) => {
+        const ds = this.dstr(d); const future = ds > todayStr; const done = !future && this.habitDoneOn(p.key, x.id, ds);
+        kids.push(h('div', { className: 'vv-wkcell', key: x.id + '-' + i }, h('span', { className: 'vv-dot2' + (done ? ' on' : '') + (future ? ' fut' : ''), style: done ? { background: p.color, borderColor: 'transparent' } : null }, done ? this.hi('check', 11) : null)));
+      });
+    });
+    kids.push(h('div', { className: 'vv-wkhabit vv-wktot', key: 'tl' }, 'Daily total'));
+    dates.forEach((d, i) => {
+      const ds = this.dstr(d); const future = ds > todayStr;
+      const cnt = future ? null : p.habits.filter(x => this.habitDoneOn(p.key, x.id, ds)).length;
+      kids.push(h('div', { className: 'vv-wkcell vv-wktot', key: 't' + i }, future ? '\u00b7' : (cnt + '/' + p.habits.length)));
+    });
+    const past = dates.filter(d => this.dstr(d) <= todayStr);
+    const avg = Math.round(past.reduce((a, d) => a + this.ratioFor(p.key, this.dstr(d)), 0) / past.length * 100);
+    return h(DS.Card, { padding: 'lg' }, [
+      this.founderBar(DS, p, 'Weekly average', avg + '%'),
+      h('div', { className: 'vv-wkgrid', key: 'g' }, kids),
+    ]);
+  }
+
+  /* ---- month view ---- */
+  monthDaysArr() {
+    const t = this.TODAY; const y = t.getFullYear(), m = t.getMonth();
+    const lead = (new Date(y, m, 1).getDay() + 6) % 7;
+    const dim = new Date(y, m + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < lead; i++) cells.push(null);
+    for (let d = 1; d <= dim; d++) cells.push(new Date(y, m, d));
+    return cells;
+  }
+  monthView(DS) {
+    const h = React.createElement;
+    return h('div', { key: 'month', className: 'vv-mgrid2' }, this.habitsData.map(p => this.monthCard(DS, p)));
+  }
+  monthCard(DS, p) {
+    const h = React.createElement;
+    const cells = this.monthDaysArr();
+    const todayStr = this.dstr(this.TODAY);
+    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const hd = labels.map((l, i) => h('div', { className: 'vv-calhd', key: 'h' + i }, l));
+    const past = cells.filter(c => c && this.dstr(c) <= todayStr);
+    const avg = Math.round(past.reduce((a, c) => a + this.ratioFor(p.key, this.dstr(c)), 0) / past.length * 100);
+    const perfect = past.filter(c => this.ratioFor(p.key, this.dstr(c)) >= 0.92).length;
+    const body = cells.map((c, i) => {
+      if (!c) return h('div', { key: 'b' + i });
+      const ds = this.dstr(c); const future = ds > todayStr; const isToday = ds === todayStr;
+      const r = future ? 0 : this.ratioFor(p.key, ds);
+      const bg = future ? 'transparent' : 'color-mix(in srgb, ' + p.color + ' ' + Math.round(14 + r * 78) + '%, transparent)';
+      return h('div', { className: 'vv-calcell' + (future ? ' fut' : '') + (isToday ? ' today' : ''), style: { background: bg, color: r > 0.55 ? '#fff' : 'var(--text-subtle)' }, key: 'b' + i }, c.getDate());
+    });
+    return h(DS.Card, { padding: 'lg' }, [
+      this.founderBar(DS, p, 'Monthly average', avg + '%'),
+      h('div', { className: 'vv-hstats', key: 'st' }, [this.miniStat(p, perfect, 'Perfect days'), this.miniStat(p, p.streak, 'Day streak'), this.miniStat(p, avg + '%', 'Consistency')]),
+      h('div', { className: 'vv-cal', key: 'cal' }, [...hd, ...body]),
+    ]);
+  }
+
+  /* ---- year view ---- */
+  yearView(DS) {
+    const h = React.createElement;
+    return h('div', { key: 'year', className: 'vv-stack' }, this.habitsData.map(p => this.yearCard(DS, p)));
+  }
+  yearCard(DS, p) {
+    const h = React.createElement;
+    const t = this.TODAY; const y = t.getFullYear();
+    const ml = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const todayStr = this.dstr(this.TODAY);
+    const avgs = ml.map((_, m) => {
+      const dim = new Date(y, m + 1, 0).getDate(); let sum = 0, n = 0;
+      for (let d = 1; d <= dim; d++) { const ds = this.dstr(new Date(y, m, d)); if (ds <= todayStr) { sum += this.ratioFor(p.key, ds); n++; } }
+      return n ? sum / n : null;
+    });
+    const valid = avgs.filter(v => v != null);
+    const yearAvg = Math.round(valid.reduce((a, v) => a + v, 0) / valid.length * 100);
+    let totalDone = 0;
+    ml.forEach((_, m) => { const dim = new Date(y, m + 1, 0).getDate(); for (let d = 1; d <= dim; d++) { const ds = this.dstr(new Date(y, m, d)); if (ds <= todayStr) totalDone += Math.round(this.ratioFor(p.key, ds) * p.habits.length); } });
+    const best = p.key === 'vivek' ? 41 : 28;
+    const bars = avgs.map((v, i) => h('div', { className: 'vv-yrcol', key: i }, [
+      h('div', { className: 'vv-yrbarwrap', key: 'w' }, h('div', { className: 'vv-yrbar', style: { height: (v == null ? 2 : Math.max(4, Math.round(v * 100))) + '%', background: v == null ? 'var(--border-strong)' : p.color, opacity: v == null ? .5 : 1 } })),
+      h('div', { className: 'vv-yrlbl' + (i === t.getMonth() ? ' now' : ''), key: 'l' }, ml[i]),
+    ]));
+    return h(DS.Card, { padding: 'lg' }, [
+      this.founderBar(DS, p, 'Year to date', yearAvg + '%'),
+      h('div', { className: 'vv-hstats', key: 'st' }, [this.miniStat(p, best, 'Best streak'), this.miniStat(p, totalDone.toLocaleString('en-IN'), 'Habits done'), this.miniStat(p, yearAvg + '%', 'Consistency')]),
+      h('div', { className: 'vv-yr', key: 'bars' }, bars),
+    ]);
+  }
+  motivCard(DS, p) {
+    const h = React.createElement;
+    const t = this.founderToday(p.key);
+    const dots = p.week.map((v, i) => h('span', { className: 'vv-wd', key: i, style: { background: v ? p.color : 'var(--border-strong)' } }));
+    return h(DS.Card, { padding: 'lg' }, h('div', { className: 'vv-fcard' }, [
+      h(DS.Avatar, { name: p.name, color: p.color, size: 'lg', key: 'av' }),
+      h('div', { style: { flex: 1, minWidth: 0 }, key: 'bd' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', letterSpacing: '-.01em' }, key: 1 }, p.name),
+        h('div', { style: { fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-subtle)', marginTop: '2px' }, key: 2 }, p.role),
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginTop: '11px', flexWrap: 'wrap' }, key: 3 }, [
+          h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), p.streak + ' day streak']),
+          h('div', { className: 'vv-weekdots', key: 'w' }, dots),
+        ]),
+      ]),
+      h('div', { style: { textAlign: 'center', flex: 'none' }, key: 'r' }, [
+        h(DS.ScoreRing, { value: t.pct, size: 'lg', color: p.color, key: 'ring' }),
+        h('div', { style: { fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-subtle)', marginTop: '6px', letterSpacing: '.08em', textTransform: 'uppercase' }, key: 'l' }, t.done + ' / ' + t.total + ' today'),
+      ]),
+    ]));
+  }
+  habitColumn(DS, p) {
+    const h = React.createElement;
+    const t = this.founderToday(p.key);
+    const groups = [
+      { label: 'Rule of 1 \u00b7 1 \u00b7 1', items: p.habits.filter(x => x.cat === 'rule') },
+      { label: 'Personal', items: p.habits.filter(x => x.cat === 'personal') },
+      { label: 'Entrepreneurial', items: p.habits.filter(x => x.cat === 'entre') },
+    ];
+    return h(DS.Card, { padding: 'lg' }, [
+      h('div', { className: 'vv-hcolhead', key: 'hd', style: { borderLeft: '3px solid ' + p.color } }, [
+        h(DS.Avatar, { name: p.name, color: p.color, size: 'md', key: 'av' }),
+        h('div', { style: { flex: 1, minWidth: 0 }, key: 'n' }, [h('div', { className: 'nm', key: 1 }, p.name), h('div', { className: 'rl', key: 2 }, p.role)]),
+        h(DS.Badge, { tone: 'green', size: 'lg', key: 'b' }, t.done + ' / ' + t.total),
+      ]),
+      ...groups.map((g, gi) => g.items.length ? h('div', { className: 'vv-hgroup', key: gi }, [
+        h('div', { className: 'vv-hglabel', key: 'l' }, g.label),
+        ...g.items.map(x => this.habitRow(DS, p, x)),
+      ]) : null),
+      this.rule3Block(DS, p),
+    ]);
+  }
+  habitRow(DS, p, x) {
+    const h = React.createElement;
+    const done = this.isHabitDone(p.key, x.id);
+    return h('div', { className: 'vv-hrow' + (done ? ' done' : ''), onClick: () => this.toggleHabit(p.key, x.id), key: x.id }, [
+      h('span', { className: 'hic', style: done ? { background: p.color, borderColor: 'transparent' } : null, key: 'ic' }, this.hi(x.icon, 16)),
+      h('span', { className: 'vv-hname', key: 'n' }, x.name),
+      h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), x.streak]),
+      h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
+    ]);
+  }
+  rule3Block(DS, p) {
+    const h = React.createElement;
+    return h('div', { className: 'vv-rule3' }, [
+      h('div', { className: 'vv-hglabel', key: 'l' }, [this.hi('target', 13), 'Rule of 3 \u00b7 today']),
+      ...p.rule3.map((txt, i) => {
+        const done = this.isRule3Done(p.key, i);
+        return h('div', { className: 'vv-hrow' + (done ? ' done' : ''), onClick: () => this.toggleRule3(p.key, i), key: i }, [
+          h('span', { className: 'hic', style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', background: done ? p.color : null, borderColor: done ? 'transparent' : null, color: done ? '#fff' : 'var(--text-subtle)' }, key: 'n' }, i + 1),
+          h('span', { className: 'vv-hname', key: 't' }, txt),
+          h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
+        ]);
+      }),
+    ]);
+  }
+
+  /* ---------------- network CRM ---------------- */
+  isContactDone(c) {
+    const s = this.state.contactDone[c.id];
+    if (s !== undefined) return s;
+    return !!(c.followStatus && /done/i.test(c.followStatus));
+  }
+  contactStatus(c) {
+    if (this.isContactDone(c)) return 'done';
+    if (!c.next) return 'nodate';
+    const d = this.daysUntil(c.next);
+    if (d < 0) return 'overdue';
+    if (d <= 3) return 'due';
+    return 'upcoming';
+  }
+  toggleContactDone(c) { const id = c.id; const cur = this.isContactDone(c); this.setState(s => ({ contactDone: Object.assign({}, s.contactDone, { [id]: !cur }) })); }
+  netActionFor(c) {
+    if (c.meetingStatus && /not set/i.test(c.meetingStatus)) return { t: 'Schedule the first meeting', ic: 'meet' };
+    if (c.bucket && /bucket a/i.test(c.bucket)) return { t: 'Share research copy & line up a pilot conversation', ic: 'research' };
+    if (c.interest && /high/i.test(c.interest)) return { t: 'Send the book and book a follow-up meeting', ic: 'book' };
+    return { t: 'Re-engage and share an update', ic: 'doc' };
+  }
+  renderNetwork(DS) {
+    const h = React.createElement, I = this.I;
+    const all = this.data.contacts;
+    const counts = { all: all.length, overdue: 0, due: 0, upcoming: 0, nodate: 0, done: 0 };
+    all.forEach(c => { counts[this.contactStatus(c)]++; });
+    const met = all.filter(c => c.meetingStatus && /completed/i.test(c.meetingStatus)).length;
+    const chros = all.filter(c => c.role && /chro|chief|vp|head|director|president/i.test(c.role)).length;
+    const statusOpts = [['all', 'All'], ['overdue', 'Overdue'], ['due', 'Due soon'], ['upcoming', 'Upcoming'], ['nodate', 'No date'], ['done', 'Done']];
+    const interestOpts = ['All', 'High', 'Medium', 'Low'];
+    const q = this.state.q.trim().toLowerCase();
+    const order = { overdue: 0, due: 1, upcoming: 2, nodate: 3, done: 4 };
+    let shown = all.filter(c => {
+      const st = this.contactStatus(c);
+      if (this.state.netStatus !== 'all' && st !== this.state.netStatus) return false;
+      if (this.state.netInterest !== 'All' && (c.interest || '') !== this.state.netInterest) return false;
+      if (q && !([c.name, c.company, c.role, c.industry, c.location, c.source].filter(Boolean).join(' ')).toLowerCase().includes(q)) return false;
+      return true;
+    }).sort((a, b) => (order[this.contactStatus(a)] - order[this.contactStatus(b)]) || ((new Date(a.next || '2100-01-01')) - (new Date(b.next || '2100-01-01'))));
+    const od = counts.overdue, due = counts.due;
+    const remText = od
+      ? od + ' follow-up' + (od > 1 ? 's' : '') + ' overdue' + (due ? ' \u00b7 ' + due + ' due soon' : '') + ' \u2014 your CRM is nudging you.'
+      : due ? due + ' follow-up' + (due > 1 ? 's' : '') + ' due soon \u2014 stay ahead of your HR leaders.'
+        : 'All caught up \u2014 no follow-ups are overdue.';
+    const stats = [[String(all.length), 'HR leaders'], [String(met), 'met'], [String(od + due), 'need follow-up'], [String(counts.done), 'closed loop']];
+    return h('div', { className: 'vv-crm' }, [
+      h('div', { className: 'vv-crmstats', key: 'st' }, stats.map((s, i) => h('div', { className: 'vv-crmstat', key: i }, [h('div', { className: 'n', key: 1 }, s[0]), h('div', { className: 'l', key: 2 }, s[1])]))),
+      h('div', { className: 'vv-crmrem' + (od ? '' : ' calm'), key: 'rem' }, [h('span', { className: 'ic', key: 'i' }, I.bell(18)), remText]),
+      h('div', { className: 'vv-crmfilters', key: 'flt' }, [
+        h('div', { className: 'vv-crmstatrow', key: 's' }, statusOpts.map(o => h('button', { key: o[0], className: 'vv-crmchip' + (this.state.netStatus === o[0] ? ' on' : ''), onClick: () => this.setState({ netStatus: o[0] }) }, [o[1], h('span', { className: 'ct', key: 'c' }, counts[o[0]])]))),
+        h('div', { className: 'vv-crmrow2', key: 'r2' }, [
+          h('div', { className: 'vv-crmtypes', key: 't' }, [h('span', { className: 'vv-flbl', key: 'l' }, 'Interest'), ...interestOpts.map(t => h('button', { key: t, className: 'vv-fpill' + (this.state.netInterest === t ? ' on' : ''), onClick: () => this.setState({ netInterest: t }) }, t))]),
+          h('div', { className: 'vv-search', style: { marginBottom: 0, flex: 1, minWidth: '200px' }, key: 'sr' }, [I.search(16), h('input', { placeholder: 'Search name, company, industry, referral\u2026', value: this.state.q, onChange: e => this.setState({ q: e.target.value }), key: 'in' })]),
+        ]),
+      ]),
+      h('div', { className: 'vv-crmlist', key: 'list' }, shown.length ? shown.map(c => this.crmCard(DS, c)) : h('div', { className: 'vv-empty', key: 'e' }, 'No contacts match these filters.')),
+      this.state.contactDetail ? this.contactModal(DS, all.find(x => x.id === this.state.contactDetail)) : null,
+    ]);
+  }
+  crmCard(DS, c) {
+    const h = React.createElement;
+    const st = this.contactStatus(c);
+    const done = st === 'done';
+    const stcol = { overdue: 'var(--danger)', due: 'var(--orange)', upcoming: 'var(--steel)', nodate: 'var(--text-subtle)', done: 'var(--success)' }[st];
+    const d = c.next ? this.daysUntil(c.next) : null;
+    const dueLabel = done ? 'Closed' : !c.next ? 'No date set' : d < 0 ? Math.abs(d) + 'd overdue' : d === 0 ? 'Due today' : d <= 3 ? 'Due in ' + d + 'd' : 'In ' + d + 'd';
+    const dueTone = done ? 'success' : !c.next ? 'neutral' : d < 0 ? 'danger' : d <= 3 ? 'amber' : 'neutral';
+    const interestTone = { High: 'green', Medium: 'amber', Low: 'neutral' }[c.interest] || null;
+    const act = this.netActionFor(c);
+    const chips = [];
+    if (c.industry) chips.push(['building', c.industry]);
+    if (c.location) chips.push(['pin', c.location]);
+    if (c.source) chips.push(['refer', 'via ' + c.source]);
+    if (c.bucket) chips.push(['target', c.bucket.replace(/bucket/i, 'Tier')]);
+    const links = [];
+    if (c.linkedin) links.push(['linkedin', c.linkedin, 'LinkedIn']);
+    if (c.email) links.push(['mail', 'mailto:' + c.email, c.email]);
+    if (c.phone) links.push(['phone', 'tel:' + String(c.phone).replace(/\s/g, ''), String(c.phone)]);
+    return h('div', { className: 'vv-crmcard' + (done ? ' done' : ''), key: c.id }, [
+      h('div', { className: 'vv-crmhd', key: 'hd', onClick: () => this.setState({ contactDetail: c.id }), style: { cursor: 'pointer' } }, [
+        h(DS.Avatar, { name: c.name, size: 'md', key: 'av' }),
+        h('div', { style: { flex: 1, minWidth: 0 }, key: 'b' }, [
+          h('div', { className: 'vv-crmname', key: 1 }, [c.name, interestTone ? h(DS.Badge, { tone: interestTone, size: 'sm', key: 'i' }, c.interest + ' interest') : null, c.meetingStatus && /not set/i.test(c.meetingStatus) ? h(DS.Badge, { tone: 'neutral', size: 'sm', key: 'm' }, 'To meet') : h(DS.Badge, { tone: 'success', size: 'sm', key: 'm' }, 'Met')]),
+          h('div', { className: 'vv-crmsub', key: 2 }, [c.role, c.company].filter(Boolean).join(' \u00b7 ') || c.id),
+        ]),
+        h('span', { className: 'vv-crmchev', key: 'ch' }, this.I.chevron(18)),
+      ]),
+      chips.length ? h('div', { className: 'vv-crmchips', key: 'ch2' }, chips.map((ch, i) => h('span', { className: 'vv-mchip', key: i }, [this.netIcon(ch[0], 12), ch[1]]))) : null,
+      links.length ? h('div', { className: 'vv-crmlinks', key: 'lk' }, links.map((l, i) => h('a', { className: 'vv-clink', href: l[1], target: '_blank', rel: 'noopener', key: i, onClick: e => e.stopPropagation() }, [this.netIcon(l[0], 13), l[2]]))) : null,
+      h('div', { className: 'vv-fu' + (done ? ' done' : ''), style: { borderLeftColor: stcol }, key: 'fu' }, [
+        h('span', { className: 'fic', style: done ? { background: 'var(--success)', borderColor: 'transparent', color: '#fff' } : { color: stcol }, key: 'ic' }, done ? this.hi('check', 16) : this.netIcon(act.ic, 16)),
+        h('div', { className: 'ftx', key: 'tx' }, [h('div', { className: 'fa', key: 1 }, done ? 'Follow-up closed' : act.t), h('div', { className: 'fd', key: 2 }, done ? (c.lastInteraction ? 'Last interaction ' + this.fmt(c.lastInteraction) : 'Marked done') : c.next ? 'Follow up by ' + this.fmt(c.next) : 'No follow-up date set')]),
+        h(DS.Badge, { tone: dueTone, size: 'sm', key: 'due' }, dueLabel),
+        h('button', { className: 'vv-fubtn' + (done ? '' : ' primary'), onClick: () => this.toggleContactDone(c), key: 'btn' }, done ? [this.hi('check', 13), ' Reopen'] : [this.hi('check', 13), ' Mark done']),
+      ]),
+    ]);
+  }
+  contactModal(DS, c) {
+    if (!c) return null;
+    const h = React.createElement;
+    const rows = [
+      ['Designation', c.role], ['Company', c.company], ['Industry', c.industry], ['Location', c.location],
+      ['Referral source', c.source], ['Opportunity tier', c.bucket ? c.bucket.replace(/bucket/i, 'Tier') : null],
+      ['Interest level', c.interest], ['Relationship', c.stage],
+      ['Meeting', c.meetingStatus ? (c.meetingStatus + (c.meetingType ? ' \u00b7 ' + c.meetingType : '') + (c.meetingDate ? ' \u00b7 ' + this.fmt(c.meetingDate) : '')) : null],
+      ['First contact', c.firstContact ? this.fmt(c.firstContact) : null],
+      ['Last interaction', c.lastInteraction ? this.fmt(c.lastInteraction) : null],
+      ['Next follow-up', c.next ? this.fmt(c.next) + (c.followStatus ? ' \u00b7 ' + c.followStatus : '') : 'Not set'],
+      ['Email', c.email], ['Phone', c.phone ? String(c.phone) : null], ['Remarks', c.remarks],
+    ].filter(r => r[1]);
+    return h('div', { className: 'vv-modal-ov', onClick: () => this.setState({ contactDetail: null }), key: 'modal' },
+      h('div', { className: 'vv-cmodal', onClick: e => e.stopPropagation() }, [
+        h('button', { className: 'vv-modal-x', onClick: () => this.setState({ contactDetail: null }), key: 'x' }, this.hi('x', 16)),
+        h('div', { className: 'vv-cmodal-hd', key: 'hd' }, [
+          h(DS.Avatar, { name: c.name, size: 'lg', key: 'av' }),
+          h('div', { key: 'n', style: { minWidth: 0 } }, [
+            h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '20px', letterSpacing: '-.01em' }, key: 1 }, c.name),
+            h('div', { className: 'vv-crmsub', style: { marginTop: '3px' }, key: 2 }, [c.role, c.company].filter(Boolean).join(' \u00b7 ') || c.id),
+          ]),
+        ]),
+        h('div', { className: 'vv-cmodal-grid', key: 'g' }, rows.map((r, i) => h('div', { className: 'vv-cmrow', key: i }, [
+          h('div', { className: 'k', key: 1 }, r[0]),
+          h('div', { className: 'v', key: 2 }, r[1]),
+        ]))),
+        h('div', { className: 'vv-cmodal-actions', key: 'a' }, [
+          c.linkedin ? h('a', { className: 'vv-fubtn', href: c.linkedin, target: '_blank', rel: 'noopener', key: 'li' }, [this.netIcon('linkedin', 13), ' LinkedIn']) : null,
+          c.email ? h('a', { className: 'vv-fubtn', href: 'mailto:' + c.email, key: 'em' }, [this.netIcon('mail', 13), ' Email']) : null,
+          c.phone ? h('a', { className: 'vv-fubtn', href: 'tel:' + String(c.phone).replace(/\s/g, ''), key: 'ph' }, [this.netIcon('phone', 13), ' Call']) : null,
+        ]),
+      ]),
+    );
+  }
+  netIcon(name, s) {
+    const h = React.createElement;
+    const p = (d, k) => h('path', { d, key: k });
+    const ci = (cx, cy, r, k) => h('circle', { cx, cy, r, key: k });
+    const M = {
+      meet: [h('rect', { x: 3, y: 4.5, width: 18, height: 16, rx: 2, key: 1 }), p('M3 9h18M8 2.5v4M16 2.5v4', 2)],
+      research: [p('M7 3h7l4 4v14H7z', 1), p('M14 3v4h4', 2), p('M10 13h5M10 17h5', 3)],
+      book: [p('M5 4.5A1.5 1.5 0 0 1 6.5 3H18v14H7a2 2 0 0 0-2 2z', 1), p('M9 7h6', 2)],
+      doc: [p('M7 3h7l4 4v14H7z', 1), p('M14 3v4h4', 2)],
+      building: [p('M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16', 1), p('M15 9h4a1 1 0 0 1 1 1v11M8 8h3M8 12h3M8 16h3', 2)],
+      pin: [p('M12 21s-6.5-5.4-6.5-10A6.5 6.5 0 0 1 18.5 11c0 4.6-6.5 10-6.5 10Z', 1), ci(12, 11, 2.3, 2)],
+      refer: [ci(9, 8, 3, 1), p('M3.5 20a5.5 5.5 0 0 1 11 0', 2), p('M17 8.5v5M19.5 11h-5', 3)],
+      target: [ci(12, 12, 9, 1), ci(12, 12, 5, 2), ci(12, 12, 1.4, 3)],
+      linkedin: [h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2, key: 1 }), p('M7 10v7M7 7v0M11 17v-4a2 2 0 0 1 4 0v4M11 17v-7', 2)],
+      mail: [h('rect', { x: 3, y: 5, width: 18, height: 14, rx: 2, key: 1 }), p('m3 7 9 6 9-6', 2)],
+      phone: [p('M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l-1 4a2 2 0 0 1-2 1.5A15 15 0 0 1 3.5 6 2 2 0 0 1 5 4Z', 1)],
+    };
+    return h('svg', { viewBox: '0 0 24 24', width: s || 14, height: s || 14, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flex: 'none' } }, M[name] || M.doc);
+  }
+
+  /* ---------------- daily affirmations ---------------- */
+  get affirmDefaults() { return window.VIVARTAM.affirmDefaults; }
+  get affirmMeta() {
+    return [
+      { key: 'guidelines', title: 'Startup Guidelines', icon: 'rocket', accent: 'var(--orange)' },
+      { key: 'mindset', title: 'Mindset & Focus', icon: 'bulb', accent: '#2E8B6B' },
+      { key: 'execution', title: 'Daily Execution', icon: 'bolt', accent: '#7A4FB0' },
+    ];
+  }
+  affirmList(key) {
+    const stored = this.state.affirmItems[key];
+    if (stored) return stored;
+    return this.affirmDefaults[key].map((it, i) => ({ id: key + '-' + i, title: it.title, subs: it.subs.slice() }));
+  }
+  _allAffSnapshot() { const o = {}; this.affirmMeta.forEach(m => { o[m.key] = this.affirmList(m.key); }); return o; }
+  persistAff(snapWithKey) {
+    const next = Object.assign({}, this._allAffSnapshot(), snapWithKey);
+    this.setState({ affirmItems: next });
+    try { localStorage.setItem('vivartam_affirmations', JSON.stringify(next)); } catch (e) {}
+  }
+  keyOf(id) { return (this.affirmMeta.find(m => this.affirmList(m.key).some(it => it.id === id)) || {}).key; }
+  draftToItem(id) {
+    const lines = this.state.draftAff.split('\n').map(s => s.trim()).filter(Boolean);
+    return { id, title: lines[0] || '', subs: lines.slice(1) };
+  }
+  saveAff() {
+    const id = this.state.editAff;
+    const key = this.keyOf(id);
+    const updated = this.draftToItem(id);
+    let list = this.affirmList(key).map(it => it.id === id ? updated : it);
+    list = list.filter(it => it.title);
+    this.persistAff({ [key]: list });
+    this.setState({ editAff: null, draftAff: '' });
+  }
+  startEditAff(it) { this.setState({ editAff: it.id, draftAff: [it.title, ...(it.subs || [])].join('\n') }); }
+  addAff(key) {
+    const nid = key + '-' + Date.now();
+    const list = [...this.affirmList(key), { id: nid, title: '', subs: [] }];
+    this.persistAff({ [key]: list });
+    this.setState({ editAff: nid, draftAff: '' });
+  }
+  removeAff(key, id) { this.persistAff({ [key]: this.affirmList(key).filter(it => it.id !== id) }); }
+  markReviewed() {
+    const today = this.dstr(this.TODAY);
+    const next = this.state.affirmReviewed === today ? '' : today;
+    this.setState({ affirmReviewed: next });
+    try { if (next) localStorage.setItem('vivartam_affirm_reviewed', next); else localStorage.removeItem('vivartam_affirm_reviewed'); } catch (e) {}
+  }
+  renderAffirmations(DS) {
+    const h = React.createElement, I = this.I;
+    const reviewed = this.state.affirmReviewed === this.dstr(this.TODAY);
+    const total = this.affirmMeta.reduce((a, m) => a + this.affirmList(m.key).length, 0);
+    let counter = 0;
+    const sections = this.affirmMeta.map(m => {
+      const list = this.affirmList(m.key);
+      return h('div', { className: 'vv-affsec', key: m.key }, [
+        h('div', { className: 'vv-affhd', style: { borderLeft: '3px solid ' + m.accent }, key: 'hd' }, [
+          h('span', { className: 'vv-affic', style: { background: 'color-mix(in srgb,' + m.accent + ' 14%,transparent)', color: m.accent }, key: 'i' }, this.hi(m.icon, 17)),
+          h('h3', { key: 't' }, m.title),
+          h('span', { className: 'vv-affcount', key: 'c' }, list.length),
+          h('button', { className: 'vv-affadd', style: { color: m.accent }, onClick: () => this.addAff(m.key), key: 'a' }, [I.plus(14), 'Add']),
+        ]),
+        h('div', { className: 'vv-affbody', key: 'b' }, list.map(it => { counter++; return this.affirmRow(DS, m, it, counter); })),
+      ]);
+    });
+    return h('div', { className: 'vv-aff' }, [
+      h('div', { className: 'vv-affintro', key: 'intro' }, [this.netIcon('refer', 14), 'Shared daily reference for Vivek & Mirat \u2014 read it each morning. Tap any affirmation to edit it.']),
+      ...sections,
+      h(DS.Card, { padding: 'lg', key: 'footer', className: 'vv-afffoot' }, h('div', { className: 'vv-afffootin' }, [
+        h('div', { className: 'vv-afffoott', key: 't' }, [
+          h('span', { className: 'ic', style: { color: reviewed ? 'var(--success)' : 'var(--text-subtle)' }, key: 'i' }, reviewed ? this.hi('check', 18) : I.future(17)),
+          h('div', { key: 'tx' }, [
+            h('div', { style: { fontWeight: 700, fontSize: '14px', color: 'var(--text)' }, key: 1 }, reviewed ? 'Reviewed today \u00b7 ' + this.fmt(this.dstr(this.TODAY)) : "Mark today's affirmations as reviewed"),
+            h('div', { style: { fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-subtle)', marginTop: '3px' }, key: 2 }, total + ' affirmations \u00b7 track your consistency'),
+          ]),
+        ]),
+        h(DS.Button, { variant: reviewed ? 'ghost' : 'accent', size: 'md', leadingIcon: reviewed ? this.hi('check', 16) : this.hi('bolt', 16), onClick: () => this.markReviewed(), key: 'b' }, reviewed ? 'Reviewed' : 'Mark as Reviewed'),
+      ])),
+    ]);
+  }
+  affirmRow(DS, m, it, num) {
+    const h = React.createElement;
+    const editing = this.state.editAff === it.id;
+    if (editing) {
+      return h('div', { className: 'vv-affrow editing', key: it.id }, [
+        h('span', { className: 'vv-affnum', style: { color: m.accent }, key: 'n' }, String(num).padStart(2, '0')),
+        h('div', { className: 'vv-affedit', key: 'e' }, [
+          h('textarea', {
+            className: 'vv-input', rows: Math.max(2, (it.subs ? it.subs.length : 0) + 2),
+            value: this.state.draftAff, placeholder: 'First line = the affirmation\nEach line below = a sub-point',
+            ref: el => { if (el && !el._f) { el._f = true; setTimeout(() => { try { el.focus(); } catch (e) {} }, 0); } },
+            onChange: e => this.setState({ draftAff: e.target.value }),
+            onKeyDown: e => { if (e.key === 'Escape') this.setState({ editAff: null, draftAff: '' }); if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) this.saveAff(); },
+            key: 'ta',
+          }),
+          h('div', { className: 'vv-affedithint', key: 'h' }, [
+            h('span', { key: 'l' }, 'First line is the affirmation \u00b7 lines below are sub-points'),
+            h('div', { style: { display: 'flex', gap: '7px' }, key: 'b' }, [
+              h(DS.Button, { variant: 'ghost', size: 'sm', onClick: () => this.setState({ editAff: null, draftAff: '' }), key: 'c' }, 'Cancel'),
+              h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.saveAff(), key: 's' }, 'Save'),
+            ]),
+          ]),
+        ]),
+      ]);
+    }
+    return h('div', { className: 'vv-affrow', key: it.id }, [
+      h('span', { className: 'vv-affnum', style: { color: m.accent }, key: 'n' }, String(num).padStart(2, '0')),
+      h('div', { className: 'vv-affc', onClick: () => this.startEditAff(it), key: 'c' }, [
+        h('div', { className: 'vv-afftitle', key: 't' }, it.title || 'Add text\u2026'),
+        (it.subs && it.subs.length) ? h('div', { className: 'vv-affsubs', key: 's' }, it.subs.map((s, i) => h('div', { className: 'vv-affsub', key: i }, [h('span', { className: 'd', style: { background: m.accent }, key: 'd' }), s]))) : null,
+      ]),
+      h('div', { className: 'vv-affactions', key: 'a' }, [
+        h('button', { className: 'vv-affedbtn', onClick: () => this.startEditAff(it), key: 'e', title: 'Edit' }, this.hi('edit', 14)),
+        h('button', { className: 'vv-affx', onClick: () => this.removeAff(m.key, it.id), key: 'x', title: 'Remove' }, this.hi('x', 13)),
+      ]),
+    ]);
+  }
+
+  /* ---------------- vision board (shared) ---------------- */
+  get visions() { return window.VIVARTAM.visions; }
+  tagColor(t) { return ({ Career: 'var(--navy)', Global: 'var(--steel)', Lifestyle: 'var(--success)', Achievement: 'var(--orange-deep)', Inspiration: 'var(--avatar-1)' })[t] || 'var(--navy)'; }
+
+  renderVision(DS) {
+    const h = React.createElement;
+    const items = this.visions;
+    const tags = ['All', 'Career', 'Global', 'Lifestyle', 'Achievement', 'Inspiration'];
+    const f = this.state.visionFilter;
+    const shown = f === 'All' ? items : items.filter(v => v.tag === f);
+    const focus = this.state.visionFocus != null ? items.find(v => v.id === this.state.visionFocus) : null;
+    return h('div', { className: 'vv-vwrap' }, [
+      this.visionHero(DS, items),
+      h('div', { className: 'vv-vfilter', key: 'flt' }, tags.map(t => h('button', { key: t, className: 'vv-fpill' + (f === t ? ' on' : ''), onClick: () => this.setState({ visionFilter: t }) }, t))),
+      h('div', { className: 'vv-vgrid', key: 'grid' }, shown.map(v => this.visionCard(DS, v))),
+      focus ? this.visionModal(DS, focus) : null,
+    ]);
+  }
+  visionHero(DS) {
+    const h = React.createElement;
+    const stats = [['13', 'visions'], ['5', 'themes'], ['2', 'founders']];
+    return h(DS.Card, { brand: true, padding: 'lg', className: 'vv-vhero', key: 'hero' }, [
+      h('div', { className: 'vv-vmark', key: 'mk' }, this.mark(230)),
+      h('div', { className: 'vv-vhero-in', key: 'in' }, [
+        h('div', { className: 'vv-veyebrow', key: 1 }, 'Vivartam Tech Private Limited \u00b7 Vision board'),
+        h('h2', { className: 'vv-vtitle', key: 2 }, 'Our manifestations'),
+        h('div', { className: 'vv-vsub', key: 3 }, 'Visualise \u2192 Believe \u2192 Achieve'),
+        h('div', { className: 'vv-vstats', key: 4 }, stats.map((s, i) => h('div', { className: 'vv-vstat', key: i }, [h('div', { className: 'n', key: 1 }, s[0]), h('div', { className: 'l', key: 2 }, s[1])]))),
+      ]),
+    ]);
+  }
+  visionCard(DS, v) {
+    const h = React.createElement;
+    const col = this.tagColor(v.tag);
+    return h('div', { className: 'vv-vcard', key: v.id }, [
+      h('div', { className: 'vv-vimg', key: 'img' }, [
+        h('image-slot', { id: 'vision-' + v.id, src: v.img, shape: 'rect', placeholder: v.hint, style: { width: '100%', height: '100%', display: 'block' }, key: 'slot' }),
+        h('span', { className: 'vv-vnum', key: 'num' }, v.id),
+        h('span', { className: 'vv-vtag', style: { background: col }, key: 'tag' }, v.tag),
+      ]),
+      h('div', { className: 'vv-vbody', onClick: () => this.setState({ visionFocus: v.id }), key: 'body' }, [
+        h('div', { className: 'vv-vtext', key: 1 }, v.text),
+        h('div', { className: 'vv-vaff', key: 2 }, v.affirmation),
+      ]),
+    ]);
+  }
+  visionModal(DS, v) {
+    const h = React.createElement;
+    const col = this.tagColor(v.tag);
+    return h('div', { className: 'vv-modal-ov', onClick: () => this.setState({ visionFocus: null }), key: 'modal' },
+      h('div', { className: 'vv-modal', onClick: e => e.stopPropagation() }, [
+        h('button', { className: 'vv-modal-x', onClick: () => this.setState({ visionFocus: null }), key: 'x' }, this.hi('x', 16)),
+        h('span', { className: 'vv-vtag', style: { background: col }, key: 'tag' }, v.tag),
+        h('div', { className: 'vv-modal-text', key: 'tx' }, v.text),
+        h('div', { className: 'vv-modal-aff', key: 'af' }, '\u201c' + v.affirmation + '\u201d'),
+        h('div', { className: 'vv-modal-eyebrow', key: 'ey' }, 'Manifestation ' + v.id + ' of 13'),
+      ]),
+    );
+  }
+
+  /* ---------------- shell ---------------- */
+  sidebar(DS) {
+    const h = React.createElement, I = this.I;
+    const navMile = [
+      { key: 'overview', label: 'Overview', icon: I.overview },
+      { key: 'timeline', label: 'Timeline', icon: I.timeline },
+      { key: 'meetings', label: 'Meetings', icon: I.meetings },
+      { key: 'network', label: 'Network', icon: I.network },
+      { key: 'future', label: 'Future events', icon: I.future },
+    ];
+    const item = (n) => h(DS.NavItem, { key: n.key, label: n.label, icon: n.icon(19), active: this.state.nav === n.key, onClick: () => this.setState({ nav: n.key }) });
+    return h('aside', { className: 'vv-side' }, [
+      h('div', { className: 'vv-brand', key: 'b' }, [this.mark(30), h('div', { key: 't' }, [h('div', { className: 'wm', key: 1 }, 'Vivartam'), h('div', { className: 'mod', key: 2 }, 'Founder OS')])]),
+      h('div', { className: 'vv-navlabel', key: 'nl1' }, 'Daily'),
+      item({ key: 'habits', label: 'Habits', icon: I.habits }),
+      item({ key: 'vision', label: 'Vision board', icon: I.vision }),
+      item({ key: 'affirm', label: 'Affirmations', icon: I.bulbNav }),
+      h('div', { className: 'vv-navlabel', key: 'nl2' }, 'Milestones'),
+      ...navMile.map(item),
+      h('div', { className: 'vv-foot', key: 'f' }, [
+        h(DS.NavItem, { label: 'Settings', icon: I.settings(19), onClick: () => {}, key: 's' }),
+        h('div', { className: 'vv-user', key: 'u' }, [h(DS.Avatar, { name: 'Vivek Dagur', color: 'var(--steel)', size: 'sm', key: 'a' }), h('div', { key: 'd' }, [h('div', { className: 'nm', key: 1 }, 'Vivek Dagur'), h('div', { className: 'rl', key: 2 }, 'Founder \u00b7 Vivartam Tech Private Limited')])]),
+      ]),
+    ]);
+  }
+  topbar(DS) {
+    const h = React.createElement, I = this.I;
+    const nav = this.state.nav;
+    const onMile = nav !== 'habits' && nav !== 'vision';
+    const crumb = onMile ? 'Milestones' : nav === 'vision' ? 'Vision board' : 'Habits';
+    const addLabel = onMile ? 'New milestone' : nav === 'vision' ? 'Add vision' : 'Add habit';
+    return h('header', { className: 'vv-top' }, [
+      h('span', { className: 'vv-crumb', key: 'c' }, [h('span', { className: 'dot', key: 'd' }), crumb]),
+      this.state.nav === 'overview' ? h('div', { className: 'vv-seg', key: 's' }, [
+        h('button', { className: this.state.layout === 'A' ? 'on' : '', onClick: () => this.setLayout('A'), key: 'a' }, [h('span', { className: 'sd', key: 'd', style: { background: this.state.layout === 'A' ? 'var(--orange)' : 'var(--gray-400)' } }), 'Command center']),
+        h('button', { className: this.state.layout === 'B' ? 'on' : '', onClick: () => this.setLayout('B'), key: 'b' }, [h('span', { className: 'sd', key: 'd', style: { background: this.state.layout === 'B' ? 'var(--orange)' : 'var(--gray-400)' } }), 'Momentum']),
+      ]) : null,
+      h('div', { className: 'vv-top-actions', key: 'ta' }, [
+        h(DS.Button, { variant: 'accent', size: 'sm', leadingIcon: I.plus(16), key: 'add' }, addLabel),
+        h(DS.IconButton, { icon: this.state.dark ? I.sun(19) : I.moon(19), label: 'Toggle theme', variant: 'ghost', onClick: () => this.toggleTheme(), key: 'th' }),
+        h(DS.IconButton, { icon: I.bell(19), label: 'Notifications', variant: 'ghost', key: 'bl' }),
+        h(DS.Avatar, { name: 'Vivek Dagur', color: 'var(--steel)', size: 'sm', ring: true, key: 'av' }),
+      ]),
+    ]);
+  }
+
+  body(DS) {
+    const h = React.createElement, I = this.I;
+    const nav = this.state.nav;
+    if (nav === 'habits') return this.renderHabits(DS);
+    if (nav === 'vision') return this.renderVision(DS);
+    if (nav === 'affirm') return this.renderAffirmations(DS);
+    if (nav === 'network') return this.renderNetwork(DS);
+    if (nav === 'future') return this.renderFuture(DS);
+    if (nav === 'meetings') return this.renderMeetings(DS);
+    if (nav !== 'overview') {
+      const card = nav === 'timeline' ? this.timelineCard(DS, { full: true })
+        : this.contactsCard(DS);
+      return h('div', { className: 'vv-focus' }, card);
+    }
+    if (this.state.layout === 'B') {
+      return h('div', {}, [
+        this.bHero(DS),
+        h('div', { className: 'vv-bcols', key: 'cols' }, [
+          this.timelineCard(DS, { full: true }),
+          h('div', { className: 'vv-stack', key: 'rail' }, [this.quarterCard(DS), this.railMeetings(DS), this.railContacts(DS)]),
+        ]),
+      ]);
+    }
+    return h('div', {}, [
+      this.kpis(DS),
+      h('div', { className: 'vv-cols', key: 'cols' }, [
+        h('div', { className: 'vv-stack', key: 'left' }, [this.timelineCard(DS), this.contactsCard(DS)]),
+        h('div', { className: 'vv-stack', key: 'right' }, [this.futureCard(DS), this.meetingsCard(DS)]),
+      ]),
+    ]);
+  }
+
+  renderApp() {
+    const h = React.createElement;
+    const DS = window.PeopleOSDesignSystem_eb8f2f;
+    if (!DS) return h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-subtle)', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '.1em', textTransform: 'uppercase' } }, 'Loading…');
+    const greet = this.state.nav === 'vision'
+      ? { h: 'Our vision board', p: 'What Vivartam looks like when we get there \u2014 visualise it, believe it, build it.' }
+      : this.state.nav === 'affirm'
+        ? { h: 'Daily affirmations', p: 'Our shared operating principles \u2014 read them every morning, edit them as we grow.' }
+        : this.state.nav === 'habits'
+        ? { h: "Today's habits", p: 'Two founders, one routine \u2014 Vivek and Mirat keep each other accountable, every day.' }
+        : this.state.nav === 'overview'
+          ? { h: 'Good morning, Vivek', p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is 3 days out.' }
+          : { h: ({ timeline: 'Milestone timeline', meetings: 'Meetings', network: 'Your network', future: 'Future events' })[this.state.nav], p: 'Everything in one place, tracked and prepped.' };
+    const page = ({ network: 'network', habits: 'habits', vision: 'vision', affirm: 'vision' })[this.state.nav] || 'milestones';
+    return h('div', { className: 'vv-app', 'data-page': page }, [
+      this.sidebar(DS),
+      h('div', { className: 'vv-main', key: 'main' }, [
+        this.topbar(DS),
+        h('div', { className: 'vv-scroll pos-darkcanvas', key: 'scroll' }, [
+          h('div', { className: 'vv-hello', key: 'hello' }, [
+            h('div', { key: 't' }, [h('h1', { key: 1 }, greet.h), h('p', { key: 2 }, greet.p)]),
+            this.state.nav === 'overview' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'Blume Ventures call \u00b7 in 3 days'])
+              : this.state.nav === 'habits' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'North star \u00b7 Build Vivartam Tech Private Limited \u2192 \u20b91 Cr revenue'])
+                : null,
+          ]),
+          this.body(DS),
+        ]),
+      ]),
+    ]);
+  }
+
+  renderVals() {
+    void this.state.dsReady; void this.state.dark; void this.state.layout; void this.state.nav; void this.state.q; void this.state.meetingDone;
+    return { app: this.renderApp() };
+  }
+}
+</script>
+</body>
+</html>
