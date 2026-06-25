@@ -69,6 +69,7 @@ class Component extends DCLogic {
     db: (() => { try { return JSON.parse(localStorage.getItem('vivartam_db') || '{}'); } catch (e) { return {}; } })(),
     dbReady: false,
     habitRange: 'day',
+    viewDate: null, // 'YYYY-MM-DD' day being viewed in Day view; null = today
     habitWho: null, // founder key to show, 'both', or null = the logged-in founder
     habitDayView: (() => { try { return localStorage.getItem('vivartam_habit_dayview') || 'card'; } catch (e) { return 'card'; } })(),
     dragHabit: null, // {k,id} of the kanban card being dragged
@@ -1015,9 +1016,15 @@ class Component extends DCLogic {
 
   /* ---------------- habits data + state ---------------- */
   get habitsData() { return window.VIVARTAM.habitsData; }
-  habitStage(k, id) { return this.dbv('status:' + k + ':' + id) || 'todo'; }
+  // Completion/stage is recorded per day, so habits reset daily and build
+  // history. selDate() is the day currently being viewed (defaults to today).
+  selDate() { return this.state.viewDate || this.dstr(this.TODAY); }
+  statusKey(k, id, ds) { return 'status:' + k + ':' + id + ':' + ds; }
+  habitStageOn(k, id, ds) { return this.dbv(this.statusKey(k, id, ds)) || 'todo'; }
+  isHabitDoneOn(k, id, ds) { return this.habitStageOn(k, id, ds) === 'done'; }
+  habitStage(k, id) { return this.habitStageOn(k, id, this.selDate()); }
   isHabitDone(k, id) { return this.habitStage(k, id) === 'done'; }
-  setStage(k, id, stage) { if (stage === 'todo') this.delKey('status:' + k + ':' + id); else this.setKey('status:' + k + ':' + id, stage); }
+  setStage(k, id, stage) { const key = this.statusKey(k, id, this.selDate()); if (stage === 'todo') this.delKey(key); else this.setKey(key, stage); }
   // Tap on a card (card/column views): simple done ↔ todo toggle.
   toggleHabit(k, id) { this.setStage(k, id, this.isHabitDone(k, id) ? 'todo' : 'done'); }
   // Kanban arrows: step one stage along todo → wip → done.
@@ -1101,8 +1108,8 @@ class Component extends DCLogic {
   }
 
   /* ---------------- Rule of 3 · today — daily task board ---------------- */
-  // Tasks are scoped to the founder + the (now live) day, so each new day blank.
-  taskKey(k) { return 'tasks:' + k + ':' + this.dstr(this.TODAY); }
+  // Tasks are scoped to the founder + the viewed day (defaults to today).
+  taskKey(k) { return 'tasks:' + k + ':' + this.selDate(); }
   getTasks(k) { return this.dbv(this.taskKey(k)) || []; }
   saveTasks(k, arr) { if (arr.length) this.setKey(this.taskKey(k), arr); else this.delKey(this.taskKey(k)); }
   taskId() { return 't' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36); }
@@ -1259,12 +1266,22 @@ class Component extends DCLogic {
     }
     if (r === 'month') return M[t.getMonth()] + ' ' + t.getFullYear();
     if (r === 'year') return '' + t.getFullYear();
-    return D[t.getDay()] + ', ' + t.getDate() + ' ' + M[t.getMonth()] + ' ' + t.getFullYear();
+    const s = new Date(this.selDate() + 'T00:00:00');
+    return D[s.getDay()] + ', ' + s.getDate() + ' ' + M[s.getMonth()] + ' ' + s.getFullYear();
   }
   periodCaption() {
     const r = this.state.habitRange;
-    return r === 'week' ? 'This week' : r === 'month' ? 'This month' : r === 'year' ? 'This year' : 'Today';
+    if (r === 'week') return 'This week'; if (r === 'month') return 'This month'; if (r === 'year') return 'This year';
+    return this.selDate() === this.dstr(this.TODAY) ? 'Today' : 'Viewing past day';
   }
+  // Step the viewed day; clamp so you can't go past today.
+  stepDate(n) {
+    const d = new Date(this.selDate() + 'T00:00:00'); d.setDate(d.getDate() + n);
+    const ns = this.dstr(d), today = this.dstr(this.TODAY);
+    if (ns > today) return;
+    this.setState({ viewDate: ns === today ? null : ns });
+  }
+  goToday() { this.setState({ viewDate: null }); }
   // Which founder(s) to show. Defaults to the logged-in founder; 'both' shows
   // the side-by-side comparison; otherwise just the chosen founder.
   whoShown() { return this.state.habitWho || this.auth.personKey || 'both'; }
@@ -1288,11 +1305,14 @@ class Component extends DCLogic {
     return h('div', { className: 'vv-hwrap' }, [
       h('div', { className: 'vv-hhead', key: 'hh' }, [
         h('div', { className: 'vv-hperiod', key: 'p' }, [
+          r === 'day' ? h('button', { className: 'vv-datenav', key: 'pv', title: 'Previous day', onClick: () => this.stepDate(-1) }, this.hi('cleft', 17)) : null,
           this.hi('calendar', 16),
           h('div', { key: 'tx' }, [
             h('div', { className: 'vv-hpcap', key: 'c' }, this.periodCaption()),
             h('div', { className: 'vv-hpval', key: 'v' }, this.periodLabel()),
           ]),
+          r === 'day' ? h('button', { className: 'vv-datenav', key: 'nx', title: 'Next day', disabled: this.selDate() >= this.dstr(this.TODAY), onClick: () => this.stepDate(1) }, this.hi('cright', 17)) : null,
+          (r === 'day' && this.selDate() !== this.dstr(this.TODAY)) ? h('button', { className: 'vv-todaybtn', key: 'td', onClick: () => this.goToday() }, 'Today') : null,
         ]),
         h('div', { className: 'vv-hctrls', key: 'ctrls' }, [this.whoBar(), this.rangeBar()]),
       ]),
@@ -1352,15 +1372,12 @@ class Component extends DCLogic {
     const wkend = (wd === 0 || wd === 6) ? -0.12 : 0;
     return Math.max(0.05, Math.min(1, base + noise + wkend));
   }
-  habitDoneOn(pk, id, ds) {
-    if (ds === this.dstr(this.TODAY)) return this.isHabitDone(pk, id);
-    const r = this.dayScore(pk, ds);
-    let hsh = 0; const s = pk + id + ds; for (let i = 0; i < s.length; i++) hsh = (hsh * 31 + s.charCodeAt(i)) >>> 0;
-    return (hsh % 1000) / 1000 < r;
-  }
+  habitDoneOn(pk, id, ds) { return this.isHabitDoneOn(pk, id, ds); }
   ratioFor(pk, ds) {
-    if (ds === this.dstr(this.TODAY)) { const t = this.founderToday(pk); return t.total ? t.done / t.total : 0; }
-    return this.dayScore(pk, ds);
+    const p = this.habitsData.find(x => x.key === pk); if (!p) return 0;
+    const hs = this.effHabits(p); if (!hs.length) return 0;
+    const done = hs.filter(x => this.isHabitDoneOn(pk, x.id, ds)).length;
+    return done / hs.length;
   }
   weekDates() {
     const t = this.TODAY; const wd = (t.getDay() + 6) % 7;

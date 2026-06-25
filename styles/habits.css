@@ -26,6 +26,11 @@
 .vv-hpval{font-family:var(--font-display);font-weight:700;font-size:17px;line-height:1.15;color:var(--text);margin-top:1px;}
 .vv-hctrls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .vv-hctrls .vv-hseg{margin-bottom:0;}
+.vv-datenav{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .15s,color .15s,border-color .15s;}
+.vv-datenav:hover:not(:disabled){border-color:var(--text-subtle);color:var(--text);}
+.vv-datenav:disabled{opacity:.35;cursor:default;}
+.vv-todaybtn{flex:none;margin-left:2px;padding:6px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text-muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;}
+.vv-todaybtn:hover{color:var(--text);border-color:var(--text-subtle);}
 
 /* ---- Rule of 3 · today — daily task board ---- */
 .vv-tbhead{display:flex;align-items:center;gap:11px;padding-left:11px;margin-bottom:14px;}
