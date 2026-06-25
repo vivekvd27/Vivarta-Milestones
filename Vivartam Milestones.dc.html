@@ -1701,7 +1701,6 @@ class Component extends DCLogic {
           (() => { const img = this.habitImg(p, x); return h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: img ? 'url("' + img + '")' : 'none' } }, [
             editable ? h('button', { className: 'vv-imgedit', title: 'Change image', onClick: e => { e.stopPropagation(); this.pickHabitImage(p.key, x.id); }, key: 'edit' }, this.hi('camera', 14)) : null,
             editable ? h('button', { className: 'vv-imgedit vv-imgdel', title: 'Delete habit', onClick: e => { e.stopPropagation(); if (window.confirm('Delete "' + this.habitName(p, x) + '"?')) this.deleteHabit(p, x); }, key: 'del' }, this.hi('trash', 14)) : null,
-            h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
           ]); })(),
           h('div', { className: 'vv-hcardbody', key: 'bd' }, [
             this.habitNameEl(p, x, editable),
