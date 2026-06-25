@@ -65,7 +65,13 @@
 .vv-tstat b{font-family:var(--font-mono);color:var(--text);font-weight:700;}
 /* Optional section (does not count) */
 .vv-toptional{margin-top:16px;padding-top:14px;border-top:1px dashed var(--border-strong);}
-.vv-optlabel{color:var(--text-subtle);margin-bottom:12px;}
+.vv-optlabel{color:var(--text-subtle);margin-bottom:0;}
+.vv-opthead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.vv-tfilters{display:flex;gap:6px;flex-wrap:wrap;}
+.vv-tchip{border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:4px 11px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+.vv-tchip:hover{border-color:var(--text-subtle);color:var(--text);}
+.vv-tchip.on{background:var(--navy);border-color:transparent;color:#fff;}
+[data-theme="dark"] .vv-tchip.on{background:var(--orange);color:#1A1612;}
 .vv-taskwrap{border:1px solid var(--border);border-radius:11px;background:var(--surface-sunken);margin-bottom:8px;overflow:hidden;}
 .vv-taskwrap:last-child{margin-bottom:0;}
 .vv-task{display:flex;align-items:center;gap:9px;padding:9px 11px;}

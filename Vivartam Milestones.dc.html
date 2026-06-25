@@ -81,6 +81,7 @@ class Component extends DCLogic {
     addDraft: '',
     taskEdit: null,  // active inline editor key for the daily Rule-of-3 task board
     taskDraft: '',
+    taskCatFilter: {}, // per-founder category filter for the Optional tasks
     editBlume: false, // editing the Blume Ventures call date on the overview
     visionFilter: 'All',
     visionFocus: null,
@@ -1173,6 +1174,8 @@ class Component extends DCLogic {
       ]) : null,
     ]);
   }
+  taskFilterFor(k) { return this.state.taskCatFilter[k] || null; }
+  setTaskFilter(k, cat) { this.setState(s => ({ taskCatFilter: Object.assign({}, s.taskCatFilter, { [k]: cat }) })); }
   taskBoard(DS, p) {
     const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
     const tasks = this.getTasks(k);
@@ -1207,12 +1210,19 @@ class Component extends DCLogic {
         : h('div', { className: 'vv-tempty', key: 'e' }, editable ? 'Star up to 3 tasks below to set today’s focus.' : 'No Top 3 picked.'),
     ]));
     if (cats.length) {
-      const optGroups = cats.map(c => h('div', { className: 'vv-tgroup', key: 'c-' + c }, [
+      const filter = this.taskFilterFor(k);
+      const shownCats = filter ? cats.filter(c => c === filter) : cats;
+      const chip = (label, cat) => h('button', { className: 'vv-tchip' + (filter === cat ? ' on' : ''), key: 'chip-' + label, onClick: () => this.setTaskFilter(k, cat) }, label);
+      const filters = cats.length > 1 ? h('div', { className: 'vv-tfilters', key: 'f' }, [chip('All', null)].concat(cats.map(c => chip(c, c)))) : null;
+      const optGroups = shownCats.map(c => h('div', { className: 'vv-tgroup', key: 'c-' + c }, [
         h('div', { className: 'vv-hglabel', key: 'l' }, c),
         ...byCat[c].map(t => this.taskRow(p, t)),
       ]));
       sections.push(h('div', { className: 'vv-toptional', key: 'opt' }, [
-        h('div', { className: 'vv-hglabel vv-optlabel', key: 'l' }, 'Optional · not counted'),
+        h('div', { className: 'vv-opthead', key: 'h' }, [
+          h('div', { className: 'vv-hglabel vv-optlabel', key: 'l' }, 'Optional · not counted'),
+          filters,
+        ]),
         ...optGroups,
       ]));
     }
