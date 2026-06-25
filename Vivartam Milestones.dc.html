@@ -983,6 +983,7 @@ class Component extends DCLogic {
       book: [p('M5 4.5A1.5 1.5 0 0 1 6.5 3H18v14H7a2 2 0 0 0-2 2z', 1), p('M9 7h6', 2)],
       chart: [p('M4 20V4M4 20h16', 1), p('M8 16v-4M13 16V9M18 16v-7', 2)],
       gift: [h('rect', { x: 4, y: 9, width: 16, height: 11, rx: 1, key: 1 }), p('M3 9h18v3H3zM12 9v11', 2), p('M12 9C10.5 5.5 6.5 6 6.5 8.2S9.5 9.4 12 9ZM12 9c1.5-3.5 5.5-3 5.5-.8S14.5 9.4 12 9Z', 3)],
+      lock: [h('rect', { x: 5, y: 11, width: 14, height: 9, rx: 2, key: 1 }), p('M8 11V8a4 4 0 0 1 8 0v3', 2)],
     };
     return h('svg', { viewBox: '0 0 24 24', width: s || 16, height: s || 16, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, M[name] || M.check);
   }
@@ -1196,7 +1197,9 @@ class Component extends DCLogic {
       h('div', { className: 'vv-hcolhead', key: 'hd', style: { borderLeft: '3px solid ' + p.color } }, [
         h(DS.Avatar, { name: p.name, color: p.color, size: 'md', key: 'av' }),
         h('div', { style: { flex: 1, minWidth: 0 }, key: 'n' }, [h('div', { className: 'nm', key: 1 }, p.name), h('div', { className: 'rl', key: 2 }, p.role)]),
-        h(DS.Badge, { tone: 'green', size: 'lg', key: 'b' }, t.done + ' / ' + t.total),
+        this.canEditFounder(p.key)
+          ? h(DS.Badge, { tone: 'green', size: 'lg', key: 'b' }, t.done + ' / ' + t.total)
+          : h('span', { className: 'vv-hreadonly', key: 'ro', title: 'You can only edit your own habits' }, [this.hi('lock', 12), 'Read only']),
       ]),
       ...groups.map((g, gi) => g.items.length ? h('div', { className: 'vv-hgroup', key: gi }, [
         h('div', { className: 'vv-hglabel', key: 'l' }, g.label),
@@ -1208,7 +1211,8 @@ class Component extends DCLogic {
   habitRow(DS, p, x) {
     const h = React.createElement;
     const done = this.isHabitDone(p.key, x.id);
-    return h('div', { className: 'vv-hrow' + (done ? ' done' : ''), onClick: () => this.toggleHabit(p.key, x.id), key: x.id }, [
+    const editable = this.canEditFounder(p.key);
+    return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), onClick: editable ? () => this.toggleHabit(p.key, x.id) : null, key: x.id }, [
       h('span', { className: 'hic', style: done ? { background: p.color, borderColor: 'transparent' } : null, key: 'ic' }, this.hi(x.icon, 16)),
       h('span', { className: 'vv-hname', key: 'n' }, x.name),
       h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), x.streak]),
@@ -1221,7 +1225,8 @@ class Component extends DCLogic {
       h('div', { className: 'vv-hglabel', key: 'l' }, [this.hi('target', 13), 'Rule of 3 \u00b7 today']),
       ...p.rule3.map((txt, i) => {
         const done = this.isRule3Done(p.key, i);
-        return h('div', { className: 'vv-hrow' + (done ? ' done' : ''), onClick: () => this.toggleRule3(p.key, i), key: i }, [
+        const editable = this.canEditFounder(p.key);
+        return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), onClick: editable ? () => this.toggleRule3(p.key, i) : null, key: i }, [
           h('span', { className: 'hic', style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', background: done ? p.color : null, borderColor: done ? 'transparent' : null, color: done ? '#fff' : 'var(--text-subtle)' }, key: 'n' }, i + 1),
           h('span', { className: 'vv-hname', key: 't' }, txt),
           h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
@@ -1568,16 +1573,31 @@ class Component extends DCLogic {
     const a = (typeof window !== 'undefined' && window.VV_AUTH) || null;
     const isFounder = a ? !!a.isFounder : true;
     const name = (a && a.name) || 'Vivek Dagur';
+    const email = ((a && a.email) || '').toLowerCase();
+    // Map the signed-in user to a habits column ('vivek' | 'mirat' | null).
+    // Each founder may only edit their own column; everyone else is read-only.
+    let personKey = null;
+    if (email === 'miratrsoni.ms@gmail.com') personKey = 'mirat';
+    else if (email === 'vivek.dagur@gmail.com' || email === 'vivartam@gmail.com') personKey = 'vivek';
+    if (!personKey) {
+      const nm = name.toLowerCase();
+      if (nm.indexOf('mirat') !== -1) personKey = 'mirat';
+      else if (nm.indexOf('vivek') !== -1) personKey = 'vivek';
+    }
     return {
       name: name,
       firstName: name.split(' ')[0],
+      email: email,
       role: a ? a.role : 'founder',
       isFounder: isFounder,
       roleLabel: isFounder ? 'Founder' : 'Employee',
+      personKey: personKey, // which habits column this user owns/can edit
       founderOnlyTabs: (a && a.founderOnlyTabs) || [],
       signOut: a && a.signOut ? a.signOut : function () { location.replace('login.html'); },
     };
   }
+  // True when the signed-in user is allowed to edit founder `pk`'s habits.
+  canEditFounder(pk) { return this.auth.personKey === pk; }
   sidebar(DS) {
     const h = React.createElement, I = this.I;
     const auth = this.auth;
