@@ -74,6 +74,17 @@
 .vv-imgedit{position:relative;z-index:2;width:26px;height:26px;border-radius:8px;border:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.42);backdrop-filter:blur(2px);opacity:0;transition:opacity .15s,background .15s;padding:0;}
 .vv-hcard:hover .vv-imgedit,.vv-hcard.compact .vv-imgedit{opacity:.92;}
 .vv-imgedit:hover{background:rgba(0,0,0,.62);}
+.vv-imgdel:hover{background:#C0392B;}
+/* delete button on list rows */
+.vv-rowdel{flex:none;width:24px;height:24px;border-radius:7px;border:0;background:transparent;color:var(--text-subtle);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:0;transition:opacity .15s,background .15s,color .15s;}
+.vv-hrow:hover .vv-rowdel{opacity:.7;}
+.vv-rowdel:hover{opacity:1;background:color-mix(in srgb,#C0392B 16%,transparent);color:#C0392B;}
+/* "Add habit" tile (card grid) + row (list) */
+.vv-addcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:124px;border-radius:15px;border:1.5px dashed var(--border-strong);background:transparent;color:var(--text-subtle);font-family:var(--font-sans);font-size:12.5px;font-weight:600;cursor:pointer;padding:12px;transition:border-color .15s,color .15s,background .15s;}
+.vv-addcard:hover{border-color:color-mix(in srgb,var(--hc) 55%,var(--border-strong));color:var(--hc);background:color-mix(in srgb,var(--hc) 6%,transparent);}
+.vv-addcard.vv-hcard{cursor:default;justify-content:center;}
+.vv-addrow{justify-content:center;gap:7px;color:var(--text-subtle);font-weight:600;border-style:dashed;background:transparent;}
+.vv-addrow:hover{color:var(--hc);border-color:color-mix(in srgb,var(--hc) 55%,var(--border-strong));transform:none;}
 /* legibility veil + accent tint over the photo */
 .vv-hcardmedia::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.34)),linear-gradient(120deg,color-mix(in srgb,var(--hc) 30%,transparent),transparent 60%);}
 .vv-hcardmedia>*{position:relative;z-index:1;}
