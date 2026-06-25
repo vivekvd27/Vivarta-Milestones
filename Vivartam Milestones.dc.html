@@ -170,7 +170,7 @@ class Component extends DCLogic {
 
   /* ---------------- data ---------------- */
   get data() { return window.VIVARTAM.data; }
-  get TODAY() { return new Date('2026-06-24T00:00:00'); }
+  get TODAY() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; } // live local date
 
   /* ---------------- helpers ---------------- */
   fmt(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }); }
@@ -1100,10 +1100,8 @@ class Component extends DCLogic {
   }
 
   /* ---------------- Rule of 3 · today — daily task board ---------------- */
-  // Tasks are scoped to the founder + the real calendar day, so each new day
-  // starts blank (independent of the app's fixed demo "today" anchor).
-  taskDate() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  taskKey(k) { return 'tasks:' + k + ':' + this.taskDate(); }
+  // Tasks are scoped to the founder + the (now live) day, so each new day blank.
+  taskKey(k) { return 'tasks:' + k + ':' + this.dstr(this.TODAY); }
   getTasks(k) { return this.dbv(this.taskKey(k)) || []; }
   saveTasks(k, arr) { if (arr.length) this.setKey(this.taskKey(k), arr); else this.delKey(this.taskKey(k)); }
   taskId() { return 't' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36); }
@@ -2193,7 +2191,7 @@ class Component extends DCLogic {
         : this.state.nav === 'habits'
         ? { h: "Today's habits", p: 'Two founders, one routine \u2014 Vivek and Mirat keep each other accountable, every day.' }
         : this.state.nav === 'overview'
-          ? { h: 'Good morning, ' + this.auth.firstName, p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is 3 days out.' }
+          ? { h: 'Good morning, ' + this.auth.firstName, p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is coming up.' }
           : { h: ({ timeline: 'Milestone timeline', meetings: 'Meetings', network: 'Your network', future: 'Future events' })[this.state.nav], p: 'Everything in one place, tracked and prepped.' };
     const page = ({ network: 'network', habits: 'habits', vision: 'vision', affirm: 'vision' })[this.state.nav] || 'milestones';
     return h('div', { className: 'vv-app', 'data-page': page }, [
@@ -2203,7 +2201,7 @@ class Component extends DCLogic {
         h('div', { className: 'vv-scroll pos-darkcanvas', key: 'scroll' }, [
           h('div', { className: 'vv-hello', key: 'hello' }, [
             h('div', { key: 't' }, [h('h1', { key: 1 }, greet.h), h('p', { key: 2 }, greet.p)]),
-            this.state.nav === 'overview' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'Blume Ventures call \u00b7 in 3 days'])
+            this.state.nav === 'overview' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'Blume Ventures call \u00b7 coming up'])
               : this.state.nav === 'habits' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'North star \u00b7 Build Vivartam Tech Private Limited \u2192 \u20b91 Cr revenue'])
                 : null,
           ]),
