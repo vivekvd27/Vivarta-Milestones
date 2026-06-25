@@ -37,6 +37,11 @@
 .vv-hello p{margin:0;color:var(--text-muted);font-size:15px;}
 .vv-north{display:inline-flex;align-items:center;gap:9px;background:color-mix(in srgb,var(--pa) 15%,transparent);color:var(--pa-strong);border-radius:var(--radius-pill);padding:9px 15px;font-size:13px;font-weight:700;white-space:nowrap;}
 [data-theme="dark"] .vv-north{background:color-mix(in srgb,var(--pa) 22%,transparent);}
+.vv-north.editable{cursor:pointer;}
+.vv-north.editable svg:last-child{opacity:.6;}
+.vv-north.editable:hover{background:color-mix(in srgb,var(--pa) 26%,transparent);}
+.vv-northdate{border:0;background:rgba(255,255,255,.65);color:var(--pa-strong);font-family:var(--font-sans);font-weight:700;font-size:12.5px;border-radius:7px;padding:3px 7px;outline:none;}
+[data-theme="dark"] .vv-northdate{background:rgba(255,255,255,.14);color:#fff;}
 .vv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
 .vv-cols{display:grid;grid-template-columns:1.42fr 1fr;gap:18px;align-items:start;}
 .vv-bcols{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start;margin-top:18px;}

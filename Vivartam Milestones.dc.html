@@ -80,6 +80,7 @@ class Component extends DCLogic {
     addDraft: '',
     taskEdit: null,  // active inline editor key for the daily Rule-of-3 task board
     taskDraft: '',
+    editBlume: false, // editing the Blume Ventures call date on the overview
     visionFilter: 'All',
     visionFocus: null,
     contactDone: {},
@@ -2180,10 +2181,44 @@ class Component extends DCLogic {
     ]);
   }
 
+  /* ---- Blume Ventures call — editable, shared date + countdown ---- */
+  blumeDate() { return this.dbv('event:blume') || ''; }
+  setBlumeDate(v) { if (v) this.setKey('event:blume', v); else this.delKey('event:blume'); }
+  blumeCountdown() {
+    const d = this.blumeDate(); if (!d) return null;
+    const a = new Date(this.dstr(this.TODAY) + 'T00:00:00'), b = new Date(d + 'T00:00:00');
+    const days = Math.round((b - a) / 86400000);
+    const text = days === 0 ? 'today' : days === 1 ? 'tomorrow' : days === -1 ? 'yesterday'
+      : days > 1 ? 'in ' + days + ' days' : Math.abs(days) + ' days ago';
+    return { days: days, text: text, date: d };
+  }
+  blumeChip() {
+    const h = React.createElement;
+    const editable = this.auth.isFounder;
+    const cd = this.blumeCountdown();
+    if (this.state.editBlume) {
+      return h('span', { className: 'vv-north editing', key: 'n' }, [
+        this.I.bolt(15), 'Blume Ventures call · ',
+        h('input', {
+          type: 'date', className: 'vv-northdate', key: 'd', value: this.blumeDate(), autoFocus: true,
+          onChange: e => this.setBlumeDate(e.target.value),
+          onBlur: () => this.setState({ editBlume: false }),
+          onKeyDown: e => { if (e.key === 'Enter' || e.key === 'Escape') this.setState({ editBlume: false }); },
+        }),
+      ]);
+    }
+    const label = cd ? 'Blume Ventures call · ' + cd.text : 'Blume Ventures call · set a date';
+    return h('span', {
+      className: 'vv-north' + (editable ? ' editable' : ''), key: 'n',
+      title: cd ? this.fmt(cd.date) : (editable ? 'Click to set the date' : ''),
+      onClick: editable ? () => this.setState({ editBlume: true }) : null,
+    }, [this.I.bolt(15), label, editable ? this.hi('edit', 12) : null]);
+  }
   renderApp() {
     const h = React.createElement;
     const DS = window.PeopleOSDesignSystem_eb8f2f;
     if (!DS) return h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-subtle)', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '.1em', textTransform: 'uppercase' } }, 'Loading…');
+    const blume = this.blumeCountdown();
     const greet = this.state.nav === 'vision'
       ? { h: 'Our vision board', p: 'What Vivartam looks like when we get there \u2014 visualise it, believe it, build it.' }
       : this.state.nav === 'affirm'
@@ -2191,7 +2226,7 @@ class Component extends DCLogic {
         : this.state.nav === 'habits'
         ? { h: "Today's habits", p: 'Two founders, one routine \u2014 Vivek and Mirat keep each other accountable, every day.' }
         : this.state.nav === 'overview'
-          ? { h: 'Good morning, ' + this.auth.firstName, p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is coming up.' }
+          ? { h: 'Good morning, ' + this.auth.firstName, p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is ' + (blume ? blume.text : 'coming up') + '.' }
           : { h: ({ timeline: 'Milestone timeline', meetings: 'Meetings', network: 'Your network', future: 'Future events' })[this.state.nav], p: 'Everything in one place, tracked and prepped.' };
     const page = ({ network: 'network', habits: 'habits', vision: 'vision', affirm: 'vision' })[this.state.nav] || 'milestones';
     return h('div', { className: 'vv-app', 'data-page': page }, [
@@ -2201,7 +2236,7 @@ class Component extends DCLogic {
         h('div', { className: 'vv-scroll pos-darkcanvas', key: 'scroll' }, [
           h('div', { className: 'vv-hello', key: 'hello' }, [
             h('div', { key: 't' }, [h('h1', { key: 1 }, greet.h), h('p', { key: 2 }, greet.p)]),
-            this.state.nav === 'overview' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'Blume Ventures call \u00b7 coming up'])
+            this.state.nav === 'overview' ? this.blumeChip()
               : this.state.nav === 'habits' ? h('span', { className: 'vv-north', key: 'n' }, [this.I.bolt(15), 'North star \u00b7 Build Vivartam Tech Private Limited \u2192 \u20b91 Cr revenue'])
                 : null,
           ]),
