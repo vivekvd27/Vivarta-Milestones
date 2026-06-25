@@ -32,6 +32,21 @@
 .vv-todaybtn{flex:none;margin-left:2px;padding:6px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text-muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer;}
 .vv-todaybtn:hover{color:var(--text);border-color:var(--text-subtle);}
 
+/* ---- Overview: Rule of 3 today at-a-glance + streak ---- */
+.vv-t3wrap{margin-bottom:18px;}
+.vv-t3head{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:15px;margin-bottom:14px;}
+.vv-t3head svg{color:var(--orange-deep);}
+[data-theme="dark"] .vv-t3head svg{color:var(--orange);}
+.vv-t3grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media (max-width:700px){.vv-t3grid{grid-template-columns:1fr;}}
+.vv-t3item{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid var(--border);border-radius:13px;background:var(--surface-sunken);border-left:3px solid var(--hc);}
+.vv-t3meta{min-width:0;}
+.vv-t3name{font-family:var(--font-display);font-weight:700;font-size:15px;}
+.vv-t3num{font-family:var(--font-mono);font-size:11px;color:var(--text-subtle);margin-top:3px;letter-spacing:.03em;}
+.vv-t3streak{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;font-weight:700;color:var(--text-subtle);}
+.vv-t3streak.on{color:var(--orange-deep);}
+[data-theme="dark"] .vv-t3streak.on{color:var(--orange);}
+
 /* ---- Rule of 3 · today — daily task board ---- */
 .vv-tbhead{display:flex;align-items:center;gap:11px;padding-left:11px;margin-bottom:14px;}
 .vv-tbhead .nm{display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-weight:700;font-size:15px;}

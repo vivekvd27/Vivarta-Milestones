@@ -2194,6 +2194,39 @@ class Component extends DCLogic {
     ]);
   }
 
+  /* ---- Top-3 score for the overview + streak ---- */
+  dayTops(k, ds) {
+    const tasks = this.dbv('tasks:' + k + ':' + ds) || [];
+    const tops = tasks.filter(t => t.top);
+    return { picked: tops.length, done: tops.filter(t => t.done).length };
+  }
+  hitTop3On(k, ds) { return this.dayTops(k, ds).done === 3; }
+  // Consecutive days the founder completed all 3. Today counts only if hit, but
+  // an unfinished today doesn't break a prior streak.
+  top3Streak(k) {
+    let n = 0; const d = new Date(this.dstr(this.TODAY) + 'T00:00:00');
+    if (this.hitTop3On(k, this.dstr(d))) n++;
+    d.setDate(d.getDate() - 1);
+    for (let i = 0; i < 400; i++) { if (this.hitTop3On(k, this.dstr(d))) { n++; d.setDate(d.getDate() - 1); } else break; }
+    return n;
+  }
+  top3Card(DS) {
+    const h = React.createElement, today = this.dstr(this.TODAY), me = this.auth.personKey;
+    return h(DS.Card, { padding: 'lg' }, [
+      h('div', { className: 'vv-t3head', key: 'h' }, [this.hi('target', 16), 'Rule of 3 · today']),
+      h('div', { className: 'vv-t3grid', key: 'g' }, this.habitsData.map(p => {
+        const s = this.dayTops(p.key, today), streak = this.top3Streak(p.key);
+        return h('div', { className: 'vv-t3item', key: p.key, style: { '--hc': p.color } }, [
+          h(DS.ScoreRing, { value: Math.round(s.done / 3 * 100), size: 'md', color: p.color, key: 'r' }),
+          h('div', { className: 'vv-t3meta', key: 'm' }, [
+            h('div', { className: 'vv-t3name', key: 'n' }, p.name.split(' ')[0] + (p.key === me ? ' (you)' : '')),
+            h('div', { className: 'vv-t3num', key: 'v' }, s.done + ' / 3 done' + (s.done === 3 ? ' · locked in 🎯' : '')),
+            h('div', { className: 'vv-t3streak' + (streak > 0 ? ' on' : ''), key: 's' }, [this.hi('flame', 13), streak > 0 ? streak + ' day Top-3 streak' : 'No streak yet']),
+          ]),
+        ]);
+      })),
+    ]);
+  }
   body(DS) {
     const h = React.createElement, I = this.I;
     const nav = this.state.nav;
@@ -2211,6 +2244,7 @@ class Component extends DCLogic {
     if (this.state.layout === 'B') {
       return h('div', {}, [
         this.bHero(DS),
+        h('div', { className: 'vv-t3wrap', key: 't3' }, this.top3Card(DS)),
         h('div', { className: 'vv-bcols', key: 'cols' }, [
           this.timelineCard(DS, { full: true }),
           h('div', { className: 'vv-stack', key: 'rail' }, [this.quarterCard(DS), this.railMeetings(DS), this.railContacts(DS)]),
@@ -2219,6 +2253,7 @@ class Component extends DCLogic {
     }
     return h('div', {}, [
       this.kpis(DS),
+      h('div', { className: 'vv-t3wrap', key: 't3' }, this.top3Card(DS)),
       h('div', { className: 'vv-cols', key: 'cols' }, [
         h('div', { className: 'vv-stack', key: 'left' }, [this.timelineCard(DS), this.contactsCard(DS)]),
         h('div', { className: 'vv-stack', key: 'right' }, [this.futureCard(DS), this.meetingsCard(DS)]),
