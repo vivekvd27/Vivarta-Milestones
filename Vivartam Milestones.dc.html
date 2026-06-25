@@ -1319,7 +1319,8 @@ class Component extends DCLogic {
         ]),
         // back — inverted "Done" face (shown when flipped)
         h('div', { className: 'vv-hcardface vv-back', key: 'b' }, [
-          h('span', { className: 'vv-backcheck', key: 'c' }, this.hi('check', 26)),
+          h('span', { className: 'vv-backcheck', key: 'c' }, this.hi('check', 24)),
+          h('span', { className: 'vv-backname', key: 'nm' }, x.name),
           h('span', { className: 'vv-backtxt', key: 't' }, 'Done'),
         ]),
       ]),
