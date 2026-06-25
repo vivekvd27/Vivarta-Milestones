@@ -16,20 +16,71 @@
 .vv-hcolhead .rl{font-family:var(--font-mono);font-size:11px;color:var(--text-subtle);margin-top:2px;}
 .vv-hgroup{margin-top:16px;}
 .vv-hglabel{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.vv-hrow{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:11px;border:1px solid var(--border);background:var(--surface-sunken);margin-bottom:7px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s;}
+/* ---- Day-view layout toggle (Cards / Columns / Kanban) ---- */
+.vv-dvbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.vv-dvlbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}
+.vv-dvseg button{display:inline-flex;align-items:center;gap:6px;}
+.vv-dvseg button svg{opacity:.85;}
+
+/* read-only pill shown in a founder column header */
+.vv-hreadonly{display:inline-flex;align-items:center;gap:5px;flex:none;padding:5px 10px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text-subtle);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;}
+
+.vv-hname{flex:1;font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
+.vv-hcheck{width:23px;height:23px;border-radius:7px;border:2px solid var(--border-strong);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--surface);transition:background .18s,border-color .18s,transform .18s;}
+
+/* shared streak chip (used in list rows + cards) */
+.vv-hrow .vv-streak,.vv-hcard .vv-streak{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange-deep);font-family:var(--font-mono);font-size:11px;font-weight:700;line-height:1;flex:none;}
+[data-theme="dark"] .vv-hrow .vv-streak,[data-theme="dark"] .vv-hcard .vv-streak{color:var(--orange);}
+
+/* ---- Column (compact list) view. --hc = founder accent, set inline ---- */
+.vv-hrow{display:flex;align-items:center;gap:11px;padding:8px 11px 8px 8px;border-radius:12px;border:1px solid var(--border);background:var(--surface-sunken);margin-bottom:8px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s;}
 .vv-hrow:last-child{margin-bottom:0;}
-.vv-hrow:hover{border-color:var(--border-strong);transform:translateX(2px);}
-/* Read-only column: you can view another founder's habits but not edit them. */
+.vv-hrow:hover{border-color:color-mix(in srgb,var(--hc) 45%,var(--border));transform:translateX(2px);}
+.vv-hthumb{width:38px;height:38px;border-radius:9px;flex:none;background-size:cover;background-position:center;border:1px solid var(--border);}
+.vv-hrow.done{background:linear-gradient(120deg,color-mix(in srgb,var(--hc) 14%,var(--surface)),var(--surface-sunken));border-color:transparent;}
+.vv-hrow.done .vv-hname{color:var(--text-muted);text-decoration:line-through;}
 .vv-hrow.readonly{cursor:default;opacity:.72;}
 .vv-hrow.readonly:hover{border-color:var(--border);transform:none;}
 .vv-hrow.readonly .vv-hcheck{opacity:.65;}
-.vv-hreadonly{display:inline-flex;align-items:center;gap:5px;flex:none;padding:5px 10px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface-sunken);color:var(--text-subtle);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;}
-.vv-hrow.done{background:var(--navy-tint);border-color:transparent;}
+/* number chip for the Rule-of-3 rows (kept from the original rows) */
 .vv-hrow .hic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;background:var(--surface);color:var(--text-muted);border:1px solid var(--border);}
-.vv-hrow.done .hic{color:#fff;}
-.vv-hname{flex:1;font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
-.vv-hrow.done .vv-hname{color:var(--text-subtle);text-decoration:line-through;}
-.vv-hcheck{width:22px;height:22px;border-radius:7px;border:2px solid var(--border-strong);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--surface);transition:background .15s,border-color .15s;}
+
+/* ---- Card view (image tiles). --hc = founder accent, set inline ---- */
+.vv-hcardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;}
+.vv-hcard{position:relative;overflow:hidden;display:flex;flex-direction:column;border-radius:15px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:transform .18s var(--ease-soft),box-shadow .18s,border-color .18s;}
+.vv-hcard:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--hc) 50%,var(--border));box-shadow:0 16px 32px -20px color-mix(in srgb,var(--hc) 70%,transparent);}
+.vv-hcard:active{transform:translateY(-1px);}
+.vv-hcardmedia{position:relative;height:92px;background-size:cover;background-position:center;background-color:color-mix(in srgb,var(--hc) 22%,var(--surface-sunken));display:flex;align-items:flex-start;justify-content:space-between;padding:9px;}
+/* legibility veil + accent tint over the photo */
+.vv-hcardmedia::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.34)),linear-gradient(120deg,color-mix(in srgb,var(--hc) 30%,transparent),transparent 60%);}
+.vv-hcardmedia>*{position:relative;z-index:1;}
+.vv-hcard .hic{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(255,255,255,.92);color:var(--hc);box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.vv-hcardbody{display:flex;flex-direction:column;gap:9px;padding:11px 12px 12px;flex:1;}
+.vv-hcard .vv-hname{flex:none;font-size:13px;font-weight:600;line-height:1.3;}
+.vv-hcardfoot{margin-top:auto;}
+.vv-hcard .vv-hcheck{background:rgba(255,255,255,.92);border-color:transparent;color:var(--text-subtle);box-shadow:0 2px 8px rgba(0,0,0,.18);}
+/* done state */
+.vv-hcard.done{border-color:color-mix(in srgb,var(--hc) 40%,transparent);}
+.vv-hcard.done .vv-hcardmedia::after{background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.26)),linear-gradient(120deg,color-mix(in srgb,var(--hc) 55%,transparent),color-mix(in srgb,var(--hc) 12%,transparent));}
+.vv-hcard.done .vv-hname{color:var(--text-muted);}
+.vv-hcard.done .vv-hcheck{background:var(--success);color:#fff;transform:scale(1.06);}
+/* read-only */
+.vv-hcard.readonly{cursor:default;opacity:.74;}
+.vv-hcard.readonly:hover{transform:none;border-color:var(--border);box-shadow:none;}
+/* compact card used inside the kanban lanes */
+.vv-hcard.compact .vv-hcardmedia{height:64px;}
+.vv-hcard.compact .vv-hcardbody{padding:9px 10px 10px;gap:7px;}
+
+/* ---- Kanban view (To do / Done lanes) ---- */
+.vv-kanban{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+@media (max-width:560px){.vv-kanban{grid-template-columns:1fr;}}
+.vv-kcol{background:var(--surface-sunken);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;}
+.vv-kcol.done{background:color-mix(in srgb,var(--success) 7%,var(--surface-sunken));}
+.vv-kcolhd{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);margin-bottom:11px;padding:0 2px;}
+.vv-kcol.done .vv-kcolhd{color:var(--success);}
+.vv-kcount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:700;}
+.vv-kbody{display:flex;flex-direction:column;gap:10px;}
+.vv-kempty{padding:18px 10px;text-align:center;font-size:12px;color:var(--text-subtle);border:1px dashed var(--border-strong);border-radius:10px;}
 .vv-rule3{margin-top:18px;padding-top:16px;border-top:1px dashed var(--border-strong);}
 .vv-hseg{margin-bottom:18px;}
 .vv-wkgrid{display:grid;grid-template-columns:1.5fr repeat(7,1fr);gap:7px 6px;align-items:center;}
