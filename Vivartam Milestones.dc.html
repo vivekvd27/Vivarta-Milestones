@@ -1117,7 +1117,40 @@ class Component extends DCLogic {
   mutateTask(k, id, fn) { this.saveTasks(k, this.getTasks(k).map(t => t.id === id ? fn(Object.assign({ subs: [] }, t)) : t)); }
   addTask(k, text) { const v = (text || '').trim(); if (!v) return; const arr = this.getTasks(k).slice(); arr.push({ id: this.taskId(), text: v, cat: '', done: false, top: false, subs: [] }); this.saveTasks(k, arr); }
   setTaskText(k, id, text) { const v = (text || '').trim(); if (!v) return; this.mutateTask(k, id, t => (t.text = v, t)); }
-  setTaskCat(k, id, cat) { this.mutateTask(k, id, t => (t.cat = (cat || '').trim(), t)); }
+  setTaskCat(k, id, cat) { const c = (cat || '').trim(); if (c) this.addSavedCat(k, c); this.mutateTask(k, id, t => (t.cat = c, t)); }
+  // Saved categories per founder + any used in today's tasks.
+  savedCats(k) {
+    const all = (this.dbv('categories:' + k) || []).slice();
+    this.getTasks(k).forEach(t => { if (t.cat && all.indexOf(t.cat) === -1) all.push(t.cat); });
+    return all;
+  }
+  addSavedCat(k, cat) {
+    const c = (cat || '').trim(); if (!c) return;
+    const saved = this.dbv('categories:' + k) || [];
+    if (saved.indexOf(c) === -1) this.setKey('categories:' + k, saved.concat([c]));
+  }
+  removeSavedCat(k, cat) {
+    const saved = this.dbv('categories:' + k) || [];
+    this.setKey('categories:' + k, saved.filter(c => c !== cat));
+  }
+  closeTaskEdit() { this.setState({ taskEdit: null, taskDraft: '' }); }
+  // Category picker shown under a task: select a saved category, type a new one,
+  // or clear. (Clicks use preventDefault so the type-new input keeps focus.)
+  catMenu(p, t) {
+    const h = React.createElement, k = p.key, id = t.id;
+    const all = this.savedCats(k);
+    const pick = c => { this.setTaskCat(k, id, c); this.closeTaskEdit(); };
+    return h('div', { className: 'vv-catmenu', key: 'cm' }, [
+      all.length ? h('div', { className: 'vv-catlist', key: 'l' }, all.map(c =>
+        h('span', { className: 'vv-catopt' + (t.cat === c ? ' on' : ''), key: c }, [
+          h('button', { className: 'vv-catpick', key: 'p', onMouseDown: e => e.preventDefault(), onClick: () => pick(c) }, c),
+          h('button', { className: 'vv-catforget', key: 'x', title: 'Remove saved category', onMouseDown: e => e.preventDefault(), onClick: () => this.removeSavedCat(k, c) }, this.hi('x', 10)),
+        ])
+      )) : null,
+      h('div', { className: 'vv-catnewrow', key: 'n' }, this.taskInput(v => { const c = (v || '').trim(); if (c) this.setTaskCat(k, id, c); }, 'Type a new category…')),
+      t.cat ? h('button', { className: 'vv-catclear', key: 'c', onMouseDown: e => e.preventDefault(), onClick: () => pick('') }, [this.hi('x', 12), 'Clear category']) : null,
+    ]);
+  }
   toggleTaskDone(k, id) { this.mutateTask(k, id, t => (t.done = !t.done, t)); }
   topCount(k) { return this.getTasks(k).filter(t => t.top).length; }
   toggleTop(k, id) {
@@ -1162,10 +1195,10 @@ class Component extends DCLogic {
         editable ? h('button', { className: 'vv-taskstar' + (t.top ? ' on' : ''), key: 'st', disabled: !t.top && atCap, title: t.top ? 'Unpin from Top 3' : (atCap ? 'Top 3 is full' : 'Pin to Top 3'), onClick: () => this.toggleTop(k, t.id) }, this.hi('star', 15)) : (t.top ? h('span', { className: 'vv-taskstar on', key: 'st' }, this.hi('star', 15)) : null),
         this.state.taskEdit === tk ? this.taskInput(v => this.setTaskText(k, t.id, v), 'Task…')
           : h('span', { className: 'vv-tasktext', key: 'x', onClick: () => editable && this.startTaskEdit(tk, t.text) }, t.text),
-        this.state.taskEdit === ck ? this.taskInput(v => this.setTaskCat(k, t.id, v), 'Category…')
-          : h('button', { className: 'vv-taskcat' + (t.cat ? '' : ' empty'), key: 'cat', onClick: () => editable && this.startTaskEdit(ck, t.cat), disabled: !editable }, t.cat || '+ category'),
+        h('button', { className: 'vv-taskcat' + (t.cat ? '' : ' empty') + (this.state.taskEdit === ck ? ' active' : ''), key: 'cat', disabled: !editable, onMouseDown: e => e.preventDefault(), onClick: () => { if (!editable) return; this.state.taskEdit === ck ? this.closeTaskEdit() : this.startTaskEdit(ck, t.cat); } }, t.cat || '+ category'),
         editable ? h('button', { className: 'vv-taskdel', key: 'd', title: 'Delete task', onClick: () => this.deleteTask(k, t.id) }, this.hi('trash', 13)) : null,
       ]),
+      (editable && this.state.taskEdit === ck) ? this.catMenu(p, t) : null,
       (t.subs && t.subs.length) || editable ? h('div', { className: 'vv-subs', key: 's' }, [
         ...(t.subs || []).map(s => this.subRow(p, t, s, editable)),
         editable ? (this.state.taskEdit === ak

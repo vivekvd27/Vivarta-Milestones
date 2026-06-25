@@ -92,6 +92,19 @@
 .vv-taskdel:hover{opacity:1;background:color-mix(in srgb,#C0392B 16%,transparent);color:#C0392B;}
 .vv-taskinput{font-weight:600;}
 .vv-task>.vv-taskinput,.vv-sub>.vv-taskinput{flex:1;width:auto;min-width:0;}
+.vv-taskcat.active{border-style:solid;border-color:var(--hc);color:var(--hc);background:color-mix(in srgb,var(--hc) 12%,transparent);}
+/* category picker */
+.vv-catmenu{margin:0 11px 10px 42px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);display:flex;flex-direction:column;gap:9px;}
+.vv-catlist{display:flex;flex-wrap:wrap;gap:6px;}
+.vv-catopt{display:inline-flex;align-items:center;border:1px solid var(--border-strong);border-radius:999px;overflow:hidden;background:var(--surface-sunken);}
+.vv-catopt.on{border-color:var(--hc);background:color-mix(in srgb,var(--hc) 14%,transparent);}
+.vv-catpick{border:0;background:transparent;color:var(--text);font-family:var(--font-mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 4px 4px 10px;cursor:pointer;}
+.vv-catopt.on .vv-catpick{color:var(--hc);}
+.vv-catforget{border:0;background:transparent;color:var(--text-subtle);display:inline-flex;align-items:center;cursor:pointer;padding:4px 8px 4px 4px;}
+.vv-catforget:hover{color:#C0392B;}
+.vv-catnewrow .vv-nameedit{font-weight:600;}
+.vv-catclear{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--text-subtle);font-size:12px;font-weight:600;cursor:pointer;padding:0;}
+.vv-catclear:hover{color:#C0392B;}
 /* subtasks */
 .vv-subs{padding:2px 11px 9px 42px;display:flex;flex-direction:column;gap:5px;}
 .vv-sub{display:flex;align-items:center;gap:8px;}
