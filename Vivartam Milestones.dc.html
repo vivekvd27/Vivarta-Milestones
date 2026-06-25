@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- AUTH GATE — runs before anything renders. supabase-config defines VV_SUPA and
+     reads the persisted session synchronously; auth-guard redirects to login.html
+     if there is no valid session, else publishes the user on window.VV_AUTH. The
+     supabase-js library loads async afterwards (only needed for signOut()). -->
+<script src="auth/supabase-config.js"></script>
+<script src="auth/auth-guard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="./support.js"></script>
 </head>
 <body>
@@ -44,7 +53,7 @@
 class Component extends DCLogic {
   state = {
     layout: (() => { try { return localStorage.getItem('vivarta_layout') || 'A'; } catch (e) { return 'A'; } })(),
-    nav: 'habits',
+    nav: (() => { try { return (window.VV_AUTH && window.VV_AUTH.isFounder) ? 'overview' : 'habits'; } catch (e) { return 'habits'; } })(),
     dark: false,
     q: '',
     meetingDone: {},
@@ -1552,8 +1561,34 @@ class Component extends DCLogic {
   }
 
   /* ---------------- shell ---------------- */
+  // Current signed-in user, derived from the auth guard (window.VV_AUTH).
+  // Falls back to a founder/Vivek identity if the guard isn't present (e.g. the
+  // file opened directly during development) so the UI still renders.
+  get auth() {
+    const a = (typeof window !== 'undefined' && window.VV_AUTH) || null;
+    const isFounder = a ? !!a.isFounder : true;
+    const name = (a && a.name) || 'Vivek Dagur';
+    return {
+      name: name,
+      firstName: name.split(' ')[0],
+      role: a ? a.role : 'founder',
+      isFounder: isFounder,
+      roleLabel: isFounder ? 'Founder' : 'Employee',
+      founderOnlyTabs: (a && a.founderOnlyTabs) || [],
+      signOut: a && a.signOut ? a.signOut : function () { location.replace('login.html'); },
+    };
+  }
   sidebar(DS) {
     const h = React.createElement, I = this.I;
+    const auth = this.auth;
+    const hidden = auth.founderOnlyTabs;            // tabs only founders may see
+    const allowed = (key) => auth.isFounder || hidden.indexOf(key) === -1;
+
+    const navDaily = [
+      { key: 'habits', label: 'Habits', icon: I.habits },
+      { key: 'vision', label: 'Vision board', icon: I.vision },
+      { key: 'affirm', label: 'Affirmations', icon: I.bulbNav },
+    ];
     const navMile = [
       { key: 'overview', label: 'Overview', icon: I.overview },
       { key: 'timeline', label: 'Timeline', icon: I.timeline },
@@ -1562,17 +1597,18 @@ class Component extends DCLogic {
       { key: 'future', label: 'Future events', icon: I.future },
     ];
     const item = (n) => h(DS.NavItem, { key: n.key, label: n.label, icon: n.icon(19), active: this.state.nav === n.key, onClick: () => this.setState({ nav: n.key }) });
+    const visibleDaily = navDaily.filter(n => allowed(n.key));
+    const visibleMile = navMile.filter(n => allowed(n.key));
+
     return h('aside', { className: 'vv-side' }, [
       h('div', { className: 'vv-brand', key: 'b' }, [this.mark(30), h('div', { key: 't' }, [h('div', { className: 'wm', key: 1 }, 'Vivartam'), h('div', { className: 'mod', key: 2 }, 'Founder OS')])]),
-      h('div', { className: 'vv-navlabel', key: 'nl1' }, 'Daily'),
-      item({ key: 'habits', label: 'Habits', icon: I.habits }),
-      item({ key: 'vision', label: 'Vision board', icon: I.vision }),
-      item({ key: 'affirm', label: 'Affirmations', icon: I.bulbNav }),
-      h('div', { className: 'vv-navlabel', key: 'nl2' }, 'Milestones'),
-      ...navMile.map(item),
+      visibleDaily.length ? h('div', { className: 'vv-navlabel', key: 'nl1' }, 'Daily') : null,
+      ...visibleDaily.map(item),
+      visibleMile.length ? h('div', { className: 'vv-navlabel', key: 'nl2' }, 'Milestones') : null,
+      ...visibleMile.map(item),
       h('div', { className: 'vv-foot', key: 'f' }, [
-        h(DS.NavItem, { label: 'Settings', icon: I.settings(19), onClick: () => {}, key: 's' }),
-        h('div', { className: 'vv-user', key: 'u' }, [h(DS.Avatar, { name: 'Vivek Dagur', color: 'var(--steel)', size: 'sm', key: 'a' }), h('div', { key: 'd' }, [h('div', { className: 'nm', key: 1 }, 'Vivek Dagur'), h('div', { className: 'rl', key: 2 }, 'Founder \u00b7 Vivartam Tech Private Limited')])]),
+        h(DS.NavItem, { label: 'Sign out', icon: I.settings(19), onClick: () => auth.signOut(), key: 's' }),
+        h('div', { className: 'vv-user', key: 'u' }, [h(DS.Avatar, { name: auth.name, color: 'var(--steel)', size: 'sm', key: 'a' }), h('div', { key: 'd' }, [h('div', { className: 'nm', key: 1 }, auth.name), h('div', { className: 'rl', key: 2 }, auth.roleLabel + ' \u00b7 Vivartam Tech Private Limited')])]),
       ]),
     ]);
   }
@@ -1592,7 +1628,7 @@ class Component extends DCLogic {
         h(DS.Button, { variant: 'accent', size: 'sm', leadingIcon: I.plus(16), key: 'add' }, addLabel),
         h(DS.IconButton, { icon: this.state.dark ? I.sun(19) : I.moon(19), label: 'Toggle theme', variant: 'ghost', onClick: () => this.toggleTheme(), key: 'th' }),
         h(DS.IconButton, { icon: I.bell(19), label: 'Notifications', variant: 'ghost', key: 'bl' }),
-        h(DS.Avatar, { name: 'Vivek Dagur', color: 'var(--steel)', size: 'sm', ring: true, key: 'av' }),
+        h(DS.Avatar, { name: this.auth.name, color: 'var(--steel)', size: 'sm', ring: true, key: 'av' }),
       ]),
     ]);
   }
@@ -1640,7 +1676,7 @@ class Component extends DCLogic {
         : this.state.nav === 'habits'
         ? { h: "Today's habits", p: 'Two founders, one routine \u2014 Vivek and Mirat keep each other accountable, every day.' }
         : this.state.nav === 'overview'
-          ? { h: 'Good morning, Vivek', p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is 3 days out.' }
+          ? { h: 'Good morning, ' + this.auth.firstName, p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is 3 days out.' }
           : { h: ({ timeline: 'Milestone timeline', meetings: 'Meetings', network: 'Your network', future: 'Future events' })[this.state.nav], p: 'Everything in one place, tracked and prepped.' };
     const page = ({ network: 'network', habits: 'habits', vision: 'vision', affirm: 'vision' })[this.state.nav] || 'milestones';
     return h('div', { className: 'vv-app', 'data-page': page }, [

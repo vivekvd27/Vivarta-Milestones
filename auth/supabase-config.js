@@ -19,15 +19,15 @@
   // as founders. Anyone signing up who is NOT in this list becomes an employee.
   var FOUNDER_EMAILS = [
     "vivartam@gmail.com",
-    // "vivek@vivartam.com",
-    // "mirat@vivartam.com",
+    "vivek.dagur@gmail.com",
+    "miratrsoni.ms@gmail.com",
   ].map(function (e) { return e.toLowerCase(); });
 
   // Pretty display names for known accounts (optional).
   var DISPLAY_NAMES = {
     "vivartam@gmail.com": "Vivek Dagur",
-    // "vivek@vivartam.com": "Vivek Dagur",
-    // "mirat@vivartam.com": "Mirat Soni",
+    "vivek.dagur@gmail.com": "Vivek Dagur",
+    "miratrsoni.ms@gmail.com": "Mirat Soni",
   };
 
   // Which tabs are founder-only (hidden from employees). Keys match the app's nav keys.
