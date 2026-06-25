@@ -72,7 +72,8 @@ class Component extends DCLogic {
     habitDayView: (() => { try { return localStorage.getItem('vivartam_habit_dayview') || 'card'; } catch (e) { return 'card'; } })(),
     dragHabit: null, // {k,id} of the kanban card being dragged
     dragOver: null,  // "<founderKey>:<stage>" lane currently hovered during a drag
-    editHabit: null, // edit key of the habit title / rule-of-3 item being edited
+    editHabit: null, // editId of the title / rule-of-3 editor currently open (per card)
+    editSave: null,  // db key the open editor writes to (may be shared across founders)
     editDraft: '',
     visionFilter: 'All',
     visionFocus: null,
@@ -1342,21 +1343,24 @@ class Component extends DCLogic {
   // titles are per-founder.
   nameKey(p, x) { return x.cat === 'rule' ? 'name:shared:' + x.id : 'name:' + p.key + ':' + x.id; }
   habitName(p, x) { return this.dbv(this.nameKey(p, x)) || x.name; }
-  isEditingName(p, x) { return this.state.editHabit === this.nameKey(p, x); }
+  // editId identifies WHICH card's editor is open (always per-founder so only
+  // one card opens, even when the saved key is shared across founders).
+  habitEditId(p, x) { return 'edit:' + p.key + ':' + x.id; }
+  isEditingName(p, x) { return this.state.editHabit === this.habitEditId(p, x); }
   r3key(k, i) { return 'r3:' + k + ':' + i; }
   rule3Text(p, i, def) { return this.dbv(this.r3key(p.key, i)) || def; }
-  cancelEdit() { this.setState({ editHabit: null, editDraft: '' }); }
+  cancelEdit() { this.setState({ editHabit: null, editSave: null, editDraft: '' }); }
   commitEdit() {
-    const key = this.state.editHabit; if (!key) { return; }
+    const key = this.state.editSave; if (!key) { this.cancelEdit(); return; }
     const v = (this.state.editDraft || '').trim();
     if (v) this.setKey(key, v); else this.delKey(key); // blank → revert to default
-    this.setState({ editHabit: null, editDraft: '' });
+    this.setState({ editHabit: null, editSave: null, editDraft: '' });
   }
-  // Inline editor shared by habit titles and Rule-of-3 items. `editKey` is the
-  // db key written on save; `current` is the text shown when not editing.
-  editField(editKey, current, editable, title) {
+  // Inline editor shared by habit titles and Rule-of-3 items. `editId` opens the
+  // editor (unique per card); `saveKey` is the db key written on save.
+  editField(editId, saveKey, current, editable, title) {
     const h = React.createElement;
-    if (this.state.editHabit === editKey) {
+    if (this.state.editHabit === editId) {
       return h('input', {
         className: 'vv-nameedit', key: 'ne', value: this.state.editDraft, autoFocus: true,
         onClick: e => e.stopPropagation(), onMouseDown: e => e.stopPropagation(), onDragStart: e => e.preventDefault(),
@@ -1367,11 +1371,11 @@ class Component extends DCLogic {
     }
     return h('div', { className: 'vv-hname', key: 'n' }, [
       h('span', { className: 'vv-hnametxt', key: 't' }, current),
-      editable ? h('button', { className: 'vv-editname', title: title || 'Edit', key: 'e', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); this.setState({ editHabit: editKey, editDraft: current }); } }, this.hi('edit', 12)) : null,
+      editable ? h('button', { className: 'vv-editname', title: title || 'Edit', key: 'e', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); this.setState({ editHabit: editId, editSave: saveKey, editDraft: current }); } }, this.hi('edit', 12)) : null,
     ]);
   }
-  habitNameEl(p, x, editable) { return this.editField(this.nameKey(p, x), this.habitName(p, x), editable, 'Edit title'); }
-  rule3El(p, i, def, editable) { return this.editField(this.r3key(p.key, i), this.rule3Text(p, i, def), editable, 'Edit'); }
+  habitNameEl(p, x, editable) { return this.editField(this.habitEditId(p, x), this.nameKey(p, x), this.habitName(p, x), editable, 'Edit title'); }
+  rule3El(p, i, def, editable) { return this.editField(this.r3key(p.key, i), this.r3key(p.key, i), this.rule3Text(p, i, def), editable, 'Edit'); }
   // Shared founder header used by every day-view layout.
   founderColHead(DS, p) {
     const h = React.createElement;
