@@ -57,7 +57,7 @@
 .vv-hcard .hic{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(255,255,255,.92);color:var(--hc);box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .vv-hcardbody{display:flex;flex-direction:column;gap:9px;padding:11px 12px 12px;flex:1;}
 .vv-hcard .vv-hname{flex:none;font-size:13px;font-weight:600;line-height:1.3;}
-.vv-hcardfoot{margin-top:auto;}
+.vv-hcardfoot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .vv-hcard .vv-hcheck{background:rgba(255,255,255,.92);border-color:transparent;color:var(--text-subtle);box-shadow:0 2px 8px rgba(0,0,0,.18);}
 /* done state */
 .vv-hcard.done{border-color:color-mix(in srgb,var(--hc) 40%,transparent);}
@@ -71,16 +71,24 @@
 .vv-hcard.compact .vv-hcardmedia{height:64px;}
 .vv-hcard.compact .vv-hcardbody{padding:9px 10px 10px;gap:7px;}
 
-/* ---- Kanban view (To do / Done lanes) ---- */
-.vv-kanban{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
-@media (max-width:560px){.vv-kanban{grid-template-columns:1fr;}}
+/* ---- Kanban view (To do / Work in progress / Done lanes) ---- */
+.vv-kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:14px;align-items:start;}
+@media (max-width:760px){.vv-kanban{grid-template-columns:1fr;}}
 .vv-kcol{background:var(--surface-sunken);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;}
+.vv-kcol.wip{background:color-mix(in srgb,var(--orange) 8%,var(--surface-sunken));}
 .vv-kcol.done{background:color-mix(in srgb,var(--success) 7%,var(--surface-sunken));}
-.vv-kcolhd{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);margin-bottom:11px;padding:0 2px;}
+.vv-kcolhd{display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);margin-bottom:11px;padding:0 2px;line-height:1.3;}
+.vv-kcol.wip .vv-kcolhd{color:var(--orange-deep);}
+[data-theme="dark"] .vv-kcol.wip .vv-kcolhd{color:var(--orange);}
 .vv-kcol.done .vv-kcolhd{color:var(--success);}
-.vv-kcount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:700;}
+.vv-kcount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:700;flex:none;}
 .vv-kbody{display:flex;flex-direction:column;gap:10px;}
 .vv-kempty{padding:18px 10px;text-align:center;font-size:12px;color:var(--text-subtle);border:1px dashed var(--border-strong);border-radius:10px;}
+/* stage move arrows on kanban cards */
+.vv-stagemove{display:inline-flex;gap:5px;}
+.vv-stbtn{width:24px;height:24px;border-radius:7px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .15s,color .15s,border-color .15s;}
+.vv-stbtn:hover:not(:disabled){border-color:color-mix(in srgb,var(--hc) 55%,var(--border));color:var(--hc);background:color-mix(in srgb,var(--hc) 10%,var(--surface));}
+.vv-stbtn:disabled{opacity:.34;cursor:default;}
 .vv-rule3{margin-top:18px;padding-top:16px;border-top:1px dashed var(--border-strong);}
 .vv-hseg{margin-bottom:18px;}
 .vv-wkgrid{display:grid;grid-template-columns:1.5fr repeat(7,1fr);gap:7px 6px;align-items:center;}

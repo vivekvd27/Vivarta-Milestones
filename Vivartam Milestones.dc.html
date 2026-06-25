@@ -57,7 +57,8 @@ class Component extends DCLogic {
     dark: false,
     q: '',
     meetingDone: {},
-    habitDone: { 'vivek:workout': true, 'vivek:meditation': true, 'vivek:reading': true, 'vivek:pranayama': true, 'vivek:diary': true, 'vivek:cad': true, 'vivek:nvidia': true, 'mirat:workout': true, 'mirat:reading': true, 'mirat:diary': true, 'mirat:nvidia': true, 'mirat:events': true },
+    // Per-habit stage: 'todo' | 'wip' (work in progress) | 'done'. Absent = 'todo'.
+    habitStatus: { 'vivek:workout': 'done', 'vivek:meditation': 'done', 'vivek:reading': 'done', 'vivek:pranayama': 'done', 'vivek:diary': 'done', 'vivek:cad': 'done', 'vivek:nvidia': 'done', 'vivek:newspaper': 'wip', 'vivek:flute': 'wip', 'mirat:workout': 'done', 'mirat:reading': 'done', 'mirat:diary': 'done', 'mirat:nvidia': 'done', 'mirat:events': 'done', 'mirat:newspaper': 'wip' },
     rule3Done: { 'vivek:0': true, 'mirat:0': true, 'mirat:1': true },
     habitRange: 'day',
     habitDayView: (() => { try { return localStorage.getItem('vivartam_habit_dayview') || 'card'; } catch (e) { return 'card'; } })(),
@@ -947,8 +948,17 @@ class Component extends DCLogic {
 
   /* ---------------- habits data + state ---------------- */
   get habitsData() { return window.VIVARTAM.habitsData; }
-  isHabitDone(k, id) { return !!this.state.habitDone[k + ':' + id]; }
-  toggleHabit(k, id) { this.setState(s => ({ habitDone: Object.assign({}, s.habitDone, { [k + ':' + id]: !s.habitDone[k + ':' + id] }) })); }
+  habitStage(k, id) { return this.state.habitStatus[k + ':' + id] || 'todo'; }
+  isHabitDone(k, id) { return this.habitStage(k, id) === 'done'; }
+  setStage(k, id, stage) { this.setState(s => ({ habitStatus: Object.assign({}, s.habitStatus, { [k + ':' + id]: stage }) })); }
+  // Tap on a card (card/column views): simple done ↔ todo toggle.
+  toggleHabit(k, id) { this.setStage(k, id, this.isHabitDone(k, id) ? 'todo' : 'done'); }
+  // Kanban arrows: step one stage along todo → wip → done.
+  moveStage(k, id, dir) {
+    const order = ['todo', 'wip', 'done'];
+    const i = Math.max(0, Math.min(order.length - 1, order.indexOf(this.habitStage(k, id)) + dir));
+    this.setStage(k, id, order[i]);
+  }
   isRule3Done(k, i) { return !!this.state.rule3Done[k + ':' + i]; }
   toggleRule3(k, i) { this.setState(s => ({ rule3Done: Object.assign({}, s.rule3Done, { [k + ':' + i]: !s.rule3Done[k + ':' + i] }) })); }
   founderToday(k) {
@@ -988,6 +998,8 @@ class Component extends DCLogic {
       grid: [h('rect', { x: 4, y: 4, width: 7, height: 7, rx: 1.5, key: 1 }), h('rect', { x: 13, y: 4, width: 7, height: 7, rx: 1.5, key: 2 }), h('rect', { x: 4, y: 13, width: 7, height: 7, rx: 1.5, key: 3 }), h('rect', { x: 13, y: 13, width: 7, height: 7, rx: 1.5, key: 4 })],
       list: [p('M4 6h16M4 12h16M4 18h16', 1)],
       kanban: [h('rect', { x: 4, y: 4, width: 6, height: 16, rx: 1.5, key: 1 }), h('rect', { x: 14, y: 4, width: 6, height: 10, rx: 1.5, key: 2 })],
+      cleft: [p('M15 6l-6 6 6 6', 1)],
+      cright: [p('M9 6l6 6-6 6', 1)],
     };
     return h('svg', { viewBox: '0 0 24 24', width: s || 16, height: s || 16, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, M[name] || M.check);
   }
@@ -1242,18 +1254,30 @@ class Component extends DCLogic {
       this.rule3Block(DS, p),
     ]);
   }
-  habitCard(DS, p, x, compact) {
+  habitCard(DS, p, x, opts) {
+    opts = opts || {};
     const h = React.createElement;
     const done = this.isHabitDone(p.key, x.id);
     const editable = this.canEditFounder(p.key);
-    return h('div', { className: 'vv-hcard' + (compact ? ' compact' : '') + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: editable ? () => this.toggleHabit(p.key, x.id) : null, key: x.id }, [
+    const stage = this.habitStage(p.key, x.id);
+    const compact = !!opts.compact, kanban = !!opts.kanban;
+    // In kanban the whole card is not a toggle — the stage is changed via arrows.
+    const cardClick = (!editable || kanban) ? null : () => this.toggleHabit(p.key, x.id);
+    const foot = [h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), x.streak])];
+    if (kanban && editable) {
+      foot.push(h('div', { className: 'vv-stagemove', key: 'mv' }, [
+        h('button', { className: 'vv-stbtn', disabled: stage === 'todo', title: 'Move back', onClick: e => { e.stopPropagation(); this.moveStage(p.key, x.id, -1); }, key: 'l' }, this.hi('cleft', 14)),
+        h('button', { className: 'vv-stbtn', disabled: stage === 'done', title: 'Move forward', onClick: e => { e.stopPropagation(); this.moveStage(p.key, x.id, 1); }, key: 'r' }, this.hi('cright', 14)),
+      ]));
+    }
+    return h('div', { className: 'vv-hcard' + (compact ? ' compact' : '') + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: cardClick, key: x.id }, [
       h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: 'url("' + this.habitImg(x) + '")' } }, [
         h('span', { className: 'hic', key: 'ic' }, this.hi(x.icon, 16)),
         h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
       ]),
       h('div', { className: 'vv-hcardbody', key: 'bd' }, [
         h('div', { className: 'vv-hname', key: 'n' }, x.name),
-        h('div', { className: 'vv-hcardfoot', key: 's' }, h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), x.streak])),
+        h('div', { className: 'vv-hcardfoot', key: 's' }, foot),
       ]),
     ]);
   }
@@ -1280,22 +1304,25 @@ class Component extends DCLogic {
       h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
     ]);
   }
-  /* ---- Kanban (To do / Done) view ---- */
+  /* ---- Kanban (To do / Work in progress / Done) view ---- */
   kanbanColumn(DS, p) {
     const h = React.createElement;
-    const todo = p.habits.filter(x => !this.isHabitDone(p.key, x.id));
-    const done = p.habits.filter(x => this.isHabitDone(p.key, x.id));
-    const lane = (label, items, kind) => h('div', { className: 'vv-kcol ' + kind, key: kind }, [
+    const st = x => this.habitStage(p.key, x.id);
+    const todo = p.habits.filter(x => st(x) === 'todo');
+    const wip = p.habits.filter(x => st(x) === 'wip');
+    const done = p.habits.filter(x => st(x) === 'done');
+    const lane = (label, items, kind, empty) => h('div', { className: 'vv-kcol ' + kind, key: kind }, [
       h('div', { className: 'vv-kcolhd', key: 'h' }, [h('span', { key: 'l' }, label), h('span', { className: 'vv-kcount', key: 'c' }, items.length)]),
       items.length
-        ? h('div', { className: 'vv-kbody', key: 'b' }, items.map(x => this.habitCard(DS, p, x, true)))
-        : h('div', { className: 'vv-kempty', key: 'e' }, kind === 'done' ? 'Nothing ticked off yet' : 'All done for today \ud83c\udf89'),
+        ? h('div', { className: 'vv-kbody', key: 'b' }, items.map(x => this.habitCard(DS, p, x, { compact: true, kanban: true })))
+        : h('div', { className: 'vv-kempty', key: 'e' }, empty),
     ]);
     return h(DS.Card, { padding: 'lg' }, [
       this.founderColHead(DS, p),
       h('div', { className: 'vv-kanban', key: 'k' }, [
-        lane('To do', todo, 'todo'),
-        lane('Done', done, 'done'),
+        lane('To do', todo, 'todo', 'Nothing queued'),
+        lane('Work in progress', wip, 'wip', 'Nothing in progress'),
+        lane('Done', done, 'done', 'Nothing done yet'),
       ]),
       this.rule3Block(DS, p),
     ]);
