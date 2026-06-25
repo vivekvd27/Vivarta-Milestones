@@ -82,6 +82,8 @@ class Component extends DCLogic {
     taskEdit: null,  // active inline editor key for the daily Rule-of-3 task board
     taskDraft: '',
     taskCatFilter: {}, // per-founder category filter for the Optional tasks
+    taskDrag: null,    // {k,id} of the task being drag-reordered
+    taskDragOver: null, // task id currently hovered as a drop target
     editBlume: false, // editing the Blume Ventures call date on the overview
     visionFilter: 'All',
     visionFocus: null,
@@ -1173,6 +1175,52 @@ class Component extends DCLogic {
   setSubText(k, id, sid, text) { const v = (text || '').trim(); if (!v) return; this.mutateTask(k, id, t => (t.subs = (t.subs || []).map(s => s.id === sid ? Object.assign({}, s, { text: v }) : s), t)); }
   toggleSub(k, id, sid) { this.mutateTask(k, id, t => (t.subs = (t.subs || []).map(s => s.id === sid ? Object.assign({}, s, { done: !s.done }) : s), t)); }
   deleteSub(k, id, sid) { this.mutateTask(k, id, t => (t.subs = (t.subs || []).filter(s => s.id !== sid), t)); }
+  setTaskTime(k, id, due) { this.mutateTask(k, id, t => (t.due = due || '', t)); }
+  fmtTime(due) {
+    if (!due) return ''; const parts = due.split(':'); let hh = parseInt(parts[0], 10); const mm = parts[1] || '00';
+    const ap = hh >= 12 ? 'PM' : 'AM'; hh = hh % 12; if (hh === 0) hh = 12;
+    return hh + ':' + mm + ' ' + ap;
+  }
+  // True when a task's due time has passed today and it isn't done.
+  taskOverdue(t) {
+    if (!t.due || t.done || this.selDate() !== this.dstr(this.TODAY)) return false;
+    const n = new Date(); const cur = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+    return t.due < cur;
+  }
+  /* ---- drag-to-reorder tasks within a group ---- */
+  reorderTask(k, dragId, targetId) {
+    if (dragId === targetId) return;
+    const arr = this.getTasks(k).slice();
+    const drag = arr.find(t => t.id === dragId), tgt = arr.find(t => t.id === targetId);
+    if (!drag || !tgt) return;
+    if (!!drag.top !== !!tgt.top || (drag.cat || '') !== (tgt.cat || '')) return; // same group only
+    arr.splice(arr.indexOf(drag), 1);
+    arr.splice(arr.indexOf(tgt), 0, drag);
+    this.saveTasks(k, arr);
+  }
+  onTaskDragStart(e, k, id) {
+    try {
+      e.dataTransfer.setData('text/plain', id); e.dataTransfer.effectAllowed = 'move';
+      const wrap = e.currentTarget.closest('.vv-taskwrap'); if (wrap) e.dataTransfer.setDragImage(wrap, 16, 16);
+    } catch (_) {}
+    this.setState({ taskDrag: { k: k, id: id }, taskDragOver: null });
+  }
+  onTaskDragEnd() { this.setState({ taskDrag: null, taskDragOver: null }); }
+  sameGroup(k, aId, b) {
+    const a = this.getTasks(k).find(t => t.id === aId);
+    return a && !!a.top === !!b.top && (a.cat || '') === (b.cat || '');
+  }
+  onTaskDragOver(e, k, t) {
+    const d = this.state.taskDrag;
+    if (!d || d.k !== k || d.id === t.id || !this.sameGroup(k, d.id, t)) return;
+    e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
+    if (this.state.taskDragOver !== t.id) this.setState({ taskDragOver: t.id });
+  }
+  onTaskDrop(e, k, t) {
+    e.preventDefault(); const d = this.state.taskDrag;
+    if (d && d.k === k) this.reorderTask(k, d.id, t.id);
+    this.setState({ taskDrag: null, taskDragOver: null });
+  }
   // Generic inline text input bound to taskDraft, committing via onCommit.
   taskInput(onCommit, ph) {
     const h = React.createElement;
@@ -1198,13 +1246,23 @@ class Component extends DCLogic {
   taskRow(p, t) {
     const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
     const atCap = this.topCount(k) >= 3;
-    const tk = 'tt:' + k + ':' + t.id, ck = 'tc:' + k + ':' + t.id, ak = 'addsub:' + k + ':' + t.id;
-    return h('div', { className: 'vv-taskwrap' + (t.done ? ' done' : ''), key: t.id, style: { '--hc': p.color } }, [
+    const tk = 'tt:' + k + ':' + t.id, ck = 'tc:' + k + ':' + t.id, ak = 'addsub:' + k + ':' + t.id, dk = 'td:' + k + ':' + t.id;
+    const over = this.state.taskDragOver === t.id, dragging = this.state.taskDrag && this.state.taskDrag.id === t.id;
+    return h('div', {
+      className: 'vv-taskwrap' + (t.done ? ' done' : '') + (over ? ' dragover' : '') + (dragging ? ' dragging' : ''),
+      key: t.id, style: { '--hc': p.color },
+      onDragOver: editable ? (e => this.onTaskDragOver(e, k, t)) : null,
+      onDrop: editable ? (e => this.onTaskDrop(e, k, t)) : null,
+    }, [
       h('div', { className: 'vv-task', key: 'r' }, [
+        editable ? h('button', { className: 'vv-taskgrip', key: 'g', title: 'Drag to reorder', draggable: true, onDragStart: e => this.onTaskDragStart(e, k, t.id), onDragEnd: () => this.onTaskDragEnd() }, this.hi('grip', 14)) : null,
         h('button', { className: 'vv-taskcheck', key: 'c', disabled: !editable, onClick: () => editable && this.toggleTaskDone(k, t.id) }, t.done ? this.hi('check', 13) : null),
         editable ? h('button', { className: 'vv-taskstar' + (t.top ? ' on' : ''), key: 'st', disabled: !t.top && atCap, title: t.top ? 'Unpin from Top 3' : (atCap ? 'Top 3 is full' : 'Pin to Top 3'), onClick: () => this.toggleTop(k, t.id) }, this.hi('star', 15)) : (t.top ? h('span', { className: 'vv-taskstar on', key: 'st' }, this.hi('star', 15)) : null),
         this.state.taskEdit === tk ? this.taskInput(v => this.setTaskText(k, t.id, v), 'Task…')
           : h('span', { className: 'vv-tasktext', key: 'x', onClick: () => editable && this.startTaskEdit(tk, t.text) }, t.text),
+        this.state.taskEdit === dk
+          ? h('input', { type: 'time', className: 'vv-tasktimein', key: 'tin', autoFocus: true, value: t.due || '', onMouseDown: e => e.stopPropagation(), onChange: e => this.setTaskTime(k, t.id, e.target.value), onBlur: () => this.closeTaskEdit(), onKeyDown: e => { if (e.key === 'Enter' || e.key === 'Escape') this.closeTaskEdit(); } })
+          : h('button', { className: 'vv-tasktime' + (t.due ? '' : ' empty') + (this.taskOverdue(t) ? ' over' : ''), key: 'tm', disabled: !editable, title: t.due ? 'Due time' : 'Set due time', onMouseDown: e => e.preventDefault(), onClick: () => editable && this.startTaskEdit(dk, '') }, t.due ? [this.hi('clock', 12), this.fmtTime(t.due)] : this.hi('clock', 13)),
         h('button', { className: 'vv-taskcat' + (t.cat ? '' : ' empty') + (this.state.taskEdit === ck ? ' active' : ''), key: 'cat', disabled: !editable, onMouseDown: e => e.preventDefault(), onClick: () => { if (!editable) return; this.state.taskEdit === ck ? this.closeTaskEdit() : this.startTaskEdit(ck, t.cat); } }, t.cat || '+ category'),
         editable ? h('button', { className: 'vv-taskdel', key: 'd', title: 'Delete task', onClick: () => this.deleteTask(k, t.id) }, this.hi('trash', 13)) : null,
       ]),
@@ -1330,6 +1388,8 @@ class Component extends DCLogic {
       cright: [p('M9 6l6 6-6 6', 1)],
       cup: [p('M6 15l6-6 6 6', 1)],
       cdown: [p('M6 9l6 6 6-6', 1)],
+      clock: [ci(12, 12, 9, 1), p('M12 7.5v5l3 2', 2)],
+      grip: [p('M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01', 1)],
       camera: [p('M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z', 1), ci(12, 13, 3.4, 2)],
       trash: [p('M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13', 1)],
       plus: [p('M12 5v14M5 12h14', 1)],
