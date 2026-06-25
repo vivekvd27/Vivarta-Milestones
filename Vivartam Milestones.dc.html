@@ -1305,13 +1305,23 @@ class Component extends DCLogic {
       cardProps.onDragEnd = () => this.onCardDragEnd();
     }
     return h('div', cardProps, [
-      h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: 'url("' + this.habitImg(x) + '")' } }, [
-        h('span', { className: 'hic', key: 'ic' }, this.hi(x.icon, 16)),
-        h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
-      ]),
-      h('div', { className: 'vv-hcardbody', key: 'bd' }, [
-        h('div', { className: 'vv-hname', key: 'n' }, x.name),
-        h('div', { className: 'vv-hcardfoot', key: 's' }, foot),
+      h('div', { className: 'vv-hcardinner', key: 'in' }, [
+        // front — photo + name + streak
+        h('div', { className: 'vv-hcardface vv-front', key: 'f' }, [
+          h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: 'url("' + this.habitImg(x) + '")' } }, [
+            h('span', { className: 'hic', key: 'ic' }, this.hi(x.icon, 16)),
+            h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
+          ]),
+          h('div', { className: 'vv-hcardbody', key: 'bd' }, [
+            h('div', { className: 'vv-hname', key: 'n' }, x.name),
+            h('div', { className: 'vv-hcardfoot', key: 's' }, foot),
+          ]),
+        ]),
+        // back — inverted "Done" face (shown when flipped)
+        h('div', { className: 'vv-hcardface vv-back', key: 'b' }, [
+          h('span', { className: 'vv-backcheck', key: 'c' }, this.hi('check', 26)),
+          h('span', { className: 'vv-backtxt', key: 't' }, 'Done'),
+        ]),
       ]),
     ]);
   }
