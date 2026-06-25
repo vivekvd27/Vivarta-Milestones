@@ -1130,8 +1130,15 @@ class Component extends DCLogic {
     if (saved.indexOf(c) === -1) this.setKey('categories:' + k, saved.concat([c]));
   }
   removeSavedCat(k, cat) {
-    const saved = this.dbv('categories:' + k) || [];
-    this.setKey('categories:' + k, saved.filter(c => c !== cat));
+    this.setKey('categories:' + k, this.savedCats(k).filter(c => c !== cat));
+  }
+  // Reorder a saved category (persists the full ordered list).
+  moveSavedCat(k, cat, dir) {
+    const list = this.savedCats(k).slice();
+    const i = list.indexOf(cat); if (i < 0) return;
+    const j = i + dir; if (j < 0 || j >= list.length) return;
+    list.splice(j, 0, list.splice(i, 1)[0]);
+    this.setKey('categories:' + k, list);
   }
   closeTaskEdit() { this.setState({ taskEdit: null, taskDraft: '' }); }
   // Category picker shown under a task: select a saved category, type a new one,
@@ -1139,16 +1146,19 @@ class Component extends DCLogic {
   catMenu(p, t) {
     const h = React.createElement, k = p.key, id = t.id;
     const all = this.savedCats(k);
+    const pd = e => e.preventDefault();
     const pick = c => { this.setTaskCat(k, id, c); this.closeTaskEdit(); };
     return h('div', { className: 'vv-catmenu', key: 'cm' }, [
-      all.length ? h('div', { className: 'vv-catlist', key: 'l' }, all.map(c =>
-        h('span', { className: 'vv-catopt' + (t.cat === c ? ' on' : ''), key: c }, [
-          h('button', { className: 'vv-catpick', key: 'p', onMouseDown: e => e.preventDefault(), onClick: () => pick(c) }, c),
-          h('button', { className: 'vv-catforget', key: 'x', title: 'Remove saved category', onMouseDown: e => e.preventDefault(), onClick: () => this.removeSavedCat(k, c) }, this.hi('x', 10)),
+      all.length ? h('div', { className: 'vv-catlist', key: 'l' }, all.map((c, i) =>
+        h('div', { className: 'vv-catrow' + (t.cat === c ? ' on' : ''), key: c }, [
+          h('button', { className: 'vv-catpick', key: 'p', onMouseDown: pd, onClick: () => pick(c) }, c),
+          h('button', { className: 'vv-catmove', key: 'u', disabled: i === 0, title: 'Move up', onMouseDown: pd, onClick: () => this.moveSavedCat(k, c, -1) }, this.hi('cup', 13)),
+          h('button', { className: 'vv-catmove', key: 'd', disabled: i === all.length - 1, title: 'Move down', onMouseDown: pd, onClick: () => this.moveSavedCat(k, c, 1) }, this.hi('cdown', 13)),
+          h('button', { className: 'vv-catforget', key: 'x', title: 'Remove saved category', onMouseDown: pd, onClick: () => this.removeSavedCat(k, c) }, this.hi('trash', 12)),
         ])
       )) : null,
       h('div', { className: 'vv-catnewrow', key: 'n' }, this.taskInput(v => { const c = (v || '').trim(); if (c) this.setTaskCat(k, id, c); }, 'Type a new category…')),
-      t.cat ? h('button', { className: 'vv-catclear', key: 'c', onMouseDown: e => e.preventDefault(), onClick: () => pick('') }, [this.hi('x', 12), 'Clear category']) : null,
+      t.cat ? h('button', { className: 'vv-catclear', key: 'c', onMouseDown: pd, onClick: () => pick('') }, [this.hi('x', 12), 'Clear category']) : null,
     ]);
   }
   toggleTaskDone(k, id) { this.mutateTask(k, id, t => (t.done = !t.done, t)); }
@@ -1214,8 +1224,11 @@ class Component extends DCLogic {
     const tasks = this.getTasks(k);
     const tops = tasks.filter(t => t.top);
     const rest = tasks.filter(t => !t.top);
-    const cats = []; const byCat = {};
-    rest.forEach(t => { const c = t.cat || 'Uncategorized'; if (!byCat[c]) { byCat[c] = []; cats.push(c); } byCat[c].push(t); });
+    const byCat = {}; let hasUncat = false;
+    rest.forEach(t => { const key = t.cat || 'Uncategorized'; if (!byCat[key]) byCat[key] = []; byCat[key].push(t); if (!t.cat) hasUncat = true; });
+    // Order categories by the saved list (so reordering it reorders everything).
+    const cats = this.savedCats(k).filter(c => byCat[c]);
+    if (hasUncat) cats.push('Uncategorized');
     const addKey = 'addtask:' + k;
     // The day's score is the Top 3 only; everything else is optional.
     const topsDone = tops.filter(t => t.done).length;
@@ -1315,6 +1328,8 @@ class Component extends DCLogic {
       kanban: [h('rect', { x: 4, y: 4, width: 6, height: 16, rx: 1.5, key: 1 }), h('rect', { x: 14, y: 4, width: 6, height: 10, rx: 1.5, key: 2 })],
       cleft: [p('M15 6l-6 6 6 6', 1)],
       cright: [p('M9 6l6 6-6 6', 1)],
+      cup: [p('M6 15l6-6 6 6', 1)],
+      cdown: [p('M6 9l6 6 6-6', 1)],
       camera: [p('M4 7h3l1.4-2h7.2L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z', 1), ci(12, 13, 3.4, 2)],
       trash: [p('M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13', 1)],
       plus: [p('M12 5v14M5 12h14', 1)],
