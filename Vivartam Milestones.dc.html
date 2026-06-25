@@ -69,6 +69,7 @@ class Component extends DCLogic {
     db: (() => { try { return JSON.parse(localStorage.getItem('vivartam_db') || '{}'); } catch (e) { return {}; } })(),
     dbReady: false,
     habitRange: 'day',
+    habitWho: null, // founder key to show, 'both', or null = the logged-in founder
     habitDayView: (() => { try { return localStorage.getItem('vivartam_habit_dayview') || 'card'; } catch (e) { return 'card'; } })(),
     dragHabit: null, // {k,id} of the kanban card being dragged
     dragOver: null,  // "<founderKey>:<stage>" lane currently hovered during a drag
@@ -1165,6 +1166,22 @@ class Component extends DCLogic {
     const r = this.state.habitRange;
     return r === 'week' ? 'This week' : r === 'month' ? 'This month' : r === 'year' ? 'This year' : 'Today';
   }
+  // Which founder(s) to show. Defaults to the logged-in founder; 'both' shows
+  // the side-by-side comparison; otherwise just the chosen founder.
+  whoShown() { return this.state.habitWho || this.auth.personKey || 'both'; }
+  shownFounders() {
+    const who = this.whoShown();
+    if (who === 'both') return this.habitsData;
+    const one = this.habitsData.filter(p => p.key === who);
+    return one.length ? one : this.habitsData;
+  }
+  whoBar() {
+    const h = React.createElement;
+    const who = this.whoShown(), me = this.auth.personKey;
+    const btn = (key, label) => h('button', { key: key, className: who === key ? 'on' : '', onClick: () => this.setState({ habitWho: key }) }, label);
+    const founders = this.habitsData.map(p => btn(p.key, p.name.split(' ')[0] + (p.key === me ? ' (me)' : '')));
+    return h('div', { className: 'vv-seg vv-whoseg', key: 'who' }, founders.concat([btn('both', 'Both')]));
+  }
   renderHabits(DS) {
     const h = React.createElement;
     const r = this.state.habitRange;
@@ -1178,7 +1195,7 @@ class Component extends DCLogic {
             h('div', { className: 'vv-hpval', key: 'v' }, this.periodLabel()),
           ]),
         ]),
-        this.rangeBar(),
+        h('div', { className: 'vv-hctrls', key: 'ctrls' }, [this.whoBar(), this.rangeBar()]),
       ]),
       view,
     ]);
@@ -1205,7 +1222,8 @@ class Component extends DCLogic {
   }
   dayView(DS) {
     const h = React.createElement;
-    const persons = this.habitsData;
+    const persons = this.shownFounders();
+    const single = persons.length === 1;
     const view = this.state.habitDayView || 'card';
     const dV = this.founderToday('vivek').done, dM = this.founderToday('mirat').done;
     const diff = Math.abs(dV - dM);
@@ -1214,10 +1232,10 @@ class Component extends DCLogic {
       : lead + ' is ' + diff + ' habit' + (diff > 1 ? 's' : '') + ' ahead today \u2014 keep each other honest.';
     const board = view === 'kanban'
       ? h('div', { className: 'vv-stack', key: 'b' }, persons.map(pp => this.kanbanColumn(DS, pp)))
-      : h('div', { className: 'vv-hboard', key: 'b' }, persons.map(pp => view === 'column' ? this.habitListColumn(DS, pp) : this.habitColumn(DS, pp)));
+      : h('div', { className: single ? 'vv-stack' : 'vv-hboard', key: 'b' }, persons.map(pp => view === 'column' ? this.habitListColumn(DS, pp) : this.habitColumn(DS, pp)));
     return h('div', { key: 'day' }, [
-      h('div', { className: 'vv-motiv', key: 'm' }, persons.map(pp => this.motivCard(DS, pp))),
-      h('div', { className: 'vv-nudge', key: 'n' }, [this.hi('flame', 15), nudge]),
+      h('div', { className: single ? 'vv-stack' : 'vv-motiv', key: 'm' }, persons.map(pp => this.motivCard(DS, pp))),
+      single ? null : h('div', { className: 'vv-nudge', key: 'n' }, [this.hi('flame', 15), nudge]),
       this.dayViewBar(),
       board,
     ]);
@@ -1272,7 +1290,7 @@ class Component extends DCLogic {
   weekView(DS) {
     const h = React.createElement;
     const dates = this.weekDates();
-    return h('div', { key: 'week', className: 'vv-stack' }, this.habitsData.map(p => this.weekCard(DS, p, dates)));
+    return h('div', { key: 'week', className: 'vv-stack' }, this.shownFounders().map(p => this.weekCard(DS, p, dates)));
   }
   weekCard(DS, p, dates) {
     const h = React.createElement;
@@ -1319,7 +1337,8 @@ class Component extends DCLogic {
   }
   monthView(DS) {
     const h = React.createElement;
-    return h('div', { key: 'month', className: 'vv-mgrid2' }, this.habitsData.map(p => this.monthCard(DS, p)));
+    const ppl = this.shownFounders();
+    return h('div', { key: 'month', className: ppl.length === 1 ? 'vv-stack' : 'vv-mgrid2' }, ppl.map(p => this.monthCard(DS, p)));
   }
   monthCard(DS, p) {
     const h = React.createElement;
@@ -1347,7 +1366,7 @@ class Component extends DCLogic {
   /* ---- year view ---- */
   yearView(DS) {
     const h = React.createElement;
-    return h('div', { key: 'year', className: 'vv-stack' }, this.habitsData.map(p => this.yearCard(DS, p)));
+    return h('div', { key: 'year', className: 'vv-stack' }, this.shownFounders().map(p => this.yearCard(DS, p)));
   }
   yearCard(DS, p) {
     const h = React.createElement;

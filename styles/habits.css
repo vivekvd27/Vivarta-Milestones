@@ -24,6 +24,8 @@
 [data-theme="dark"] .vv-hperiod svg{color:var(--orange);}
 .vv-hpcap{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}
 .vv-hpval{font-family:var(--font-display);font-weight:700;font-size:17px;line-height:1.15;color:var(--text);margin-top:1px;}
+.vv-hctrls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.vv-hctrls .vv-hseg{margin-bottom:0;}
 
 /* ---- Day-view layout toggle (Cards / Columns / Kanban) ---- */
 .vv-dvbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
