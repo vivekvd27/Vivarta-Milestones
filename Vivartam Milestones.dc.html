@@ -1181,24 +1181,52 @@ class Component extends DCLogic {
     const cats = []; const byCat = {};
     rest.forEach(t => { const c = t.cat || 'Uncategorized'; if (!byCat[c]) { byCat[c] = []; cats.push(c); } byCat[c].push(t); });
     const addKey = 'addtask:' + k;
+    // The day's score is the Top 3 only; everything else is optional.
+    const topsDone = tops.filter(t => t.done).length;
+    const pct = Math.round(topsDone / 3 * 100);
+    const optDone = rest.filter(t => t.done).length;
+    const allTop = topsDone === 3;
+
+    // Dashboard summary: Top-3 progress ring + counts.
+    const dash = h('div', { className: 'vv-tdash', key: 'dash' }, [
+      h(DS.ScoreRing, { value: pct, size: 'md', color: p.color, key: 'ring' }),
+      h('div', { className: 'vv-tdashmeta', key: 'meta' }, [
+        h('div', { className: 'vv-tdashnum', key: 'n' }, topsDone + ' / 3'),
+        h('div', { className: 'vv-tdashlbl', key: 'l' }, allTop ? 'Top 3 done — locked in 🎯' : 'Top 3 completed today'),
+      ]),
+      h('div', { className: 'vv-tdashstats', key: 'stats' }, [
+        h('div', { className: 'vv-tstat', key: 's1' }, [h('b', { key: 'v' }, tops.length + '/3'), ' picked']),
+        h('div', { className: 'vv-tstat', key: 's2' }, [h('b', { key: 'v' }, '' + rest.length), ' optional · ' + optDone + ' done']),
+      ]),
+    ]);
+
     const sections = [];
-    if (tops.length) sections.push(h('div', { className: 'vv-tgroup', key: 'top' }, [
-      h('div', { className: 'vv-hglabel vv-toplabel', key: 'l' }, [this.hi('star', 12), 'Top 3 · ' + tops.length + '/3']),
-      ...tops.map(t => this.taskRow(p, t)),
+    sections.push(h('div', { className: 'vv-tgroup', key: 'top' }, [
+      h('div', { className: 'vv-hglabel vv-toplabel', key: 'l' }, [this.hi('star', 12), 'Top 3 · counts toward today · ' + tops.length + '/3']),
+      tops.length ? h('div', { key: 'ts' }, tops.map(t => this.taskRow(p, t)))
+        : h('div', { className: 'vv-tempty', key: 'e' }, editable ? 'Star up to 3 tasks below to set today’s focus.' : 'No Top 3 picked.'),
     ]));
-    cats.forEach(c => sections.push(h('div', { className: 'vv-tgroup', key: 'c-' + c }, [
-      h('div', { className: 'vv-hglabel', key: 'l' }, c),
-      ...byCat[c].map(t => this.taskRow(p, t)),
-    ])));
+    if (cats.length) {
+      const optGroups = cats.map(c => h('div', { className: 'vv-tgroup', key: 'c-' + c }, [
+        h('div', { className: 'vv-hglabel', key: 'l' }, c),
+        ...byCat[c].map(t => this.taskRow(p, t)),
+      ]));
+      sections.push(h('div', { className: 'vv-toptional', key: 'opt' }, [
+        h('div', { className: 'vv-hglabel vv-optlabel', key: 'l' }, 'Optional · not counted'),
+        ...optGroups,
+      ]));
+    }
+
     return h(DS.Card, { padding: 'lg' }, [
       h('div', { className: 'vv-tbhead', key: 'hd', style: { borderLeft: '3px solid ' + p.color } }, [
         h(DS.Avatar, { name: p.name, color: p.color, size: 'sm', key: 'av' }),
         h('div', { style: { flex: 1, minWidth: 0 }, key: 'n' }, [
           h('div', { className: 'nm', key: 1 }, [this.hi('target', 14), ' Rule of 3 · today']),
-          h('div', { className: 'rl', key: 2 }, editable ? 'Your tasks for today — pick your top 3' : (p.name.split(' ')[0] + "'s tasks for today")),
+          h('div', { className: 'rl', key: 2 }, editable ? 'Pick your top 3 — only those count; the rest are optional' : (p.name.split(' ')[0] + "'s tasks for today")),
         ]),
       ]),
-      sections.length ? h('div', { key: 'sec' }, sections) : (!editable ? h('div', { className: 'vv-tempty', key: 'e' }, 'No tasks yet today.') : null),
+      dash,
+      tasks.length ? h('div', { key: 'sec' }, sections) : (!editable ? h('div', { className: 'vv-tempty', key: 'e' }, 'No tasks yet today.') : null),
       editable ? (this.state.taskEdit === addKey
         ? h('div', { className: 'vv-addtask', key: 'add' }, this.taskInput(v => this.addTask(k, v), 'Add a task for today…'))
         : h('button', { className: 'vv-addtask', key: 'add', onClick: () => this.startTaskEdit(addKey, '') }, [this.hi('plus', 16), 'Add task'])) : null,

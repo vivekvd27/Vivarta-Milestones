@@ -40,6 +40,17 @@
 .vv-tgroup:last-of-type{margin-bottom:0;}
 .vv-toplabel{color:var(--orange-deep);}
 [data-theme="dark"] .vv-toplabel{color:var(--orange);}
+/* Top-3 dashboard summary */
+.vv-tdash{display:flex;align-items:center;gap:16px;padding:14px;margin-bottom:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface-sunken);flex-wrap:wrap;}
+.vv-tdashmeta{min-width:0;}
+.vv-tdashnum{font-family:var(--font-display);font-weight:700;font-size:24px;line-height:1;}
+.vv-tdashlbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-subtle);margin-top:5px;font-weight:700;}
+.vv-tdashstats{margin-left:auto;display:flex;flex-direction:column;gap:6px;text-align:right;}
+.vv-tstat{font-size:12px;color:var(--text-muted);}
+.vv-tstat b{font-family:var(--font-mono);color:var(--text);font-weight:700;}
+/* Optional section (does not count) */
+.vv-toptional{margin-top:16px;padding-top:14px;border-top:1px dashed var(--border-strong);}
+.vv-optlabel{color:var(--text-subtle);margin-bottom:12px;}
 .vv-taskwrap{border:1px solid var(--border);border-radius:11px;background:var(--surface-sunken);margin-bottom:8px;overflow:hidden;}
 .vv-taskwrap:last-child{margin-bottom:0;}
 .vv-task{display:flex;align-items:center;gap:9px;padding:9px 11px;}
