@@ -84,6 +84,13 @@
 .vv-kcount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:700;flex:none;}
 .vv-kbody{display:flex;flex-direction:column;gap:10px;}
 .vv-kempty{padding:18px 10px;text-align:center;font-size:12px;color:var(--text-subtle);border:1px dashed var(--border-strong);border-radius:10px;}
+/* drag & drop */
+.vv-hcard.draggable{cursor:grab;}
+.vv-hcard.draggable:active{cursor:grabbing;}
+.vv-hcard.dragging{opacity:.4;}
+.vv-kcol{transition:background .15s,border-color .15s,box-shadow .15s;}
+.vv-kcol.candrop{border-style:dashed;border-color:var(--border-strong);}
+.vv-kcol.dropok{border-style:solid;border-color:color-mix(in srgb,var(--hc) 60%,var(--border));background:color-mix(in srgb,var(--hc) 12%,var(--surface));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hc) 35%,transparent);}
 /* stage move arrows on kanban cards */
 .vv-stagemove{display:inline-flex;gap:5px;}
 .vv-stbtn{width:24px;height:24px;border-radius:7px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .15s,color .15s,border-color .15s;}

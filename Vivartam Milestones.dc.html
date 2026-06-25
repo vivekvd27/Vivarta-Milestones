@@ -62,6 +62,8 @@ class Component extends DCLogic {
     rule3Done: { 'vivek:0': true, 'mirat:0': true, 'mirat:1': true },
     habitRange: 'day',
     habitDayView: (() => { try { return localStorage.getItem('vivartam_habit_dayview') || 'card'; } catch (e) { return 'card'; } })(),
+    dragHabit: null, // {k,id} of the kanban card being dragged
+    dragOver: null,  // "<founderKey>:<stage>" lane currently hovered during a drag
     visionFilter: 'All',
     visionFocus: null,
     contactDone: {},
@@ -959,6 +961,28 @@ class Component extends DCLogic {
     const i = Math.max(0, Math.min(order.length - 1, order.indexOf(this.habitStage(k, id)) + dir));
     this.setStage(k, id, order[i]);
   }
+  /* ---- Kanban drag & drop ---- */
+  onCardDragStart(e, k, id) {
+    try { e.dataTransfer.setData('text/plain', k + '|' + id); e.dataTransfer.effectAllowed = 'move'; } catch (_) {}
+    this.setState({ dragHabit: { k: k, id: id }, dragOver: null });
+  }
+  onCardDragEnd() { this.setState({ dragHabit: null, dragOver: null }); }
+  onLaneDragOver(e, p, kind) {
+    const d = this.state.dragHabit;
+    if (!d || d.k !== p.key || !this.canEditFounder(p.key)) return; // only within your own board
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
+    const tgt = p.key + ':' + kind;
+    if (this.state.dragOver !== tgt) this.setState({ dragOver: tgt });
+  }
+  onLaneDrop(e, p, kind) {
+    e.preventDefault();
+    let k, id;
+    try { const s = e.dataTransfer.getData('text/plain'); if (s) { k = s.split('|')[0]; id = s.split('|')[1]; } } catch (_) {}
+    if (!id && this.state.dragHabit) { k = this.state.dragHabit.k; id = this.state.dragHabit.id; }
+    if (id && k === p.key && this.canEditFounder(p.key)) this.setStage(k, id, kind);
+    this.setState({ dragHabit: null, dragOver: null });
+  }
   isRule3Done(k, i) { return !!this.state.rule3Done[k + ':' + i]; }
   toggleRule3(k, i) { this.setState(s => ({ rule3Done: Object.assign({}, s.rule3Done, { [k + ':' + i]: !s.rule3Done[k + ':' + i] }) })); }
   founderToday(k) {
@@ -1270,7 +1294,17 @@ class Component extends DCLogic {
         h('button', { className: 'vv-stbtn', disabled: stage === 'done', title: 'Move forward', onClick: e => { e.stopPropagation(); this.moveStage(p.key, x.id, 1); }, key: 'r' }, this.hi('cright', 14)),
       ]));
     }
-    return h('div', { className: 'vv-hcard' + (compact ? ' compact' : '') + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: cardClick, key: x.id }, [
+    const dragging = kanban && this.state.dragHabit && this.state.dragHabit.k === p.key && this.state.dragHabit.id === x.id;
+    const cardProps = {
+      className: 'vv-hcard' + (compact ? ' compact' : '') + (done ? ' done' : '') + (editable ? '' : ' readonly') + (kanban && editable ? ' draggable' : '') + (dragging ? ' dragging' : ''),
+      style: { '--hc': p.color }, onClick: cardClick, key: x.id,
+    };
+    if (kanban && editable) {
+      cardProps.draggable = true;
+      cardProps.onDragStart = e => this.onCardDragStart(e, p.key, x.id);
+      cardProps.onDragEnd = () => this.onCardDragEnd();
+    }
+    return h('div', cardProps, [
       h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: 'url("' + this.habitImg(x) + '")' } }, [
         h('span', { className: 'hic', key: 'ic' }, this.hi(x.icon, 16)),
         h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
@@ -1311,7 +1345,13 @@ class Component extends DCLogic {
     const todo = p.habits.filter(x => st(x) === 'todo');
     const wip = p.habits.filter(x => st(x) === 'wip');
     const done = p.habits.filter(x => st(x) === 'done');
-    const lane = (label, items, kind, empty) => h('div', { className: 'vv-kcol ' + kind, key: kind }, [
+    const canDrop = this.state.dragHabit && this.state.dragHabit.k === p.key && this.canEditFounder(p.key);
+    const lane = (label, items, kind, empty) => h('div', {
+      className: 'vv-kcol ' + kind + (canDrop ? ' candrop' : '') + (this.state.dragOver === p.key + ':' + kind ? ' dropok' : ''),
+      key: kind,
+      onDragOver: e => this.onLaneDragOver(e, p, kind),
+      onDrop: e => this.onLaneDrop(e, p, kind),
+    }, [
       h('div', { className: 'vv-kcolhd', key: 'h' }, [h('span', { key: 'l' }, label), h('span', { className: 'vv-kcount', key: 'c' }, items.length)]),
       items.length
         ? h('div', { className: 'vv-kbody', key: 'b' }, items.map(x => this.habitCard(DS, p, x, { compact: true, kanban: true })))
@@ -1319,7 +1359,7 @@ class Component extends DCLogic {
     ]);
     return h(DS.Card, { padding: 'lg' }, [
       this.founderColHead(DS, p),
-      h('div', { className: 'vv-kanban', key: 'k' }, [
+      h('div', { className: 'vv-kanban', key: 'k', style: { '--hc': p.color } }, [
         lane('To do', todo, 'todo', 'Nothing queued'),
         lane('Work in progress', wip, 'wip', 'Nothing in progress'),
         lane('Done', done, 'done', 'Nothing done yet'),
