@@ -1309,7 +1309,6 @@ class Component extends DCLogic {
         // front — photo + name + streak
         h('div', { className: 'vv-hcardface vv-front', key: 'f' }, [
           h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: 'url("' + this.habitImg(x) + '")' } }, [
-            h('span', { className: 'hic', key: 'ic' }, this.hi(x.icon, 16)),
             h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
           ]),
           h('div', { className: 'vv-hcardbody', key: 'bd' }, [
