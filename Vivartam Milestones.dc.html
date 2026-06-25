@@ -69,8 +69,10 @@ class Component extends DCLogic {
     habitImgs: (() => { try { return JSON.parse(localStorage.getItem('vivartam_habit_imgs') || '{}'); } catch (e) { return {}; } })(),
     // Per-habit custom titles (override the default name). Persisted in localStorage.
     habitNames: (() => { try { return JSON.parse(localStorage.getItem('vivartam_habit_names') || '{}'); } catch (e) { return {}; } })(),
-    editHabit: null, // "<k>:<id>" of the habit whose title is being edited
+    editHabit: null, // edit key of the habit title / rule-of-3 item being edited
     editDraft: '',
+    // Per-founder custom Rule-of-3 text (override defaults). Persisted in localStorage.
+    rule3Names: (() => { try { return JSON.parse(localStorage.getItem('vivartam_rule3') || '{}'); } catch (e) { return {}; } })(),
     visionFilter: 'All',
     visionFocus: null,
     contactDone: {},
@@ -1328,6 +1330,34 @@ class Component extends DCLogic {
       editable ? h('button', { className: 'vv-editname', title: 'Edit title', key: 'e', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); this.startEditName(k, id, this.habitName(p, x)); } }, this.hi('edit', 12)) : null,
     ]);
   }
+  /* ---- Editable Rule-of-3 items (same pattern as titles) ---- */
+  r3key(k, i) { return k + ':r3:' + i; }
+  rule3Text(p, i, def) { return this.state.rule3Names[this.r3key(p.key, i)] || def; }
+  commitEditR3(k, i) {
+    const v = (this.state.editDraft || '').trim();
+    this.setState(s => {
+      const next = Object.assign({}, s.rule3Names);
+      if (v) next[this.r3key(k, i)] = v; else delete next[this.r3key(k, i)];
+      try { localStorage.setItem('vivartam_rule3', JSON.stringify(next)); } catch (e) {}
+      return { rule3Names: next, editHabit: null, editDraft: '' };
+    });
+  }
+  rule3El(p, i, def, editable) {
+    const h = React.createElement, key = this.r3key(p.key, i);
+    if (this.state.editHabit === key) {
+      return h('input', {
+        className: 'vv-nameedit', key: 'ne', value: this.state.editDraft, autoFocus: true,
+        onClick: e => e.stopPropagation(), onMouseDown: e => e.stopPropagation(),
+        onChange: e => this.setState({ editDraft: e.target.value }),
+        onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.commitEditR3(p.key, i); } else if (e.key === 'Escape') { e.preventDefault(); this.cancelEditName(); } },
+        onBlur: () => this.commitEditR3(p.key, i),
+      });
+    }
+    return h('div', { className: 'vv-hname', key: 't' }, [
+      h('span', { className: 'vv-hnametxt', key: 'tx' }, this.rule3Text(p, i, def)),
+      editable ? h('button', { className: 'vv-editname', title: 'Edit', key: 'e', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); this.setState({ editHabit: key, editDraft: this.rule3Text(p, i, def) }); } }, this.hi('edit', 12)) : null,
+    ]);
+  }
   // Shared founder header used by every day-view layout.
   founderColHead(DS, p) {
     const h = React.createElement;
@@ -1468,9 +1498,10 @@ class Component extends DCLogic {
       ...p.rule3.map((txt, i) => {
         const done = this.isRule3Done(p.key, i);
         const editable = this.canEditFounder(p.key);
-        return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: editable ? () => this.toggleRule3(p.key, i) : null, key: i }, [
+        const editing = this.state.editHabit === this.r3key(p.key, i);
+        return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: (editable && !editing) ? () => this.toggleRule3(p.key, i) : null, key: i }, [
           h('span', { className: 'hic', style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', background: done ? p.color : null, borderColor: done ? 'transparent' : null, color: done ? '#fff' : 'var(--text-subtle)' }, key: 'n' }, i + 1),
-          h('span', { className: 'vv-hname', key: 't' }, txt),
+          this.rule3El(p, i, txt, editable),
           h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
         ]);
       }),
