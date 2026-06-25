@@ -1138,7 +1138,7 @@ class Component extends DCLogic {
       ]));
     });
     p.habits.forEach(x => {
-      kids.push(h('div', { className: 'vv-wkhabit', key: x.id + '-n' }, [h('span', { className: 'hicmini', key: 'i' }, this.hi(x.icon, 14)), x.name]));
+      kids.push(h('div', { className: 'vv-wkhabit', key: x.id + '-n' }, x.name));
       dates.forEach((d, i) => {
         const ds = this.dstr(d); const future = ds > todayStr; const done = !future && this.habitDoneOn(p.key, x.id, ds);
         kids.push(h('div', { className: 'vv-wkcell', key: x.id + '-' + i }, h('span', { className: 'vv-dot2' + (done ? ' on' : '') + (future ? ' fut' : ''), style: done ? { background: p.color, borderColor: 'transparent' } : null }, done ? this.hi('check', 11) : null)));
