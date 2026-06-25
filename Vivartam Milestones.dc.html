@@ -67,6 +67,10 @@ class Component extends DCLogic {
     // Per-habit custom images chosen by the user (data URLs), overriding the
     // default photo in uploads/habits/. Persisted in localStorage.
     habitImgs: (() => { try { return JSON.parse(localStorage.getItem('vivartam_habit_imgs') || '{}'); } catch (e) { return {}; } })(),
+    // Per-habit custom titles (override the default name). Persisted in localStorage.
+    habitNames: (() => { try { return JSON.parse(localStorage.getItem('vivartam_habit_names') || '{}'); } catch (e) { return {}; } })(),
+    editHabit: null, // "<k>:<id>" of the habit whose title is being edited
+    editDraft: '',
     visionFilter: 'All',
     visionFocus: null,
     contactDone: {},
@@ -1142,7 +1146,7 @@ class Component extends DCLogic {
       ]));
     });
     p.habits.forEach(x => {
-      kids.push(h('div', { className: 'vv-wkhabit', key: x.id + '-n' }, x.name));
+      kids.push(h('div', { className: 'vv-wkhabit', key: x.id + '-n' }, this.habitName(p, x)));
       dates.forEach((d, i) => {
         const ds = this.dstr(d); const future = ds > todayStr; const done = !future && this.habitDoneOn(p.key, x.id, ds);
         kids.push(h('div', { className: 'vv-wkcell', key: x.id + '-' + i }, h('span', { className: 'vv-dot2' + (done ? ' on' : '') + (future ? ' fut' : ''), style: done ? { background: p.color, borderColor: 'transparent' } : null }, done ? this.hi('check', 11) : null)));
@@ -1289,6 +1293,41 @@ class Component extends DCLogic {
     };
     input.click();
   }
+  /* ---- Editable habit titles ---- */
+  habitName(p, x) {
+    const key = (p && p.key ? p.key : p) + ':' + x.id;
+    return this.state.habitNames[key] || x.name;
+  }
+  isEditingName(k, id) { return this.state.editHabit === k + ':' + id; }
+  startEditName(k, id, current) { this.setState({ editHabit: k + ':' + id, editDraft: current }); }
+  cancelEditName() { this.setState({ editHabit: null, editDraft: '' }); }
+  commitEditName(k, id) {
+    const v = (this.state.editDraft || '').trim();
+    this.setState(s => {
+      const next = Object.assign({}, s.habitNames);
+      if (v) next[k + ':' + id] = v; else delete next[k + ':' + id]; // empty → revert to default
+      try { localStorage.setItem('vivartam_habit_names', JSON.stringify(next)); } catch (e) {}
+      return { habitNames: next, editHabit: null, editDraft: '' };
+    });
+  }
+  // Renders the habit title: an inline editor when editing, else the name + a
+  // pencil button (for the owner).
+  habitNameEl(p, x, editable) {
+    const h = React.createElement, k = p.key, id = x.id;
+    if (this.isEditingName(k, id)) {
+      return h('input', {
+        className: 'vv-nameedit', key: 'ne', value: this.state.editDraft, autoFocus: true,
+        onClick: e => e.stopPropagation(), onMouseDown: e => e.stopPropagation(), onDragStart: e => e.preventDefault(),
+        onChange: e => this.setState({ editDraft: e.target.value }),
+        onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.commitEditName(k, id); } else if (e.key === 'Escape') { e.preventDefault(); this.cancelEditName(); } },
+        onBlur: () => this.commitEditName(k, id),
+      });
+    }
+    return h('div', { className: 'vv-hname', key: 'n' }, [
+      h('span', { className: 'vv-hnametxt', key: 't' }, this.habitName(p, x)),
+      editable ? h('button', { className: 'vv-editname', title: 'Edit title', key: 'e', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); this.startEditName(k, id, this.habitName(p, x)); } }, this.hi('edit', 12)) : null,
+    ]);
+  }
   // Shared founder header used by every day-view layout.
   founderColHead(DS, p) {
     const h = React.createElement;
@@ -1327,8 +1366,10 @@ class Component extends DCLogic {
     const editable = this.canEditFounder(p.key);
     const stage = this.habitStage(p.key, x.id);
     const compact = !!opts.compact, kanban = !!opts.kanban;
+    const editingThis = this.isEditingName(p.key, x.id);
     // In kanban the whole card is not a toggle — the stage is changed via arrows.
-    const cardClick = (!editable || kanban) ? null : () => this.toggleHabit(p.key, x.id);
+    // While editing the title, don't toggle/flip on click.
+    const cardClick = (!editable || kanban || editingThis) ? null : () => this.toggleHabit(p.key, x.id);
     const foot = [h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), x.streak])];
     if (kanban && editable) {
       foot.push(h('div', { className: 'vv-stagemove', key: 'mv' }, [
@@ -1338,10 +1379,10 @@ class Component extends DCLogic {
     }
     const dragging = kanban && this.state.dragHabit && this.state.dragHabit.k === p.key && this.state.dragHabit.id === x.id;
     const cardProps = {
-      className: 'vv-hcard' + (compact ? ' compact' : '') + (done ? ' done' : '') + (editable ? '' : ' readonly') + (kanban && editable ? ' draggable' : '') + (dragging ? ' dragging' : ''),
+      className: 'vv-hcard' + (compact ? ' compact' : '') + (done ? ' done' : '') + (editable ? '' : ' readonly') + (kanban && editable && !editingThis ? ' draggable' : '') + (dragging ? ' dragging' : ''),
       style: { '--hc': p.color }, onClick: cardClick, key: x.id,
     };
-    if (kanban && editable) {
+    if (kanban && editable && !editingThis) {
       cardProps.draggable = true;
       cardProps.onDragStart = e => this.onCardDragStart(e, p.key, x.id);
       cardProps.onDragEnd = () => this.onCardDragEnd();
@@ -1355,7 +1396,7 @@ class Component extends DCLogic {
             h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
           ]),
           h('div', { className: 'vv-hcardbody', key: 'bd' }, [
-            h('div', { className: 'vv-hname', key: 'n' }, x.name),
+            this.habitNameEl(p, x, editable),
             h('div', { className: 'vv-hcardfoot', key: 's' }, foot),
           ]),
         ]),
@@ -1363,7 +1404,7 @@ class Component extends DCLogic {
         h('div', { className: 'vv-hcardface vv-back', key: 'b' }, [
           h('span', { className: 'vv-backcheck', key: 'c' }, this.hi('check', 24)),
           h('span', { className: 'vv-backtxt', key: 't' }, 'Done'),
-          h('span', { className: 'vv-backname', key: 'nm' }, x.name),
+          h('span', { className: 'vv-backname', key: 'nm' }, this.habitName(p, x)),
         ]),
       ]),
     ]);
@@ -1386,7 +1427,7 @@ class Component extends DCLogic {
     const editable = this.canEditFounder(p.key);
     return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: editable ? () => this.toggleHabit(p.key, x.id) : null, key: x.id }, [
       h('span', { className: 'vv-hthumb', key: 'th', style: { backgroundImage: 'url("' + this.habitImg(p, x) + '")' } }),
-      h('span', { className: 'vv-hname', key: 'n' }, x.name),
+      this.habitNameEl(p, x, editable),
       h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), x.streak]),
       h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
     ]);
