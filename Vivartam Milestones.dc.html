@@ -1044,13 +1044,14 @@ class Component extends DCLogic {
     if (id && k === p.key && this.canEditFounder(p.key)) this.setStage(k, id, kind);
     this.setState({ dragHabit: null, dragOver: null });
   }
-  isRule3Done(k, i) { return !!this.dbv('r3done:' + k + ':' + i); }
-  toggleRule3(k, i) { if (this.isRule3Done(k, i)) this.delKey('r3done:' + k + ':' + i); else this.setKey('r3done:' + k + ':' + i, true); }
   // Effective habit list for a founder: defaults + custom habits − deleted ones.
   isDeleted(k, id) { return !!this.dbv('del:' + k + ':' + id); }
   effHabits(p) {
+    // Rule-of-3 items are seeded as habits in their own 'r3' category so they
+    // render as cards/kanban with the same machinery as every other habit.
+    const r3 = (p.rule3 || []).map((txt, i) => ({ id: 'r3-' + i, name: txt, cat: 'r3', streak: 0 }));
     const customs = (this.dbv('customHabits:' + p.key) || []).map(c => ({ id: c.id, name: c.name, cat: c.cat, streak: 0, custom: true }));
-    return p.habits.concat(customs).filter(x => !this.isDeleted(p.key, x.id));
+    return p.habits.concat(r3).concat(customs).filter(x => !this.isDeleted(p.key, x.id));
   }
   createHabit(k, cat, name) {
     const nm = (name || '').trim(); if (!nm) return;
@@ -1368,7 +1369,7 @@ class Component extends DCLogic {
     const k = (p && p.key ? p.key : p);
     const custom = this.dbv('img:' + k + ':' + x.id);
     if (custom) return custom;
-    return x.custom ? '' : ('uploads/habits/' + x.id + '.jpg'); // custom habits have no bundled photo
+    return (x.custom || x.cat === 'r3') ? '' : ('uploads/habits/' + x.id + '.jpg'); // custom + Rule-of-3 have no bundled photo
   }
   setHabitImage(k, id, dataUrl) {
     if (dataUrl) this.setKey('img:' + k + ':' + id, dataUrl); else this.delKey('img:' + k + ':' + id);
@@ -1407,8 +1408,6 @@ class Component extends DCLogic {
   // one card opens, even when the saved key is shared across founders).
   habitEditId(p, x) { return 'edit:' + p.key + ':' + x.id; }
   isEditingName(p, x) { return this.state.editHabit === this.habitEditId(p, x); }
-  r3key(k, i) { return 'r3:' + k + ':' + i; }
-  rule3Text(p, i, def) { return this.dbv(this.r3key(p.key, i)) || def; }
   cancelEdit() { this.setState({ editHabit: null, editSave: null, editDraft: '' }); }
   commitEdit() {
     const key = this.state.editSave; if (!key) { this.cancelEdit(); return; }
@@ -1435,7 +1434,6 @@ class Component extends DCLogic {
     ]);
   }
   habitNameEl(p, x, editable) { return this.editField(this.habitEditId(p, x), this.nameKey(p, x), this.habitName(p, x), editable, 'Edit title'); }
-  rule3El(p, i, def, editable) { return this.editField(this.r3key(p.key, i), this.r3key(p.key, i), this.rule3Text(p, i, def), editable, 'Edit'); }
   // Shared founder header used by every day-view layout.
   founderColHead(DS, p) {
     const h = React.createElement;
@@ -1451,9 +1449,10 @@ class Component extends DCLogic {
   habitGroups(p) {
     const hs = this.effHabits(p);
     return [
+      { label: [this.hi('target', 13), 'Rule of 3 \u00b7 today'], items: hs.filter(x => x.cat === 'r3'), cat: 'r3' },
       { label: 'Rule of 1 \u00b7 1 \u00b7 1', items: hs.filter(x => x.cat === 'rule'), cat: 'rule' },
-      { label: 'Personal', items: hs.filter(x => x.cat === 'personal'), cat: 'personal' },
       { label: 'Entrepreneurial', items: hs.filter(x => x.cat === 'entre'), cat: 'entre' },
+      { label: 'Personal', items: hs.filter(x => x.cat === 'personal'), cat: 'personal' },
     ];
   }
   /* ---- Card view ---- */
@@ -1470,7 +1469,6 @@ class Component extends DCLogic {
           h('div', { className: 'vv-hcardgrid', key: 'g' }, g.items.map(x => this.habitCard(DS, p, x)).concat(showAdd ? [this.addTile(p, g.cat)] : [])),
         ]);
       }),
-      this.rule3Block(DS, p),
     ]);
   }
   habitCard(DS, p, x, opts) {
@@ -1484,7 +1482,8 @@ class Component extends DCLogic {
     // In kanban the whole card is not a toggle — the stage is changed via arrows.
     // While editing the title, don't toggle/flip on click.
     const cardClick = (!editable || kanban || editingThis) ? null : () => this.toggleHabit(p.key, x.id);
-    const foot = [h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), x.streak])];
+    const foot = [];
+    if (x.streak) foot.push(h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), x.streak]));
     if (kanban && editable) {
       foot.push(h('div', { className: 'vv-stagemove', key: 'mv' }, [
         h('button', { className: 'vv-stbtn', disabled: stage === 'todo', title: 'Move back', onClick: e => { e.stopPropagation(); this.moveStage(p.key, x.id, -1); }, key: 'l' }, this.hi('cleft', 14)),
@@ -1539,7 +1538,6 @@ class Component extends DCLogic {
           showAdd ? this.addRow(p, g.cat) : null,
         ]);
       }),
-      this.rule3Block(DS, p),
     ]);
   }
   habitRow(DS, p, x) {
@@ -1549,7 +1547,7 @@ class Component extends DCLogic {
     return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: editable ? () => this.toggleHabit(p.key, x.id) : null, key: x.id }, [
       (() => { const img = this.habitImg(p, x); return h('span', { className: 'vv-hthumb', key: 'th', style: img ? { backgroundImage: 'url("' + img + '")' } : { background: 'color-mix(in srgb,' + p.color + ' 22%,var(--surface-sunken))' } }); })(),
       this.habitNameEl(p, x, editable),
-      h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), x.streak]),
+      x.streak ? h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), x.streak]) : null,
       editable ? h('button', { className: 'vv-rowdel', title: 'Delete habit', key: 'del', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); if (window.confirm('Delete "' + this.habitName(p, x) + '"?')) this.deleteHabit(p, x); } }, this.hi('trash', 13)) : null,
       h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
     ]);
@@ -1581,23 +1579,6 @@ class Component extends DCLogic {
         lane('Work in progress', wip, 'wip', 'Nothing in progress'),
         lane('Done', done, 'done', 'Nothing done yet'),
       ]),
-      this.rule3Block(DS, p),
-    ]);
-  }
-  rule3Block(DS, p) {
-    const h = React.createElement;
-    return h('div', { className: 'vv-rule3' }, [
-      h('div', { className: 'vv-hglabel', key: 'l' }, [this.hi('target', 13), 'Rule of 3 \u00b7 today']),
-      ...p.rule3.map((txt, i) => {
-        const done = this.isRule3Done(p.key, i);
-        const editable = this.canEditFounder(p.key);
-        const editing = this.state.editHabit === this.r3key(p.key, i);
-        return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: (editable && !editing) ? () => this.toggleRule3(p.key, i) : null, key: i }, [
-          h('span', { className: 'hic', style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px', background: done ? p.color : null, borderColor: done ? 'transparent' : null, color: done ? '#fff' : 'var(--text-subtle)' }, key: 'n' }, i + 1),
-          this.rule3El(p, i, txt, editable),
-          h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
-        ]);
-      }),
     ]);
   }
 
