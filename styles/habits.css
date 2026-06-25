@@ -60,7 +60,12 @@
 .vv-backcheck{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);}
 .vv-backtxt{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:.02em;line-height:1;}
 .vv-backname{font-family:var(--font-mono);font-size:10.5px;line-height:1.3;opacity:.9;}
-.vv-hcardmedia{position:relative;height:92px;background-size:cover;background-position:center;background-color:color-mix(in srgb,var(--hc) 22%,var(--surface-sunken));display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;}
+.vv-hcardmedia{position:relative;height:92px;background-size:cover;background-position:center;background-color:color-mix(in srgb,var(--hc) 22%,var(--surface-sunken));display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;padding:9px;}
+.vv-hcardmedia .vv-hcheck{margin-left:auto;}
+/* change-image (camera) button */
+.vv-imgedit{position:relative;z-index:2;width:26px;height:26px;border-radius:8px;border:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.42);backdrop-filter:blur(2px);opacity:0;transition:opacity .15s,background .15s;padding:0;}
+.vv-hcard:hover .vv-imgedit,.vv-hcard.compact .vv-imgedit{opacity:.92;}
+.vv-imgedit:hover{background:rgba(0,0,0,.62);}
 /* legibility veil + accent tint over the photo */
 .vv-hcardmedia::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.34)),linear-gradient(120deg,color-mix(in srgb,var(--hc) 30%,transparent),transparent 60%);}
 .vv-hcardmedia>*{position:relative;z-index:1;}
