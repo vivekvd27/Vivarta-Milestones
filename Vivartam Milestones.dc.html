@@ -1146,11 +1146,42 @@ class Component extends DCLogic {
   }
 
   /* ---------------- habits screen ---------------- */
+  // Human label for the current range: full date / week span / month / year.
+  periodLabel() {
+    const t = this.TODAY, r = this.state.habitRange;
+    const M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const D = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    if (r === 'week') {
+      const wd = this.weekDates(), a = wd[0], b = wd[6];
+      if (a.getMonth() === b.getMonth()) return a.getDate() + ' – ' + b.getDate() + ' ' + M[a.getMonth()] + ' ' + a.getFullYear();
+      if (a.getFullYear() === b.getFullYear()) return a.getDate() + ' ' + M[a.getMonth()] + ' – ' + b.getDate() + ' ' + M[b.getMonth()] + ' ' + a.getFullYear();
+      return a.getDate() + ' ' + M[a.getMonth()] + ' ' + a.getFullYear() + ' – ' + b.getDate() + ' ' + M[b.getMonth()] + ' ' + b.getFullYear();
+    }
+    if (r === 'month') return M[t.getMonth()] + ' ' + t.getFullYear();
+    if (r === 'year') return '' + t.getFullYear();
+    return D[t.getDay()] + ', ' + t.getDate() + ' ' + M[t.getMonth()] + ' ' + t.getFullYear();
+  }
+  periodCaption() {
+    const r = this.state.habitRange;
+    return r === 'week' ? 'This week' : r === 'month' ? 'This month' : r === 'year' ? 'This year' : 'Today';
+  }
   renderHabits(DS) {
     const h = React.createElement;
     const r = this.state.habitRange;
     const view = r === 'week' ? this.weekView(DS) : r === 'month' ? this.monthView(DS) : r === 'year' ? this.yearView(DS) : this.dayView(DS);
-    return h('div', { className: 'vv-hwrap' }, [this.rangeBar(), view]);
+    return h('div', { className: 'vv-hwrap' }, [
+      h('div', { className: 'vv-hhead', key: 'hh' }, [
+        h('div', { className: 'vv-hperiod', key: 'p' }, [
+          this.hi('calendar', 16),
+          h('div', { key: 'tx' }, [
+            h('div', { className: 'vv-hpcap', key: 'c' }, this.periodCaption()),
+            h('div', { className: 'vv-hpval', key: 'v' }, this.periodLabel()),
+          ]),
+        ]),
+        this.rangeBar(),
+      ]),
+      view,
+    ]);
   }
   rangeBar() {
     const h = React.createElement;

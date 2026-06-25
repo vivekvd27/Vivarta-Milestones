@@ -16,6 +16,15 @@
 .vv-hcolhead .rl{font-family:var(--font-mono);font-size:11px;color:var(--text-subtle);margin-top:2px;}
 .vv-hgroup{margin-top:16px;}
 .vv-hglabel{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+/* ---- Period header (date / week span / month / year + range toggle) ---- */
+.vv-hhead{display:flex;align-items:center;justify-content:space-between;gap:14px 18px;margin-bottom:18px;flex-wrap:wrap;}
+.vv-hhead .vv-hseg{margin-bottom:0;}
+.vv-hperiod{display:flex;align-items:center;gap:11px;}
+.vv-hperiod svg{color:var(--orange-deep);flex:none;}
+[data-theme="dark"] .vv-hperiod svg{color:var(--orange);}
+.vv-hpcap{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}
+.vv-hpval{font-family:var(--font-display);font-weight:700;font-size:17px;line-height:1.15;color:var(--text);margin-top:1px;}
+
 /* ---- Day-view layout toggle (Cards / Columns / Kanban) ---- */
 .vv-dvbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
 .vv-dvlbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}
