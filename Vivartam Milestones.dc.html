@@ -95,6 +95,9 @@ class Component extends DCLogic {
     discoverRing: 'all',
     showAddEvent: false,
     newEvent: { title: '', date: '', location: 'Ahmedabad', priority: 'medium', prep: '', owner: 'both' },
+    showAddMilestone: false,
+    editMilestoneId: null,
+    newMilestone: { title: '', date: '', type: 'minor', desc: '' },
     userEvents: (() => { try { return JSON.parse(localStorage.getItem('vivartam_events') || '[]'); } catch (e) { return []; } })(),
     savedDiscover: (() => { try { return JSON.parse(localStorage.getItem('vivartam_saved_events') || '{}'); } catch (e) { return {}; } })(),
     mentorNotes: (() => { try { return JSON.parse(localStorage.getItem('vivartam_mentor_notes') || '{}'); } catch (e) { return {}; } })(),
@@ -140,6 +143,7 @@ class Component extends DCLogic {
       (res.data || []).forEach(r => { db[r.k] = r.v; });
       this.setState({ db: db, dbReady: true });
       try { localStorage.setItem('vivartam_db', JSON.stringify(db)); } catch (e) {}
+      this.migrateTimelineToCloud(db);   // lift any local timeline edits into the shared map (one-time)
       // Live updates from the other founder / other devices.
       this._chan = this._supa.channel('habit_state_rt')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'habit_state' }, payload => {
@@ -244,16 +248,123 @@ class Component extends DCLogic {
   }
 
   /* ---------------- widgets ---------------- */
+  /* ---------------- timeline: editable milestone CRUD (cloud-synced) ---------------- */
+  // The seed in content.js stays the source of truth. User changes are stored as
+  // deltas in the shared Supabase key→value map (db) so they sync live across both
+  // founders and every device — exactly like the habit state:
+  //   tl:added   → [ {id,title,date,type,desc}, … ]  (new milestones)
+  //   tl:edited  → { id: {title,date,type,desc}, … } (overrides for seed/added)
+  //   tl:deleted → [ id, … ]                          (tombstoned milestones)
+  // New seed entries always surface; deletions/edits persist for everyone.
+  get tlAdded() { return this.dbv('tl:added') || []; }
+  get tlEdited() { return this.dbv('tl:edited') || {}; }
+  get tlDeleted() { return this.dbv('tl:deleted') || []; }
+  get timelineList() {
+    const edited = this.tlEdited, deleted = this.tlDeleted;
+    const apply = e => edited[e.id] ? Object.assign({}, e, edited[e.id]) : e;
+    const base = this.data.timeline.filter(e => deleted.indexOf(e.id) === -1).map(apply);
+    const added = this.tlAdded.filter(e => deleted.indexOf(e.id) === -1).map(apply);
+    return base.concat(added);
+  }
+  setNM(k, v) { this.setState(s => ({ newMilestone: Object.assign({}, s.newMilestone, { [k]: v }) })); }
+  openAddMilestone() { this.setState({ showAddMilestone: true, editMilestoneId: null, newMilestone: { title: '', date: '', type: 'minor', desc: '' } }); }
+  openEditMilestone(ev) { this.setState({ showAddMilestone: true, editMilestoneId: ev.id, newMilestone: { title: ev.title, date: ev.date, type: ev.type || 'minor', desc: ev.desc || '' } }); }
+  closeMilestoneForm() { this.setState({ showAddMilestone: false, editMilestoneId: null }); }
+  saveMilestone() {
+    const n = this.state.newMilestone;
+    if (!n.title.trim() || !n.date) return;
+    const entry = { title: n.title.trim(), date: n.date, type: n.type, desc: n.desc.trim() };
+    const editId = this.state.editMilestoneId;
+    if (editId) {
+      const added = this.tlAdded.slice();
+      const i = added.findIndex(e => e.id === editId);
+      if (i !== -1) { added[i] = Object.assign({}, added[i], entry); this.setKey('tl:added', added); } // edit a user-added entry
+      else { const edited = Object.assign({}, this.tlEdited); edited[editId] = entry; this.setKey('tl:edited', edited); } // override a seed entry
+    } else {
+      this.setKey('tl:added', this.tlAdded.concat([Object.assign({ id: 'tl' + Date.now() }, entry)]));
+    }
+    this.setState({ showAddMilestone: false, editMilestoneId: null, newMilestone: { title: '', date: '', type: 'minor', desc: '' } });
+  }
+  deleteMilestone(ev) {
+    if (!window.confirm('Delete milestone "' + ev.title + '"?')) return;
+    const added = this.tlAdded;
+    const i = added.findIndex(e => e.id === ev.id);
+    if (i !== -1) { const next = added.slice(); next.splice(i, 1); this.setKey('tl:added', next); } // user-added → drop it
+    else if (this.tlDeleted.indexOf(ev.id) === -1) this.setKey('tl:deleted', this.tlDeleted.concat([ev.id])); // seed → tombstone
+    if (this.tlEdited[ev.id]) { const edited = Object.assign({}, this.tlEdited); delete edited[ev.id]; this.setKey('tl:edited', edited); }
+  }
+  // One-time lift of any locally-stored timeline edits into the shared cloud map.
+  // Runs after the cloud db has loaded; skips if the cloud already has timeline keys.
+  migrateTimelineToCloud(db) {
+    try {
+      if (db['tl:added'] !== undefined || db['tl:edited'] !== undefined || db['tl:deleted'] !== undefined) {
+        this._clearLegacyTimeline();
+        return;
+      }
+      let added = [], edited = {}, deleted = [];
+      const laA = localStorage.getItem('vivartam_tl_added'), laE = localStorage.getItem('vivartam_tl_edited'), laD = localStorage.getItem('vivartam_tl_deleted');
+      if (laA || laE || laD) {
+        added = laA ? JSON.parse(laA) : []; edited = laE ? JSON.parse(laE) : {}; deleted = laD ? JSON.parse(laD) : [];
+      } else {
+        const raw = localStorage.getItem('vivartam_timeline');
+        if (raw) {
+          const seed = this.data.timeline, seedById = {}; seed.forEach(e => { seedById[e.id] = e; });
+          const snap = JSON.parse(raw) || [], snapById = {}; snap.forEach(e => { snapById[e.id] = e; });
+          const BASELINE = ['t0', 't1', 't2', 't3', 't4', 't5', 't6'];
+          deleted = BASELINE.filter(id => !snapById[id]);
+          added = snap.filter(e => !seedById[e.id]);
+          snap.forEach(e => { const s = seedById[e.id]; if (s && (s.title !== e.title || s.date !== e.date || (s.type || 'minor') !== (e.type || 'minor') || (s.desc || '') !== (e.desc || ''))) edited[e.id] = { title: e.title, date: e.date, type: e.type || 'minor', desc: e.desc || '' }; });
+        }
+      }
+      this.setKey('tl:added', added);
+      this.setKey('tl:edited', edited);
+      this.setKey('tl:deleted', deleted);
+      this._clearLegacyTimeline();
+    } catch (e) { console.error('timeline cloud migration failed', e); }
+  }
+  _clearLegacyTimeline() {
+    try { ['vivartam_timeline', 'vivartam_tl_added', 'vivartam_tl_edited', 'vivartam_tl_deleted', 'vivartam_tl_migrated'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  }
+  milestoneForm(DS) {
+    const h = React.createElement;
+    const n = this.state.newMilestone;
+    const editing = !!this.state.editMilestoneId;
+    const types = [['major', 'Major'], ['minor', 'Minor']];
+    const field = (label, node) => h('div', { className: 'vv-field', key: label }, [h('label', { className: 'vv-flabel', key: 'l' }, label), node]);
+    return h('div', { className: 'vv-form', key: 'mform' }, [
+      h('div', { className: 'vv-formhd', key: 'hd' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px' }, key: 1 }, editing ? 'Edit milestone' : 'New milestone'),
+        h('button', { className: 'vv-modal-x', style: { position: 'static' }, onClick: () => this.closeMilestoneForm(), key: 2 }, this.hi('x', 16)),
+      ]),
+      field('Milestone', h('input', { className: 'vv-input', value: n.title, placeholder: 'e.g. Signed first enterprise customer', onChange: e => this.setNM('title', e.target.value), key: 'i' })),
+      h('div', { className: 'vv-form2', key: 'r1' }, [
+        field('Date', h('input', { type: 'date', className: 'vv-input', value: n.date, onChange: e => this.setNM('date', e.target.value), key: 'i' })),
+        field('Type', h('div', { className: 'vv-pickrow', key: 'p' }, types.map(o => h('button', { key: o[0], className: 'vv-pick' + (n.type === o[0] ? ' on' : ''), onClick: () => this.setNM('type', o[0]) }, o[1])))),
+      ]),
+      field('Description (optional)', h('textarea', { className: 'vv-input', rows: 2, value: n.desc, placeholder: 'A line of context…', onChange: e => this.setNM('desc', e.target.value), key: 'i' })),
+      h('div', { className: 'vv-formactions', key: 'a' }, [
+        h(DS.Button, { variant: 'ghost', size: 'md', onClick: () => this.closeMilestoneForm(), key: 'c' }, 'Cancel'),
+        h(DS.Button, { variant: 'accent', size: 'md', onClick: () => this.saveMilestone(), key: 's' }, editing ? 'Save changes' : 'Add to timeline'),
+      ]),
+    ]);
+  }
   timelineCard(DS, opts) {
     const h = React.createElement, I = this.I;
-    const events = [...this.data.timeline].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const editable = !!(opts && opts.editable);
+    const events = [...this.timelineList].sort((a, b) => new Date(b.date) - new Date(a.date));
     const list = (opts && opts.full) ? events : events.slice(0, 5);
     const rows = list.map(ev => {
       const major = ev.type === 'major';
       return h('div', { className: 'ev', key: ev.id }, [
         h('div', { className: 'dot', style: { background: major ? 'var(--orange)' : 'var(--gray-400)' }, key: 'd' }),
         h('div', { className: 'card' + (major ? ' major' : ''), key: 'c' }, [
-          h('div', { className: 't', key: 1 }, ev.title),
+          h('div', { className: 'vv-tlrow', key: 0 }, [
+            h('div', { className: 't', key: 1 }, ev.title),
+            editable ? h('div', { className: 'vv-tlacts', key: 'acts' }, [
+              h('button', { className: 'vv-xmini vv-xedit', title: 'Edit milestone', onClick: () => this.openEditMilestone(ev), key: 'e' }, this.hi('edit', 13)),
+              h('button', { className: 'vv-xmini', title: 'Delete milestone', onClick: () => this.deleteMilestone(ev), key: 'd' }, this.hi('trash', 13)),
+            ]) : null,
+          ]),
           h('div', { className: 'meta', key: 2 }, [
             h('span', { className: 'date', key: 'a' }, this.fmt(ev.date)),
             h(DS.Badge, { tone: major ? 'amber' : 'neutral', size: 'sm', key: 'b' }, major ? 'Major' : 'Minor'),
@@ -264,6 +375,13 @@ class Component extends DCLogic {
     });
     return h(DS.Card, { padding: 'lg' }, [
       this.sectionHead(DS, I.timeline(18), 'Milestone timeline', events.length + ' events', { bg: 'var(--orange-tint)', fg: 'var(--orange-deep)' }),
+      editable ? h('div', { className: 'vv-tledit', key: 'edit' }, this.state.showAddMilestone ? this.milestoneForm(DS) : h('div', { className: 'vv-addbar' }, [
+        h('div', { key: 't' }, [
+          h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '15px', letterSpacing: '-.01em' }, key: 1 }, 'Add a milestone'),
+          h('div', { style: { fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }, key: 2 }, 'Capture a new moment, then edit or remove any entry below.'),
+        ]),
+        h(DS.Button, { variant: 'accent', size: 'md', leadingIcon: I.plus(16), onClick: () => this.openAddMilestone(), key: 'b' }, 'Add milestone'),
+      ])) : null,
       h('div', { className: 'vv-tl', key: 'tl' }, [h('div', { className: 'line', key: 'l' }), ...rows]),
     ]);
   }
@@ -1061,15 +1179,17 @@ class Component extends DCLogic {
   // Effective habit list for a founder: defaults + custom habits − deleted ones.
   isDeleted(k, id) { return !!this.dbv('del:' + k + ':' + id); }
   effHabits(p) {
-    const customs = (this.dbv('customHabits:' + p.key) || []).map(c => ({ id: c.id, name: c.name, cat: c.cat, streak: 0, custom: true }));
+    const customs = (this.dbv('customHabits:' + p.key) || []).map(c => ({ id: c.id, name: c.name, cat: c.cat, custom: true }));
     return p.habits.concat(customs).filter(x => !this.isDeleted(p.key, x.id));
   }
-  createHabit(k, cat, name) {
+  createHabit(k, cat, name, link) {
     const nm = (name || '').trim(); if (!nm) return;
     const id = 'c' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36);
     const list = (this.dbv('customHabits:' + k) || []).slice();
     list.push({ id: id, name: nm, cat: cat });
     this.setKey('customHabits:' + k, list);
+    const url = this.normalizeUrl(link);
+    if (url) this.setKey('link:' + k + ':' + id, url); // custom habits are never 'rule', so per-founder key
   }
   deleteHabit(p, x) {
     if (x.custom) {
@@ -1079,35 +1199,36 @@ class Component extends DCLogic {
       this.setKey('del:' + p.key + ':' + x.id, true); // tombstone a default habit
     }
   }
-  commitAdd(k, cat) { const v = (this.state.addDraft || '').trim(); if (v) this.createHabit(k, cat, v); this.setState({ addCat: null, addDraft: '' }); }
-  cancelAdd() { this.setState({ addCat: null, addDraft: '' }); }
+  commitAdd(k, cat) { const v = (this.state.addDraft || '').trim(); if (v) this.createHabit(k, cat, v, this.state.addLink); this.setState({ addCat: null, addDraft: '', addLink: '' }); }
+  cancelAdd() { this.setState({ addCat: null, addDraft: '', addLink: '' }); }
   // "Add habit" tile for the card grid (Personal / Entrepreneurial only).
   addTile(p, cat) {
     const h = React.createElement, key = p.key + ':' + cat;
     if (this.state.addCat === key) {
-      return h('div', { className: 'vv-hcard vv-addcard', key: 'add', style: { '--hc': p.color } },
-        h('input', {
-          className: 'vv-nameedit', autoFocus: true, placeholder: 'New habit…', value: this.state.addDraft,
-          onChange: e => this.setState({ addDraft: e.target.value }),
-          onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.commitAdd(p.key, cat); } else if (e.key === 'Escape') { e.preventDefault(); this.cancelAdd(); } },
-          onBlur: () => this.commitAdd(p.key, cat),
-        }));
+      return h('div', { className: 'vv-hcard vv-addcard editing', key: 'add', style: { '--hc': p.color } }, this.addFields(p, cat));
     }
-    return h('button', { className: 'vv-addcard', key: 'add', style: { '--hc': p.color }, onClick: () => this.setState({ addCat: key, addDraft: '' }) }, [this.hi('plus', 18), h('span', { key: 't' }, 'Add habit')]);
+    return h('button', { className: 'vv-addcard', key: 'add', style: { '--hc': p.color }, onClick: () => this.setState({ addCat: key, addDraft: '', addLink: '' }) }, [this.hi('plus', 18), h('span', { key: 't' }, 'Add habit')]);
   }
   // "Add habit" row for the column (list) view.
   addRow(p, cat) {
     const h = React.createElement, key = p.key + ':' + cat;
     if (this.state.addCat === key) {
-      return h('div', { className: 'vv-hrow vv-addrow', key: 'add', style: { '--hc': p.color } },
-        h('input', {
-          className: 'vv-nameedit', autoFocus: true, placeholder: 'New habit…', value: this.state.addDraft,
-          onChange: e => this.setState({ addDraft: e.target.value }),
-          onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.commitAdd(p.key, cat); } else if (e.key === 'Escape') { e.preventDefault(); this.cancelAdd(); } },
-          onBlur: () => this.commitAdd(p.key, cat),
-        }));
+      return h('div', { className: 'vv-hrow vv-addrow editing', key: 'add', style: { '--hc': p.color } }, this.addFields(p, cat));
     }
-    return h('button', { className: 'vv-hrow vv-addrow', key: 'add', style: { '--hc': p.color }, onClick: () => this.setState({ addCat: key, addDraft: '' }) }, [this.hi('plus', 16), h('span', { key: 't' }, 'Add habit')]);
+    return h('button', { className: 'vv-hrow vv-addrow', key: 'add', style: { '--hc': p.color }, onClick: () => this.setState({ addCat: key, addDraft: '', addLink: '' }) }, [this.hi('plus', 16), h('span', { key: 't' }, 'Add habit')]);
+  }
+  // Shared name + optional link fields for both add UIs.
+  addFields(p, cat) {
+    const h = React.createElement;
+    const onKey = e => { if (e.key === 'Enter') { e.preventDefault(); this.commitAdd(p.key, cat); } else if (e.key === 'Escape') { e.preventDefault(); this.cancelAdd(); } };
+    return [
+      h('input', { className: 'vv-nameedit', key: 'n', autoFocus: true, placeholder: 'New habit…', value: this.state.addDraft || '', onChange: e => this.setState({ addDraft: e.target.value }), onKeyDown: onKey }),
+      h('input', { className: 'vv-nameedit vv-linkedit', key: 'l', placeholder: 'Link (optional) — e.g. blogs.nvidia.com', value: this.state.addLink || '', onChange: e => this.setState({ addLink: e.target.value }), onKeyDown: onKey }),
+      h('div', { className: 'vv-addbtns', key: 'b' }, [
+        h('button', { className: 'vv-addok', key: 'ok', onMouseDown: e => e.preventDefault(), onClick: () => this.commitAdd(p.key, cat) }, 'Add'),
+        h('button', { className: 'vv-addcancel', key: 'c', onMouseDown: e => e.preventDefault(), onClick: () => this.cancelAdd() }, 'Cancel'),
+      ]),
+    ];
   }
 
   /* ---------------- Rule of 3 · today — daily task board ---------------- */
@@ -1394,6 +1515,8 @@ class Component extends DCLogic {
       trash: [p('M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13', 1)],
       plus: [p('M12 5v14M5 12h14', 1)],
       star: [p('M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z', 1)],
+      link: [p('M9.5 13.5 14.5 8.5', 1), p('M11 6.5l1-1a4 4 0 0 1 5.7 5.7l-1 1', 2), p('M13 17.5l-1 1a4 4 0 0 1-5.7-5.7l1-1', 3)],
+      external: [p('M14 4h6v6', 1), p('M20 4 11 13', 2), p('M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5', 3)],
     };
     return h('svg', { viewBox: '0 0 24 24', width: s || 16, height: s || 16, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, M[name] || M.check);
   }
@@ -1525,6 +1648,41 @@ class Component extends DCLogic {
     const done = hs.filter(x => this.isHabitDoneOn(pk, x.id, ds)).length;
     return done / hs.length;
   }
+  /* ---- real streaks, computed from completion history (no seeded dummies) ---- */
+  // Consecutive days up to today a single habit was marked done (today is optional
+  // so an as-yet-incomplete today doesn't reset the count).
+  habitStreakCount(k, id) {
+    const d = new Date(this.TODAY);
+    if (!this.isHabitDoneOn(k, id, this.dstr(d))) d.setDate(d.getDate() - 1);
+    let n = 0;
+    for (let i = 0; i < 1000 && this.isHabitDoneOn(k, id, this.dstr(d)); i++) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  // Consecutive fully-completed days (all habits done) up to today.
+  dayStreakCount(k) {
+    const d = new Date(this.TODAY);
+    if (this.ratioFor(k, this.dstr(d)) < 1) d.setDate(d.getDate() - 1);
+    let n = 0;
+    for (let i = 0; i < 1000 && this.ratioFor(k, this.dstr(d)) >= 1; i++) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  // Longest run of fully-completed days over the trailing year.
+  bestStreakCount(k) {
+    const today = this.dstr(this.TODAY);
+    const d = new Date(this.TODAY); d.setFullYear(d.getFullYear() - 1);
+    let best = 0, run = 0;
+    for (let i = 0; i < 800 && this.dstr(d) <= today; i++) {
+      if (this.ratioFor(k, this.dstr(d)) >= 1) { run++; if (run > best) best = run; } else run = 0;
+      d.setDate(d.getDate() + 1);
+    }
+    return best;
+  }
+  // Last 7 days as 1/0 — fully completed or not (for the week dots).
+  weekDots(k) {
+    const out = []; const d = new Date(this.TODAY); d.setDate(d.getDate() - 6);
+    for (let i = 0; i < 7; i++) { out.push(this.ratioFor(k, this.dstr(d)) >= 1 ? 1 : 0); d.setDate(d.getDate() + 1); }
+    return out;
+  }
   weekDates() {
     const t = this.TODAY; const wd = (t.getDay() + 6) % 7;
     const mon = this.addDays(t, -wd);
@@ -1621,7 +1779,7 @@ class Component extends DCLogic {
     });
     return h(DS.Card, { padding: 'lg' }, [
       this.founderBar(DS, p, 'Monthly average', avg + '%'),
-      h('div', { className: 'vv-hstats', key: 'st' }, [this.miniStat(p, perfect, 'Perfect days'), this.miniStat(p, p.streak, 'Day streak'), this.miniStat(p, avg + '%', 'Consistency')]),
+      h('div', { className: 'vv-hstats', key: 'st' }, [this.miniStat(p, perfect, 'Perfect days'), this.miniStat(p, this.dayStreakCount(p.key), 'Day streak'), this.miniStat(p, avg + '%', 'Consistency')]),
       h('div', { className: 'vv-cal', key: 'cal' }, [...hd, ...body]),
     ]);
   }
@@ -1646,7 +1804,7 @@ class Component extends DCLogic {
     let totalDone = 0;
     const yrHabitCount = this.effHabits(p).length;
     ml.forEach((_, m) => { const dim = new Date(y, m + 1, 0).getDate(); for (let d = 1; d <= dim; d++) { const ds = this.dstr(new Date(y, m, d)); if (ds <= todayStr) totalDone += Math.round(this.ratioFor(p.key, ds) * yrHabitCount); } });
-    const best = p.key === 'vivek' ? 41 : 28;
+    const best = this.bestStreakCount(p.key);
     const bars = avgs.map((v, i) => h('div', { className: 'vv-yrcol', key: i }, [
       h('div', { className: 'vv-yrbarwrap', key: 'w' }, h('div', { className: 'vv-yrbar', style: { height: (v == null ? 2 : Math.max(4, Math.round(v * 100))) + '%', background: v == null ? 'var(--border-strong)' : p.color, opacity: v == null ? .5 : 1 } })),
       h('div', { className: 'vv-yrlbl' + (i === t.getMonth() ? ' now' : ''), key: 'l' }, ml[i]),
@@ -1660,14 +1818,14 @@ class Component extends DCLogic {
   motivCard(DS, p) {
     const h = React.createElement;
     const t = this.founderToday(p.key);
-    const dots = p.week.map((v, i) => h('span', { className: 'vv-wd', key: i, style: { background: v ? p.color : 'var(--border-strong)' } }));
+    const dots = this.weekDots(p.key).map((v, i) => h('span', { className: 'vv-wd', key: i, style: { background: v ? p.color : 'var(--border-strong)' } }));
     return h(DS.Card, { padding: 'lg' }, h('div', { className: 'vv-fcard' }, [
       h(DS.Avatar, { name: p.name, color: p.color, size: 'lg', key: 'av' }),
       h('div', { style: { flex: 1, minWidth: 0 }, key: 'bd' }, [
         h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', letterSpacing: '-.01em' }, key: 1 }, p.name),
         h('div', { style: { fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-subtle)', marginTop: '2px' }, key: 2 }, p.role),
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginTop: '11px', flexWrap: 'wrap' }, key: 3 }, [
-          h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), p.streak + ' day streak']),
+          h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), this.dayStreakCount(p.key) + ' day streak']),
           h('div', { className: 'vv-weekdots', key: 'w' }, dots),
         ]),
       ]),
@@ -1717,6 +1875,26 @@ class Component extends DCLogic {
   // titles are per-founder.
   nameKey(p, x) { return x.cat === 'rule' ? 'name:shared:' + x.id : 'name:' + p.key + ':' + x.id; }
   habitName(p, x) { return this.dbv(this.nameKey(p, x)) || x.name; }
+  // Optional per-habit link (synced). Rule-of-1·1·1 links are shared like their titles.
+  linkKey(p, x) { return x.cat === 'rule' ? 'link:shared:' + x.id : 'link:' + p.key + ':' + x.id; }
+  habitLink(p, x) { return this.dbv(this.linkKey(p, x)) || ''; }
+  normalizeUrl(u) { u = (u || '').trim(); if (!u) return ''; return /^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : 'https://' + u.replace(/^\/+/, ''); }
+  editHabitLink(p, x) {
+    const v = window.prompt('Link for "' + this.habitName(p, x) + '"\nPaste a URL to launch when this habit is clicked (leave blank to remove):', this.habitLink(p, x));
+    if (v === null) return; // cancelled
+    const url = this.normalizeUrl(v);
+    if (url) this.setKey(this.linkKey(p, x), url); else this.delKey(this.linkKey(p, x));
+  }
+  // Small launch button shown on a card/row when the habit has a link.
+  linkLaunch(p, x) {
+    const url = this.normalizeUrl(this.habitLink(p, x));
+    if (!url) return null;
+    const h = React.createElement;
+    return h('a', {
+      className: 'vv-hlink', href: url, target: '_blank', rel: 'noopener noreferrer', title: 'Open ' + url, key: 'lk',
+      onClick: e => e.stopPropagation(), onMouseDown: e => e.stopPropagation(), onDragStart: e => e.preventDefault(),
+    }, [this.hi('external', 12), h('span', { className: 'vv-hlinktxt', key: 't' }, 'Open')]);
+  }
   // editId identifies WHICH card's editor is open (always per-founder so only
   // one card opens, even when the saved key is shared across founders).
   habitEditId(p, x) { return 'edit:' + p.key + ':' + x.id; }
@@ -1795,7 +1973,8 @@ class Component extends DCLogic {
     // While editing the title, don't toggle/flip on click.
     const cardClick = (!editable || kanban || editingThis) ? null : () => this.toggleHabit(p.key, x.id);
     const foot = [];
-    if (x.streak) foot.push(h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), x.streak]));
+    const hstreak = this.habitStreakCount(p.key, x.id);
+    if (hstreak) foot.push(h('span', { className: 'vv-streak', key: 'st' }, [this.hi('flame', 12), hstreak]));
     if (kanban && editable) {
       foot.push(h('div', { className: 'vv-stagemove', key: 'mv' }, [
         h('button', { className: 'vv-stbtn', disabled: stage === 'todo', title: 'Move back', onClick: e => { e.stopPropagation(); this.moveStage(p.key, x.id, -1); }, key: 'l' }, this.hi('cleft', 14)),
@@ -1818,10 +1997,12 @@ class Component extends DCLogic {
         h('div', { className: 'vv-hcardface vv-front', key: 'f' }, [
           (() => { const img = this.habitImg(p, x); return h('div', { className: 'vv-hcardmedia', key: 'm', style: { backgroundImage: img ? 'url("' + img + '")' : 'none' } }, [
             editable ? h('button', { className: 'vv-imgedit', title: 'Change image', onClick: e => { e.stopPropagation(); this.pickHabitImage(p.key, x.id); }, key: 'edit' }, this.hi('camera', 14)) : null,
+            editable ? h('button', { className: 'vv-imgedit vv-imglink' + (this.habitLink(p, x) ? ' on' : ''), title: this.habitLink(p, x) ? 'Edit link' : 'Add link', onClick: e => { e.stopPropagation(); this.editHabitLink(p, x); }, key: 'link' }, this.hi('link', 14)) : null,
             editable ? h('button', { className: 'vv-imgedit vv-imgdel', title: 'Delete habit', onClick: e => { e.stopPropagation(); if (window.confirm('Delete "' + this.habitName(p, x) + '"?')) this.deleteHabit(p, x); }, key: 'del' }, this.hi('trash', 14)) : null,
           ]); })(),
           h('div', { className: 'vv-hcardbody', key: 'bd' }, [
             this.habitNameEl(p, x, editable),
+            this.linkLaunch(p, x),
             h('div', { className: 'vv-hcardfoot', key: 's' }, foot),
           ]),
         ]),
@@ -1858,7 +2039,9 @@ class Component extends DCLogic {
     return h('div', { className: 'vv-hrow' + (done ? ' done' : '') + (editable ? '' : ' readonly'), style: { '--hc': p.color }, onClick: editable ? () => this.toggleHabit(p.key, x.id) : null, key: x.id }, [
       (() => { const img = this.habitImg(p, x); return h('span', { className: 'vv-hthumb', key: 'th', style: img ? { backgroundImage: 'url("' + img + '")' } : { background: 'color-mix(in srgb,' + p.color + ' 22%,var(--surface-sunken))' } }); })(),
       this.habitNameEl(p, x, editable),
-      x.streak ? h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), x.streak]) : null,
+      this.linkLaunch(p, x),
+      (() => { const rs = this.habitStreakCount(p.key, x.id); return rs ? h('span', { className: 'vv-streak', key: 's' }, [this.hi('flame', 12), rs]) : null; })(),
+      editable ? h('button', { className: 'vv-rowdel vv-rowlink' + (this.habitLink(p, x) ? ' on' : ''), title: this.habitLink(p, x) ? 'Edit link' : 'Add link', key: 'link', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); this.editHabitLink(p, x); } }, this.hi('link', 13)) : null,
       editable ? h('button', { className: 'vv-rowdel', title: 'Delete habit', key: 'del', onMouseDown: e => e.stopPropagation(), onClick: e => { e.stopPropagation(); if (window.confirm('Delete "' + this.habitName(p, x) + '"?')) this.deleteHabit(p, x); } }, this.hi('trash', 13)) : null,
       h('span', { className: 'vv-hcheck', style: done ? { background: 'var(--success)', borderColor: 'transparent' } : null, key: 'ck' }, done ? this.hi('check', 13) : null),
     ]);
@@ -2354,7 +2537,7 @@ class Component extends DCLogic {
     if (nav === 'future') return this.renderFuture(DS);
     if (nav === 'meetings') return this.renderMeetings(DS);
     if (nav !== 'overview') {
-      const card = nav === 'timeline' ? this.timelineCard(DS, { full: true })
+      const card = nav === 'timeline' ? this.timelineCard(DS, { full: true, editable: true })
         : this.contactsCard(DS);
       return h('div', { className: 'vv-focus' }, card);
     }

@@ -9,11 +9,13 @@ window.VIVARTAM = window.VIVARTAM || {};
 /* Milestones tab — timeline, planned future events, meetings, contacts */
 window.VIVARTAM.data = {
       timeline: [
+        { id: 't0', title: 'Checkbook from HDFC received and company stamp received today', date: '2026-06-26', type: 'minor', desc: '' },
         { id: 't1', title: 'Vivartam crosses 1,000 users', date: '2026-06-18', type: 'major', desc: 'First real traction milestone — organic growth from building in public on LinkedIn.' },
+        { id: 't7', title: 'Launched the PeopleOS website', date: '2026-06-19', type: 'major', desc: 'Went live at www.peopleos.in.' },
         { id: 't2', title: 'Closed pre-seed angel round', date: '2026-05-30', type: 'major', desc: 'Raised ₹40L from three angels in Bengaluru.' },
         { id: 't3', title: 'Launched the public beta', date: '2026-05-12', type: 'minor', desc: 'Opened the waitlist to 300 early users.' },
         { id: 't4', title: 'Hired first engineer', date: '2026-04-28', type: 'minor', desc: '' },
-        { id: 't5', title: 'Incorporated Vivartam Tech Private Limited', date: '2026-03-15', type: 'major', desc: 'Registered as a private limited in Bengaluru.' },
+        { id: 't5', title: 'Incorporated Vivartam Tech Private Limited', date: '2026-06-01', type: 'major', desc: 'Registered as a private limited in Bengaluru.' },
         { id: 't6', title: 'First line of code', date: '2026-02-02', type: 'minor', desc: '' },
       ],
       future: [
@@ -87,30 +89,28 @@ window.VIVARTAM.mentorSeeds = {
 
 /* Habits — founders, habit lists, Rule of 3 */
 window.VIVARTAM.habitsData = [
-      { key: 'vivek', name: 'Vivek Dagur', role: 'Product & Engineering', color: 'var(--steel)', streak: 24, week: [1, 1, 1, 0, 1, 1, 1],
-        rule3: ['Finalize the Blume metrics one-pager', 'Ship dashboard v2 to the beta group', 'Follow up with 2 angels'],
+      { key: 'vivek', name: 'Vivek Dagur', role: 'Product & Engineering', color: 'var(--steel)',
         habits: [
-          { id: 'workout', name: '1 hour workout / yoga', icon: 'workout', cat: 'rule', streak: 12 },
-          { id: 'meditation', name: '1 hour meditation', icon: 'meditation', cat: 'rule', streak: 24 },
-          { id: 'reading', name: '1 hour reading', icon: 'reading', cat: 'rule', streak: 9 },
-          { id: 'pranayama', name: 'Pranayama', icon: 'breathe', cat: 'personal', streak: 30 },
-          { id: 'diary', name: 'Write daily diary', icon: 'edit', cat: 'personal', streak: 18 },
-          { id: 'newspaper', name: 'Read newspaper in the library', icon: 'news', cat: 'personal', streak: 6 },
-          { id: 'flute', name: 'Play flute \u00b7 10 min', icon: 'music', cat: 'personal', streak: 4 },
-          { id: 'cad', name: 'Read a CAD / CAE article', icon: 'gear', cat: 'entre', streak: 11 },
-          { id: 'nvidia', name: 'Read an NVIDIA blog post', icon: 'monitor', cat: 'entre', streak: 15 },
-          { id: 'events', name: 'Check startup events', icon: 'calendar', cat: 'entre', streak: 22 },
+          { id: 'workout', name: '1 hour workout / yoga', icon: 'workout', cat: 'rule' },
+          { id: 'meditation', name: '1 hour meditation', icon: 'meditation', cat: 'rule' },
+          { id: 'reading', name: '1 hour reading', icon: 'reading', cat: 'rule' },
+          { id: 'pranayama', name: 'Pranayama', icon: 'breathe', cat: 'personal' },
+          { id: 'diary', name: 'Write daily diary', icon: 'edit', cat: 'personal' },
+          { id: 'newspaper', name: 'Read newspaper in the library', icon: 'news', cat: 'personal' },
+          { id: 'flute', name: 'Play flute \u00b7 10 min', icon: 'music', cat: 'personal' },
+          { id: 'cad', name: 'Read a CAD / CAE article', icon: 'gear', cat: 'entre' },
+          { id: 'nvidia', name: 'Read an NVIDIA blog post', icon: 'monitor', cat: 'entre' },
+          { id: 'events', name: 'Check startup events', icon: 'calendar', cat: 'entre' },
         ] },
-      { key: 'mirat', name: 'Mirat Soni', role: 'Growth & Operations', color: '#8A5CC4', streak: 18, week: [1, 0, 1, 1, 1, 1, 0],
-        rule3: ['Draft the Product Hunt launch copy', 'Reply to 5 user interviews', 'Book SaaSBoomi travel'],
+      { key: 'mirat', name: 'Mirat Soni', role: 'Growth & Operations', color: '#8A5CC4',
         habits: [
-          { id: 'workout', name: '1 hour workout / yoga', icon: 'workout', cat: 'rule', streak: 8 },
-          { id: 'meditation', name: '1 hour meditation', icon: 'meditation', cat: 'rule', streak: 14 },
-          { id: 'reading', name: '1 hour reading', icon: 'reading', cat: 'rule', streak: 18 },
-          { id: 'diary', name: 'Write daily diary', icon: 'edit', cat: 'personal', streak: 10 },
-          { id: 'newspaper', name: 'Read newspaper in the library', icon: 'news', cat: 'personal', streak: 5 },
-          { id: 'nvidia', name: 'Read an NVIDIA blog post', icon: 'monitor', cat: 'entre', streak: 9 },
-          { id: 'events', name: 'Check startup events', icon: 'calendar', cat: 'entre', streak: 16 },
+          { id: 'workout', name: '1 hour workout / yoga', icon: 'workout', cat: 'rule' },
+          { id: 'meditation', name: '1 hour meditation', icon: 'meditation', cat: 'rule' },
+          { id: 'reading', name: '1 hour reading', icon: 'reading', cat: 'rule' },
+          { id: 'diary', name: 'Write daily diary', icon: 'edit', cat: 'personal' },
+          { id: 'newspaper', name: 'Read newspaper in the library', icon: 'news', cat: 'personal' },
+          { id: 'nvidia', name: 'Read an NVIDIA blog post', icon: 'monitor', cat: 'entre' },
+          { id: 'events', name: 'Check startup events', icon: 'calendar', cat: 'entre' },
         ] },
     ];
 

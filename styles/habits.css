@@ -192,16 +192,37 @@
 .vv-hcard:hover .vv-imgedit,.vv-hcard.compact .vv-imgedit{opacity:.92;}
 .vv-imgedit:hover{background:rgba(0,0,0,.62);}
 .vv-imgdel:hover{background:#C0392B;}
+.vv-imglink.on{background:color-mix(in srgb,var(--hc) 78%,#000);opacity:.92;}
+.vv-imglink:hover{background:var(--hc);}
 /* delete button on list rows */
 .vv-rowdel{flex:none;width:24px;height:24px;border-radius:7px;border:0;background:transparent;color:var(--text-subtle);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:0;transition:opacity .15s,background .15s,color .15s;}
 .vv-hrow:hover .vv-rowdel{opacity:.7;}
 .vv-rowdel:hover{opacity:1;background:color-mix(in srgb,#C0392B 16%,transparent);color:#C0392B;}
+.vv-rowlink:hover{opacity:1;background:color-mix(in srgb,var(--hc) 16%,transparent);color:var(--hc);}
+.vv-rowlink.on{opacity:.85;color:var(--hc);}
+/* launch-link button shown when a habit has a URL */
+.vv-hlink{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--hc) 14%,transparent);color:var(--hc);font-family:var(--font-sans);font-size:11.5px;font-weight:700;line-height:1;text-decoration:none;border:1px solid color-mix(in srgb,var(--hc) 30%,transparent);transition:background .15s;cursor:pointer;}
+.vv-hlink:hover{background:color-mix(in srgb,var(--hc) 26%,transparent);}
+.vv-hrow .vv-hlink{flex:none;align-self:center;}
+.vv-hcard.compact .vv-hlinktxt{display:none;}
+.vv-hcard.compact .vv-hlink{padding:4px 7px;}
 /* "Add habit" tile (card grid) + row (list) */
 .vv-addcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:124px;border-radius:15px;border:1.5px dashed var(--border-strong);background:transparent;color:var(--text-subtle);font-family:var(--font-sans);font-size:12.5px;font-weight:600;cursor:pointer;padding:12px;transition:border-color .15s,color .15s,background .15s;}
 .vv-addcard:hover{border-color:color-mix(in srgb,var(--hc) 55%,var(--border-strong));color:var(--hc);background:color-mix(in srgb,var(--hc) 6%,transparent);}
 .vv-addcard.vv-hcard{cursor:default;justify-content:center;}
 .vv-addrow{justify-content:center;gap:7px;color:var(--text-subtle);font-weight:600;border-style:dashed;background:transparent;}
 .vv-addrow:hover{color:var(--hc);border-color:color-mix(in srgb,var(--hc) 55%,var(--border-strong));transform:none;}
+/* add-habit form (name + optional link + actions) */
+.vv-addcard.editing{align-items:stretch;justify-content:flex-start;gap:7px;cursor:default;border-style:solid;border-color:color-mix(in srgb,var(--hc) 45%,var(--border-strong));padding:11px;}
+.vv-addrow.editing{display:flex;flex-direction:column;align-items:stretch;gap:7px;cursor:default;border-style:solid;border-color:color-mix(in srgb,var(--hc) 45%,var(--border-strong));padding:10px 11px;}
+.vv-linkedit{font-weight:500;font-size:12px;}
+.vv-linkedit::placeholder{font-weight:500;color:var(--text-subtle);}
+.vv-addbtns{display:flex;gap:7px;}
+.vv-addbtns .vv-addok,.vv-addbtns .vv-addcancel{flex:1;border:0;border-radius:8px;padding:7px 10px;font-family:var(--font-sans);font-size:12.5px;font-weight:700;cursor:pointer;}
+.vv-addbtns .vv-addok{background:var(--hc);color:#fff;}
+.vv-addbtns .vv-addok:hover{filter:brightness(1.06);}
+.vv-addbtns .vv-addcancel{background:var(--surface-sunken);color:var(--text-muted);border:1px solid var(--border);}
+.vv-addbtns .vv-addcancel:hover{color:var(--text);background:var(--surface);}
 /* legibility veil + accent tint over the photo */
 .vv-hcardmedia::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.34)),linear-gradient(120deg,color-mix(in srgb,var(--hc) 30%,transparent),transparent 60%);}
 .vv-hcardmedia>*{position:relative;z-index:1;}
