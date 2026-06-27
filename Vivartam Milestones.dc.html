@@ -46,6 +46,7 @@
 <link rel="stylesheet" href="styles/meetings.css">
 <link rel="stylesheet" href="styles/future.css">
 <link rel="stylesheet" href="styles/vision.css">
+<link rel="stylesheet" href="styles/goals.css">
 </helmet>
 <div style="height:100vh;width:100%;overflow:hidden">{{ app }}</div>
 </x-dc>
@@ -98,6 +99,11 @@ class Component extends DCLogic {
     showAddMilestone: false,
     editMilestoneId: null,
     newMilestone: { title: '', date: '', type: 'minor', desc: '' },
+    // Future goals (Goals → Milestones → Tasks), cloud-synced under db key 'goals'.
+    goalCollapsed: {},
+    showAddGoal: false, editGoalId: null, goalTitle: '', goalDesc: '', goalDue: '',
+    addMileFor: null, editMileId: null, mileDraftTitle: '', mileDraftDue: '',
+    addTaskFor: null, taskDraftText: '', taskDraftOwner: 'both', ownerEditTask: null,
     userEvents: (() => { try { return JSON.parse(localStorage.getItem('vivartam_events') || '[]'); } catch (e) { return []; } })(),
     savedDiscover: (() => { try { return JSON.parse(localStorage.getItem('vivartam_saved_events') || '{}'); } catch (e) { return {}; } })(),
     mentorNotes: (() => { try { return JSON.parse(localStorage.getItem('vivartam_mentor_notes') || '{}'); } catch (e) { return {}; } })(),
@@ -219,6 +225,7 @@ class Component extends DCLogic {
       habits: (s) => svg([ci(12, 12, 9, 1), p('M8.4 12.4 11 15l4.6-5.2', 2)], s),
       vision: (s) => svg([p('M12 3l1.7 5.1 5.3.1-4.3 3.1 1.6 5.1L12 14.4 7.7 16.5l1.6-5.1-4.3-3.1 5.3-.1z', 1)], s),
       bulbNav: (s) => svg([p('M9 18h6M10 21h4', 1), p('M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3Z', 2)], s),
+      goals: (s) => svg([ci(12, 12, 8, 1), ci(12, 12, 3.4, 2), p('M12 1.5v3.2M12 19.3v3.2M1.5 12h3.2M19.3 12h3.2', 3)], s),
     };
   }
 
@@ -2346,6 +2353,221 @@ class Component extends DCLogic {
     ]);
   }
 
+  /* ---------------- Future goals → milestones → tasks (cloud-synced) ---------------- */
+  // The whole tree lives under one shared db key 'goals' so it syncs live across
+  // both founders / all devices. Shape:
+  //   [ { id, title, desc, due, milestones:[ { id, title, due,
+  //         tasks:[ { id, text, owner:'vivek'|'mirat'|'both', done } ] } ] } ]
+  get goals() { return this.dbv('goals') || []; }
+  saveGoals(arr) { if (arr && arr.length) this.setKey('goals', arr); else this.delKey('goals'); }
+  mutateGoals(fn) { const arr = JSON.parse(JSON.stringify(this.goals)); fn(arr); this.saveGoals(arr); }
+  gid(pfx) { return pfx + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36); }
+  findGoal(arr, id) { return arr.find(a => a.id === id); }
+  findMile(g, id) { return g && (g.milestones || []).find(m => m.id === id); }
+  goalStats(g) { let total = 0, done = 0; (g.milestones || []).forEach(m => (m.tasks || []).forEach(t => { total++; if (t.done) done++; })); return { done, total, pct: total ? Math.round(done / total * 100) : 0 }; }
+  mileStats(m) { const ts = m.tasks || []; const done = ts.filter(t => t.done).length; return { done, total: ts.length, pct: ts.length ? Math.round(done / ts.length * 100) : 0 }; }
+
+  // --- goal CRUD ---
+  addGoal(g) { this.mutateGoals(arr => arr.push({ id: this.gid('g'), title: g.title, desc: g.desc || '', due: g.due || '', milestones: [] })); }
+  updateGoal(id, patch) { this.mutateGoals(arr => { const x = this.findGoal(arr, id); if (x) Object.assign(x, patch); }); }
+  deleteGoal(id) { const g = this.findGoal(this.goals, id); if (!g) return; if (!window.confirm('Delete goal "' + g.title + '" and all its milestones and tasks?')) return; this.mutateGoals(arr => { const i = arr.findIndex(a => a.id === id); if (i >= 0) arr.splice(i, 1); }); }
+  openAddGoal() { this.setState({ showAddGoal: true, editGoalId: null, goalTitle: '', goalDesc: '', goalDue: '' }); }
+  openEditGoal(g) { this.setState({ editGoalId: g.id, showAddGoal: false, goalTitle: g.title, goalDesc: g.desc || '', goalDue: g.due || '' }); }
+  closeGoalForm() { this.setState({ showAddGoal: false, editGoalId: null }); }
+  saveGoal() {
+    const t = (this.state.goalTitle || '').trim(); if (!t) return;
+    const patch = { title: t, desc: (this.state.goalDesc || '').trim(), due: this.state.goalDue || '' };
+    if (this.state.editGoalId) this.updateGoal(this.state.editGoalId, patch); else this.addGoal(patch);
+    this.closeGoalForm();
+  }
+  toggleGoalCollapse(id) { this.setState(s => { const c = Object.assign({}, s.goalCollapsed); c[id] = !c[id]; return { goalCollapsed: c }; }); }
+
+  // --- milestone CRUD ---
+  addMilestone(goalId, m) { this.mutateGoals(arr => { const g = this.findGoal(arr, goalId); if (g) (g.milestones = g.milestones || []).push({ id: this.gid('m'), title: m.title, due: m.due || '', tasks: [] }); }); }
+  updateMilestone(goalId, mId, patch) { this.mutateGoals(arr => { const m = this.findMile(this.findGoal(arr, goalId), mId); if (m) Object.assign(m, patch); }); }
+  deleteMilestone(goalId, mId) { const m = this.findMile(this.findGoal(this.goals, goalId), mId); if (!m) return; if (!window.confirm('Delete milestone "' + m.title + '" and its tasks?')) return; this.mutateGoals(arr => { const g = this.findGoal(arr, goalId); if (g) g.milestones = (g.milestones || []).filter(x => x.id !== mId); }); }
+  openAddMile(g) { this.setState({ addMileFor: g.id, editMileId: null, mileDraftTitle: '', mileDraftDue: '' }); }
+  openEditMile(g, m) { this.setState({ editMileId: m.id, addMileFor: null, mileDraftTitle: m.title, mileDraftDue: m.due || '' }); }
+  closeMileForm() { this.setState({ addMileFor: null, editMileId: null }); }
+  commitMile(g) {
+    const t = (this.state.mileDraftTitle || '').trim(); if (!t) return;
+    if (this.state.editMileId) this.updateMilestone(g.id, this.state.editMileId, { title: t, due: this.state.mileDraftDue || '' });
+    else this.addMilestone(g.id, { title: t, due: this.state.mileDraftDue || '' });
+    this.closeMileForm();
+  }
+
+  // --- task CRUD (with owner) ---
+  addTaskTo(goalId, mId, text, owner) { this.mutateGoals(arr => { const m = this.findMile(this.findGoal(arr, goalId), mId); if (m) (m.tasks = m.tasks || []).push({ id: this.gid('t'), text: text, owner: owner || 'both', done: false }); }); }
+  mutTask(goalId, mId, tId, fn) { this.mutateGoals(arr => { const m = this.findMile(this.findGoal(arr, goalId), mId); const t = m && (m.tasks || []).find(x => x.id === tId); if (t) fn(t); }); }
+  toggleGoalTask(goalId, mId, tId) { this.mutTask(goalId, mId, tId, t => { t.done = !t.done; }); }
+  setGoalTaskOwner(goalId, mId, tId, o) { this.mutTask(goalId, mId, tId, t => { t.owner = o; }); }
+  setGoalTaskText(goalId, mId, tId, tx) { this.mutTask(goalId, mId, tId, t => { t.text = tx; }); }
+  deleteGoalTask(goalId, mId, tId) { this.mutateGoals(arr => { const m = this.findMile(this.findGoal(arr, goalId), mId); if (m) m.tasks = (m.tasks || []).filter(x => x.id !== tId); }); }
+  editGoalTaskText(g, m, t) {
+    const v = window.prompt('Edit task', t.text); if (v === null) return;
+    const tx = v.trim();
+    if (!tx) { if (window.confirm('Empty text — delete this task?')) this.deleteGoalTask(g.id, m.id, t.id); return; }
+    this.setGoalTaskText(g.id, m.id, t.id, tx);
+  }
+  commitTask(g, m) {
+    const tx = (this.state.taskDraftText || '').trim(); if (!tx) return;
+    this.addTaskTo(g.id, m.id, tx, this.state.taskDraftOwner || 'both');
+    this.setState({ taskDraftText: '', taskDraftOwner: this.state.taskDraftOwner || 'both' });
+  }
+
+  // --- shared owner picker (Both / Vivek / Mirat) ---
+  ownerPills(current, onPick) {
+    const h = React.createElement;
+    return h('div', { className: 'vv-gpicks', key: 'op' }, [['both', 'Both'], ['vivek', 'Vivek'], ['mirat', 'Mirat']].map(o => {
+      const om = this.ownerMeta(o[0]);
+      return h('button', { key: o[0], className: 'vv-gpick' + (current === o[0] ? ' on' : ''), style: current === o[0] ? { borderColor: om.color, color: om.color, background: 'color-mix(in srgb,' + om.color + ' 12%,transparent)' } : null, onClick: e => { e.stopPropagation(); onPick(o[0]); } }, o[1]);
+    }));
+  }
+
+  /* ---- render: Goals page ---- */
+  renderGoals(DS) {
+    const h = React.createElement, I = this.I;
+    const goals = this.goals;
+    return h('div', { className: 'vv-goals' }, [
+      this.goalsHero(DS, goals),
+      h(DS.Card, { padding: 'lg', key: 'add' }, (this.state.showAddGoal && !this.state.editGoalId) ? this.goalForm(DS) : h('div', { className: 'vv-addbar' }, [
+        h('div', { key: 't' }, [
+          h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', letterSpacing: '-.01em' }, key: 1 }, 'Set a new goal'),
+          h('div', { style: { fontSize: '13px', color: 'var(--text-muted)', marginTop: '3px' }, key: 2 }, 'Define a goal, break it into milestones, then add tasks and assign an owner.'),
+        ]),
+        h(DS.Button, { variant: 'accent', size: 'md', leadingIcon: I.plus(16), onClick: () => this.openAddGoal(), key: 'b' }, 'New goal'),
+      ])),
+      goals.length ? h('div', { className: 'vv-glist', key: 'list' }, goals.map(g => this.goalCard(DS, g)))
+        : h('div', { className: 'vv-gempty', key: 'empty' }, 'No goals yet — create your first future goal above.'),
+    ]);
+  }
+  goalsHero(DS, goals) {
+    const h = React.createElement;
+    let tot = 0, done = 0, miles = 0;
+    goals.forEach(g => (g.milestones || []).forEach(m => { miles++; (m.tasks || []).forEach(t => { tot++; if (t.done) done++; }); }));
+    const pct = tot ? Math.round(done / tot * 100) : 0;
+    const stat = (v, l) => h('div', { className: 'vv-gherostat', key: l }, [h('div', { className: 'v', key: 1 }, String(v)), h('div', { className: 'l', key: 2 }, l)]);
+    return h(DS.Card, { brand: true, padding: 'lg', className: 'vv-ghero', key: 'hero' }, h('div', { className: 'vv-gheroin' }, [
+      h('div', { className: 'vv-veyebrow', key: 1 }, 'Vivartam Tech Private Limited · Future goals'),
+      h('h2', { className: 'vv-gherotitle', key: 2 }, goals.length ? 'What we are building toward' : 'Set your first goal'),
+      h('div', { className: 'vv-gherostats', key: 3 }, [stat(goals.length, 'goals'), stat(miles, 'milestones'), stat(done + '/' + tot, 'tasks done'), stat(pct + '%', 'complete')]),
+    ]));
+  }
+  goalForm(DS) {
+    const h = React.createElement;
+    const editing = !!this.state.editGoalId;
+    const field = (label, node) => h('div', { className: 'vv-field', key: label }, [h('label', { className: 'vv-flabel', key: 'l' }, label), node]);
+    return h('div', { className: 'vv-form' }, [
+      h('div', { className: 'vv-formhd', key: 'hd' }, [
+        h('div', { style: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px' }, key: 1 }, editing ? 'Edit goal' : 'New goal'),
+        h('button', { className: 'vv-modal-x', style: { position: 'static' }, onClick: () => this.closeGoalForm(), key: 2 }, this.hi('x', 16)),
+      ]),
+      field('Goal', h('input', { className: 'vv-input', autoFocus: true, value: this.state.goalTitle || '', placeholder: 'e.g. Reach ₹1 Cr ARR', onChange: e => this.setState({ goalTitle: e.target.value }), onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.saveGoal(); } }, key: 'i' })),
+      h('div', { className: 'vv-form2', key: 'r' }, [
+        field('Target date', h('input', { type: 'date', className: 'vv-input', value: this.state.goalDue || '', onChange: e => this.setState({ goalDue: e.target.value }), key: 'i' })),
+        h('div', { key: 'sp' }),
+      ]),
+      field('Description (optional)', h('textarea', { className: 'vv-input', rows: 2, value: this.state.goalDesc || '', placeholder: 'What does success look like?', onChange: e => this.setState({ goalDesc: e.target.value }), key: 'i' })),
+      h('div', { className: 'vv-formactions', key: 'a' }, [
+        h(DS.Button, { variant: 'ghost', size: 'md', onClick: () => this.closeGoalForm(), key: 'c' }, 'Cancel'),
+        h(DS.Button, { variant: 'accent', size: 'md', onClick: () => this.saveGoal(), key: 's' }, editing ? 'Save changes' : 'Create goal'),
+      ]),
+    ]);
+  }
+  goalCard(DS, g) {
+    const h = React.createElement;
+    if (this.state.editGoalId === g.id) return h(DS.Card, { padding: 'lg', key: g.id }, this.goalForm(DS));
+    const st = this.goalStats(g);
+    const collapsed = !!this.state.goalCollapsed[g.id];
+    return h(DS.Card, { padding: 'lg', key: g.id, className: 'vv-gcard' }, [
+      h('div', { className: 'vv-gcardhd', key: 'hd' }, [
+        h('button', { className: 'vv-gcollapse', title: collapsed ? 'Expand' : 'Collapse', onClick: () => this.toggleGoalCollapse(g.id), key: 'cl' }, this.hi(collapsed ? 'cright' : 'cdown', 16)),
+        h('div', { style: { flex: 1, minWidth: 0 }, key: 't' }, [
+          h('div', { className: 'vv-gtitle', key: 1 }, g.title),
+          h('div', { className: 'vv-gmetarow', key: 2 }, [
+            g.due ? h('span', { className: 'vv-gduepill', key: 'd' }, [this.hi('clock', 12), this.fmt(g.due)]) : null,
+            h('span', { className: 'vv-gcount', key: 'c' }, (g.milestones || []).length + ' milestone' + ((g.milestones || []).length === 1 ? '' : 's') + ' · ' + st.done + '/' + st.total + ' tasks'),
+          ]),
+        ]),
+        h(DS.Badge, { tone: (st.total && st.pct === 100) ? 'green' : 'neutral', size: 'lg', key: 'b' }, st.pct + '%'),
+        h('button', { className: 'vv-gicon', title: 'Edit goal', onClick: () => this.openEditGoal(g), key: 'e' }, this.hi('edit', 14)),
+        h('button', { className: 'vv-gicon vv-gdanger', title: 'Delete goal', onClick: () => this.deleteGoal(g.id), key: 'x' }, this.hi('trash', 14)),
+      ]),
+      st.total ? h('div', { className: 'vv-gbar big', key: 'bar' }, h('div', { className: 'vv-gbarfill', style: { width: st.pct + '%' } })) : null,
+      g.desc ? h('div', { className: 'vv-gdesc', key: 'desc' }, g.desc) : null,
+      collapsed ? null : h('div', { className: 'vv-gmiles', key: 'miles' }, [
+        ...(g.milestones || []).map(m => this.goalMilestone(DS, g, m)),
+        this.state.addMileFor === g.id ? h('div', { className: 'vv-gmile editing', key: 'addm' }, this.mileForm(DS, g))
+          : h('button', { className: 'vv-gaddmile', onClick: () => this.openAddMile(g), key: 'addm' }, [this.hi('plus', 14), 'Add milestone']),
+      ]),
+    ]);
+  }
+  mileForm(DS, g) {
+    const h = React.createElement;
+    const editing = !!this.state.editMileId;
+    return [
+      h('div', { className: 'vv-gmileformrow', key: 'r' }, [
+        h('input', { className: 'vv-input vv-ginput', autoFocus: true, placeholder: 'Milestone toward this goal…', value: this.state.mileDraftTitle || '', onChange: e => this.setState({ mileDraftTitle: e.target.value }), onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.commitMile(g); } else if (e.key === 'Escape') this.closeMileForm(); }, key: 't' }),
+        h('input', { type: 'date', className: 'vv-input vv-gdateinput', title: 'Target date (optional)', value: this.state.mileDraftDue || '', onChange: e => this.setState({ mileDraftDue: e.target.value }), key: 'd' }),
+      ]),
+      h('div', { className: 'vv-gformbtns', key: 'b' }, [
+        h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.commitMile(g), key: 'a' }, editing ? 'Save' : 'Add milestone'),
+        h(DS.Button, { variant: 'ghost', size: 'sm', onClick: () => this.closeMileForm(), key: 'c' }, 'Cancel'),
+      ]),
+    ];
+  }
+  goalMilestone(DS, g, m) {
+    const h = React.createElement;
+    if (this.state.editMileId === m.id) return h('div', { className: 'vv-gmile editing', key: m.id }, this.mileForm(DS, g));
+    const st = this.mileStats(m);
+    return h('div', { className: 'vv-gmile', key: m.id }, [
+      h('div', { className: 'vv-gmilehd', key: 'hd' }, [
+        h('span', { className: 'vv-gmiledot' + ((st.total && st.pct === 100) ? ' done' : ''), key: 'n' }, (st.total && st.pct === 100) ? this.hi('check', 12) : null),
+        h('div', { style: { flex: 1, minWidth: 0 }, key: 't' }, [
+          h('div', { className: 'vv-gmiletitle', key: 1 }, m.title),
+          h('div', { className: 'vv-gmilemeta', key: 2 }, [
+            m.due ? h('span', { className: 'vv-gdate', key: 'd' }, this.fmt(m.due)) : null,
+            h('span', { className: 'vv-gmileprog', key: 'p' }, st.done + '/' + st.total + ' tasks'),
+          ]),
+        ]),
+        h('button', { className: 'vv-gicon', title: 'Edit milestone', onClick: () => this.openEditMile(g, m), key: 'e' }, this.hi('edit', 13)),
+        h('button', { className: 'vv-gicon vv-gdanger', title: 'Delete milestone', onClick: () => this.deleteMilestone(g.id, m.id), key: 'x' }, this.hi('trash', 13)),
+      ]),
+      st.total ? h('div', { className: 'vv-gbar', key: 'bar' }, h('div', { className: 'vv-gbarfill', style: { width: st.pct + '%' } })) : null,
+      h('div', { className: 'vv-gtasks', key: 'tasks' }, [
+        ...(m.tasks || []).map(t => this.goalTaskRow(DS, g, m, t)),
+        this.addTaskRow(DS, g, m),
+      ]),
+    ]);
+  }
+  goalTaskRow(DS, g, m, t) {
+    const h = React.createElement;
+    const om = this.ownerMeta(t.owner || 'both');
+    const picking = this.state.ownerEditTask === t.id;
+    return h('div', { className: 'vv-gtask' + (t.done ? ' done' : ''), key: t.id }, [
+      h('button', { className: 'vv-gcheck', title: t.done ? 'Mark not done' : 'Mark done', onClick: () => this.toggleGoalTask(g.id, m.id, t.id), key: 'c' }, t.done ? this.hi('check', 13) : null),
+      h('span', { className: 'vv-gtasktext', title: 'Click to edit', onClick: () => this.editGoalTaskText(g, m, t), key: 'x' }, t.text),
+      picking
+        ? this.ownerPills(t.owner || 'both', o => { this.setGoalTaskOwner(g.id, m.id, t.id, o); this.setState({ ownerEditTask: null }); })
+        : h('button', { className: 'vv-gowner', title: 'Assigned to ' + om.name + ' — click to reassign', style: { background: 'color-mix(in srgb,' + om.color + ' 16%,transparent)', color: om.color }, onClick: () => this.setState({ ownerEditTask: t.id }), key: 'o' }, om.label),
+      h('button', { className: 'vv-gicon vv-gdanger', title: 'Delete task', onClick: () => this.deleteGoalTask(g.id, m.id, t.id), key: 'd' }, this.hi('trash', 13)),
+    ]);
+  }
+  addTaskRow(DS, g, m) {
+    const h = React.createElement;
+    if (this.state.addTaskFor !== m.id) {
+      return h('button', { className: 'vv-gaddtask', onClick: () => this.setState({ addTaskFor: m.id, taskDraftText: '', taskDraftOwner: 'both', ownerEditTask: null }), key: 'addt' }, [this.hi('plus', 13), 'Add task']);
+    }
+    return h('div', { className: 'vv-gaddtaskform', key: 'addt' }, [
+      h('input', { className: 'vv-input vv-ginput', autoFocus: true, placeholder: 'Task to complete this milestone…', value: this.state.taskDraftText || '', onChange: e => this.setState({ taskDraftText: e.target.value }), onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); this.commitTask(g, m); } else if (e.key === 'Escape') this.setState({ addTaskFor: null }); }, key: 'i' }),
+      h('div', { className: 'vv-gownerrow', key: 'ow' }, [h('span', { className: 'vv-glbl', key: 'l' }, 'Owner'), this.ownerPills(this.state.taskDraftOwner || 'both', o => this.setState({ taskDraftOwner: o }))]),
+      h('div', { className: 'vv-gformbtns', key: 'b' }, [
+        h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.commitTask(g, m), key: 'a' }, 'Add task'),
+        h(DS.Button, { variant: 'ghost', size: 'sm', onClick: () => this.setState({ addTaskFor: null }), key: 'c' }, 'Done'),
+      ]),
+    ]);
+  }
+
   /* ---------------- vision board (shared) ---------------- */
   get visions() { return window.VIVARTAM.visions; }
   tagColor(t) { return ({ Career: 'var(--navy)', Global: 'var(--steel)', Lifestyle: 'var(--success)', Achievement: 'var(--orange-deep)', Inspiration: 'var(--avatar-1)' })[t] || 'var(--navy)'; }
@@ -2453,6 +2675,7 @@ class Component extends DCLogic {
     const navMile = [
       { key: 'overview', label: 'Overview', icon: I.overview },
       { key: 'timeline', label: 'Timeline', icon: I.timeline },
+      { key: 'goals', label: 'Future goals', icon: I.goals },
       { key: 'meetings', label: 'Meetings', icon: I.meetings },
       { key: 'network', label: 'Network', icon: I.network },
       { key: 'future', label: 'Future events', icon: I.future },
@@ -2535,6 +2758,7 @@ class Component extends DCLogic {
     if (nav === 'affirm') return this.renderAffirmations(DS);
     if (nav === 'network') return this.renderNetwork(DS);
     if (nav === 'future') return this.renderFuture(DS);
+    if (nav === 'goals') return this.renderGoals(DS);
     if (nav === 'meetings') return this.renderMeetings(DS);
     if (nav !== 'overview') {
       const card = nav === 'timeline' ? this.timelineCard(DS, { full: true, editable: true })
@@ -2607,6 +2831,8 @@ class Component extends DCLogic {
         ? { h: "Today's habits", p: 'Two founders, one routine \u2014 Vivek and Mirat keep each other accountable, every day.' }
         : this.state.nav === 'overview'
           ? { h: 'Good morning, ' + this.auth.firstName, p: 'You have 2 meetings this week and your next milestone moment \u2014 the Blume Ventures call \u2014 is ' + (blume ? blume.text : 'coming up') + '.' }
+          : this.state.nav === 'goals'
+          ? { h: 'Future goals', p: 'Set the big goals, break them into milestones, then assign the tasks that get us there.' }
           : { h: ({ timeline: 'Milestone timeline', meetings: 'Meetings', network: 'Your network', future: 'Future events' })[this.state.nav], p: 'Everything in one place, tracked and prepped.' };
     const page = ({ network: 'network', habits: 'habits', vision: 'vision', affirm: 'vision' })[this.state.nav] || 'milestones';
     return h('div', { className: 'vv-app', 'data-page': page }, [
