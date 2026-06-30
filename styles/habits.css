@@ -133,6 +133,57 @@
 .vv-addtask:hover{border-color:color-mix(in srgb,var(--hc) 55%,var(--border-strong));color:var(--hc);}
 .vv-tempty{font-size:13px;color:var(--text-subtle);padding:8px 2px;}
 
+/* ---- Rule-of-3 worksheet: goal banner, action plan, derailers, focus ---- */
+/* Goal banner — "In [N] days I will [goal]" */
+.vv-goalbar{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:16px;padding:11px 14px;border:1px solid color-mix(in srgb,var(--hc) 32%,var(--border));border-radius:13px;background:color-mix(in srgb,var(--hc) 8%,var(--surface-sunken));font-family:var(--font-display);font-weight:700;font-size:15px;line-height:1.3;}
+.vv-goallbl{display:inline-flex;align-items:center;gap:6px;color:var(--hc);}
+.vv-goallbl svg{color:var(--hc);}
+.vv-goalmid{color:var(--text-muted);}
+.vv-goaldays,.vv-goaltext{border:0;background:transparent;font-family:inherit;font-weight:700;font-size:15px;color:var(--text);cursor:text;padding:2px 7px;border-radius:8px;border-bottom:2px solid color-mix(in srgb,var(--hc) 45%,transparent);}
+.vv-goaldays{min-width:34px;text-align:center;color:var(--hc);}
+.vv-goaltext{flex:1;min-width:120px;text-align:left;}
+.vv-goaldays:hover:not(:disabled),.vv-goaltext:hover:not(:disabled){background:color-mix(in srgb,var(--hc) 12%,transparent);}
+.vv-goaldays.empty,.vv-goaltext.empty{color:var(--text-subtle);border-bottom-style:dashed;}
+.vv-goaldays:disabled,.vv-goaltext:disabled{cursor:default;border-bottom-color:transparent;}
+.vv-goaldaysin{width:60px!important;flex:none;text-align:center;font-weight:700;}
+.vv-goaltextin{flex:1;min-width:120px;font-weight:700;}
+
+/* Shared worksheet block (action plan / derailers / focus) */
+.vv-wsblock{margin-top:16px;padding-top:14px;border-top:1px dashed var(--border-strong);}
+.vv-wshead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--font-display);font-weight:700;font-size:13.5px;margin-bottom:11px;}
+.vv-wshead svg{color:var(--hc);flex:none;}
+.vv-wssub{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}
+.vv-wslist{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.vv-wsitem{display:flex;align-items:center;gap:9px;padding:8px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface-sunken);}
+.vv-wsdot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--hc);}
+.vv-wstext{flex:1;min-width:0;font-size:13px;font-weight:500;color:var(--text);cursor:text;line-height:1.35;}
+.vv-wsedit{flex:1;min-width:0;font-weight:500;}
+.vv-wsdel{flex:none;width:24px;height:24px;border-radius:6px;border:0;background:transparent;color:var(--text-subtle);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:0;transition:opacity .15s,background .15s,color .15s;}
+.vv-wsitem:hover .vv-wsdel{opacity:.7;}
+.vv-wsdel:hover{opacity:1;background:color-mix(in srgb,#C0392B 16%,transparent);color:#C0392B;}
+.vv-wsadd{display:inline-flex;align-items:center;gap:7px;width:100%;padding:9px 12px;border:1.5px dashed var(--border-strong);border-radius:10px;background:transparent;color:var(--text-subtle);font-family:var(--font-sans);font-size:12.5px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s;}
+.vv-wsadd:hover{border-color:color-mix(in srgb,var(--hc) 55%,var(--border-strong));color:var(--hc);}
+div.vv-wsadd{cursor:default;}
+
+/* Action plan table */
+.vv-plantable{margin-bottom:10px;border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+.vv-planhead,.vv-planrow{display:grid;grid-template-columns:1fr 84px 84px auto;align-items:center;gap:8px;padding:8px 11px;}
+.vv-planhead{background:var(--surface-sunken);border-bottom:1px solid var(--border);}
+.vv-plancol{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}
+.vv-plancol.time{text-align:center;}
+.vv-plancol.act{width:24px;}
+.vv-planrow{border-bottom:1px solid var(--border);}
+.vv-planrow:last-child{border-bottom:0;}
+.vv-plantask{min-width:0;font-size:13px;font-weight:600;color:var(--text);cursor:text;line-height:1.3;}
+.vv-plantask.empty{color:var(--text-subtle);}
+.vv-planedit{min-width:0;font-weight:600;}
+.vv-plantime{font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:7px;padding:4px 6px;outline:none;text-align:center;}
+.vv-plantime:focus{border-color:var(--hc);box-shadow:0 0 0 3px color-mix(in srgb,var(--hc) 18%,transparent);}
+.vv-plantimero{font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--text-muted);text-align:center;}
+.vv-planrowdel{width:24px;height:24px;border-radius:6px;border:0;background:transparent;color:var(--text-subtle);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:0;transition:opacity .15s,background .15s,color .15s;}
+.vv-planrow:hover .vv-planrowdel{opacity:.7;}
+.vv-planrowdel:hover{opacity:1;background:color-mix(in srgb,#C0392B 16%,transparent);color:#C0392B;}
+
 /* ---- Day-view layout toggle (Cards / Columns / Kanban) ---- */
 .vv-dvbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
 .vv-dvlbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--text-subtle);}

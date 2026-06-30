@@ -1405,6 +1405,124 @@ class Component extends DCLogic {
   }
   taskFilterFor(k) { return this.state.taskCatFilter[k] || null; }
   setTaskFilter(k, cat) { this.setState(s => ({ taskCatFilter: Object.assign({}, s.taskCatFilter, { [k]: cat }) })); }
+
+  /* ---------------- Rule-of-3 worksheet — goal, action plan, derailers, focus ---- */
+  // Standing goal per founder ("In N days I will …") — not scoped to a day.
+  // The deadline is stored as an absolute target date so the day count auto-
+  // counts down (N → N-1 → N-2 …) as real days pass.
+  goalKey(k) { return 'goal:' + k; }
+  getGoal(k) { return this.dbv(this.goalKey(k)) || { target: '', text: '' }; }
+  setGoal(k, patch) { this.setKey(this.goalKey(k), Object.assign({}, this.getGoal(k), patch)); }
+  // Days remaining until the goal's target date, relative to the viewed day
+  // (so past-day views stay accurate). Legacy goals that stored a flat number
+  // still show it until the user re-enters it. Returns '' when unset.
+  goalDays(k) {
+    const g = this.getGoal(k);
+    if (g.target) {
+      const sd = new Date(this.selDate() + 'T00:00:00'), tgt = new Date(g.target + 'T00:00:00');
+      return Math.max(0, Math.round((tgt - sd) / 86400000));
+    }
+    return (g.days === 0 || g.days) ? g.days : '';
+  }
+  // Anchor the deadline: N days from the viewed day → an absolute target date.
+  setGoalDays(k, n) {
+    const v = parseInt(n, 10);
+    if (isNaN(v) || v < 0) { this.setGoal(k, { target: '', days: '' }); return; }
+    this.setGoal(k, { target: this.dstr(this.addDays(new Date(this.selDate() + 'T00:00:00'), v)), days: '' });
+  }
+  // Generic per-founder + per-day list (action plan rows, derailers, focus moves).
+  wsKey(prefix, k) { return prefix + ':' + k + ':' + this.selDate(); }
+  wsList(prefix, k) { return this.dbv(this.wsKey(prefix, k)) || []; }
+  wsSave(prefix, k, arr) { if (arr.length) this.setKey(this.wsKey(prefix, k), arr); else this.delKey(this.wsKey(prefix, k)); }
+  wsAdd(prefix, k, item) { this.wsSave(prefix, k, this.wsList(prefix, k).concat([Object.assign({ id: this.taskId() }, item)])); }
+  wsSet(prefix, k, id, patch) { this.wsSave(prefix, k, this.wsList(prefix, k).map(x => x.id === id ? Object.assign({}, x, patch) : x)); }
+  wsDel(prefix, k, id) { this.wsSave(prefix, k, this.wsList(prefix, k).filter(x => x.id !== id)); }
+  // Inline single-field editor bound to taskDraft; commits on Enter/blur, cancels on Esc.
+  inlineEdit(onCommit, opts) {
+    const h = React.createElement; opts = opts || {};
+    const commit = v => { onCommit(v || ''); this.closeTaskEdit(); };
+    return h('input', {
+      type: opts.type || 'text', className: opts.className || 'vv-nameedit', autoFocus: true,
+      placeholder: opts.ph || '', min: opts.min, value: this.state.taskDraft,
+      onClick: e => e.stopPropagation(), onMouseDown: e => e.stopPropagation(),
+      onChange: e => this.setState({ taskDraft: e.target.value }),
+      onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); commit(e.target.value); } else if (e.key === 'Escape') { e.preventDefault(); this.closeTaskEdit(); } },
+      onBlur: e => commit(e.target.value),
+    });
+  }
+  // "In [N] days I will [goal]" banner — shown above the day's tasks.
+  goalBlock(p) {
+    const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
+    const g = this.getGoal(k), dk = 'goaldays:' + k, tk = 'goaltext:' + k;
+    const rem = this.goalDays(k);
+    const days = this.state.taskEdit === dk
+      ? this.inlineEdit(v => this.setGoalDays(k, v), { type: 'number', min: 0, className: 'vv-goaldaysin', ph: 'N' })
+      : h('button', { className: 'vv-goaldays' + (rem === '' ? ' empty' : ''), key: 'd', disabled: !editable, title: editable ? 'Set the number of days until your deadline' : null, onClick: () => editable && this.startTaskEdit(dk, rem === '' ? '' : String(rem)) }, rem === '' ? 'N' : rem);
+    const txt = this.state.taskEdit === tk
+      ? this.inlineEdit(v => this.setGoal(k, { text: (v || '').trim() }), { className: 'vv-goaltextin', ph: 'name your goal…' })
+      : h('button', { className: 'vv-goaltext' + (g.text ? '' : ' empty'), key: 't', disabled: !editable, onClick: () => editable && this.startTaskEdit(tk, g.text || '') }, g.text || (editable ? 'name your goal…' : '—'));
+    return h('div', { className: 'vv-goalbar', key: 'goal', style: { '--hc': p.color } }, [
+      h('span', { className: 'vv-goallbl', key: 'l' }, [this.hi('rocket', 13), 'In']),
+      days,
+      h('span', { className: 'vv-goalmid', key: 'm' }, (rem === 1 ? 'day I will' : 'days I will')),
+      txt,
+    ]);
+  }
+  // "My action plan for the day" — editable time-block table.
+  planBlock(p) {
+    const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
+    const rows = this.wsList('plan', k);
+    if (!rows.length && !editable) return null;
+    const head = rows.length ? h('div', { className: 'vv-planhead', key: 'ph' }, [
+      h('span', { className: 'vv-plancol task', key: 'a' }, 'Task to complete'),
+      h('span', { className: 'vv-plancol time', key: 'b' }, 'Start'),
+      h('span', { className: 'vv-plancol time', key: 'c' }, 'End'),
+      editable ? h('span', { className: 'vv-plancol act', key: 'd' }) : null,
+    ]) : null;
+    const body = rows.map(r => {
+      const tk = 'plantext:' + k + ':' + r.id;
+      return h('div', { className: 'vv-planrow', key: r.id }, [
+        this.state.taskEdit === tk
+          ? this.inlineEdit(v => this.wsSet('plan', k, r.id, { text: (v || '').trim() }), { className: 'vv-planedit', ph: 'Task…' })
+          : h('span', { className: 'vv-plantask' + (r.text ? '' : ' empty'), key: 't', onClick: () => editable && this.startTaskEdit(tk, r.text || '') }, r.text || (editable ? 'Add task…' : '—')),
+        editable
+          ? h('input', { type: 'time', className: 'vv-plantime', key: 's', value: r.start || '', onChange: e => this.wsSet('plan', k, r.id, { start: e.target.value }) })
+          : h('span', { className: 'vv-plantimero', key: 's' }, this.fmtTime(r.start) || '—'),
+        editable
+          ? h('input', { type: 'time', className: 'vv-plantime', key: 'e', value: r.end || '', onChange: e => this.wsSet('plan', k, r.id, { end: e.target.value }) })
+          : h('span', { className: 'vv-plantimero', key: 'e' }, this.fmtTime(r.end) || '—'),
+        editable ? h('button', { className: 'vv-planrowdel', key: 'd', title: 'Remove block', onClick: () => this.wsDel('plan', k, r.id) }, this.hi('trash', 13)) : null,
+      ]);
+    });
+    return h('div', { className: 'vv-wsblock vv-plan', key: 'plan', style: { '--hc': p.color } }, [
+      h('div', { className: 'vv-wshead', key: 'h' }, [this.hi('calendar', 14), h('span', { key: 't' }, 'My action plan for the day')]),
+      rows.length ? h('div', { className: 'vv-plantable', key: 'tb' }, [head, ...body]) : null,
+      editable ? h('button', { className: 'vv-wsadd', key: 'add', onClick: () => this.wsAdd('plan', k, { text: '', start: '', end: '' }) }, [this.hi('plus', 15), 'Add time block']) : null,
+    ]);
+  }
+  // Simple bulleted worksheet list (derailers, focus moves).
+  wsTextBlock(p, prefix, icon, title, sub, addLabel, ph) {
+    const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
+    const items = this.wsList(prefix, k), addKey = 'add' + prefix + ':' + k;
+    if (!items.length && !editable) return null;
+    const rows = items.map(it => {
+      const ek = prefix + 'i:' + k + ':' + it.id;
+      return h('div', { className: 'vv-wsitem', key: it.id }, [
+        h('span', { className: 'vv-wsdot', key: 'b' }),
+        this.state.taskEdit === ek
+          ? this.inlineEdit(v => { const t = (v || '').trim(); if (t) this.wsSet(prefix, k, it.id, { text: t }); else this.wsDel(prefix, k, it.id); }, { className: 'vv-wsedit', ph: ph })
+          : h('span', { className: 'vv-wstext', key: 't', onClick: () => editable && this.startTaskEdit(ek, it.text) }, it.text),
+        editable ? h('button', { className: 'vv-wsdel', key: 'd', title: 'Remove', onClick: () => this.wsDel(prefix, k, it.id) }, this.hi('x', 13)) : null,
+      ]);
+    });
+    return h('div', { className: 'vv-wsblock', key: prefix, style: { '--hc': p.color } }, [
+      h('div', { className: 'vv-wshead', key: 'h' }, [this.hi(icon, 14), h('span', { key: 't' }, title), sub ? h('span', { className: 'vv-wssub', key: 's' }, sub) : null]),
+      rows.length ? h('div', { className: 'vv-wslist', key: 'l' }, rows) : null,
+      editable ? (this.state.taskEdit === addKey
+        ? h('div', { className: 'vv-wsadd', key: 'add' }, this.inlineEdit(v => { const t = (v || '').trim(); if (t) this.wsAdd(prefix, k, { text: t }); }, { className: 'vv-wsedit', ph: ph }))
+        : h('button', { className: 'vv-wsadd', key: 'add', onClick: () => this.startTaskEdit(addKey, '') }, [this.hi('plus', 15), addLabel])) : null,
+    ]);
+  }
   taskBoard(DS, p) {
     const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
     const tasks = this.getTasks(k);
@@ -1460,11 +1578,12 @@ class Component extends DCLogic {
     }
 
     return h(DS.Card, { padding: 'lg' }, [
+      this.goalBlock(p),
       h('div', { className: 'vv-tbhead', key: 'hd', style: { borderLeft: '3px solid ' + p.color } }, [
         h(DS.Avatar, { name: p.name, color: p.color, size: 'sm', key: 'av' }),
         h('div', { style: { flex: 1, minWidth: 0 }, key: 'n' }, [
           h('div', { className: 'nm', key: 1 }, [this.hi('target', 14), ' Rule of 3 · today']),
-          h('div', { className: 'rl', key: 2 }, editable ? 'Pick your top 3 — only those count; the rest are optional' : (p.name.split(' ')[0] + "'s tasks for today")),
+          h('div', { className: 'rl', key: 2 }, editable ? "To get closer to my goal, I'll accomplish these by end of today" : (p.name.split(' ')[0] + "'s tasks for today")),
         ]),
       ]),
       dash,
@@ -1472,6 +1591,9 @@ class Component extends DCLogic {
       editable ? (this.state.taskEdit === addKey
         ? h('div', { className: 'vv-addtask', key: 'add' }, this.taskInput(v => this.addTask(k, v), 'Add a task for today…'))
         : h('button', { className: 'vv-addtask', key: 'add', onClick: () => this.startTaskEdit(addKey, '') }, [this.hi('plus', 16), 'Add task'])) : null,
+      this.planBlock(p),
+      this.wsTextBlock(p, 'derail', 'bolt', 'Distractions / derailers I may face today', null, 'Add a derailer', 'e.g. phone notifications, doomscrolling…'),
+      this.wsTextBlock(p, 'focus', 'bulb', "I'll do these to overcome the challenges and stay focused", null, 'Add a focus move', 'e.g. phone on airplane mode till noon…'),
     ]);
   }
   founderToday(k) {
