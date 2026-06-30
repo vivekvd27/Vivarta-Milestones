@@ -1455,6 +1455,8 @@ class Component extends DCLogic {
     const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
     const g = this.getGoal(k), dk = 'goaldays:' + k, tk = 'goaltext:' + k;
     const rem = this.goalDays(k);
+    // Read-only viewers (e.g. the other founder, or "Both") only see a goal once it's set.
+    if (!editable && rem === '' && !g.text) return null;
     const days = this.state.taskEdit === dk
       ? this.inlineEdit(v => this.setGoalDays(k, v), { type: 'number', min: 0, className: 'vv-goaldaysin', ph: 'N' })
       : h('button', { className: 'vv-goaldays' + (rem === '' ? ' empty' : ''), key: 'd', disabled: !editable, title: editable ? 'Set the number of days until your deadline' : null, onClick: () => editable && this.startTaskEdit(dk, rem === '' ? '' : String(rem)) }, rem === '' ? 'N' : rem);
