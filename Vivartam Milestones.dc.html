@@ -1455,7 +1455,8 @@ class Component extends DCLogic {
     const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
     const g = this.getGoal(k), dk = 'goaldays:' + k, tk = 'goaltext:' + k;
     const rem = this.goalDays(k);
-    // Read-only viewers (e.g. the other founder, or "Both") only see a goal once it's set.
+    // Shared view: the other founder sees a goal read-only once it's set; an
+    // unset goal stays hidden for non-owners (no empty placeholder).
     if (!editable && rem === '' && !g.text) return null;
     const days = this.state.taskEdit === dk
       ? this.inlineEdit(v => this.setGoalDays(k, v), { type: 'number', min: 0, className: 'vv-goaldaysin', ph: 'N' })
@@ -1474,6 +1475,7 @@ class Component extends DCLogic {
   planBlock(p) {
     const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
     const rows = this.wsList('plan', k);
+    // Shared view: the other founder sees the plan read-only once it has rows.
     if (!rows.length && !editable) return null;
     const head = rows.length ? h('div', { className: 'vv-planhead', key: 'ph' }, [
       h('span', { className: 'vv-plancol task', key: 'a' }, 'Task to complete'),
