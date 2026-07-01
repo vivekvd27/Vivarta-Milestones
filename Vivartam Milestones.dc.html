@@ -47,6 +47,7 @@
 <link rel="stylesheet" href="styles/future.css">
 <link rel="stylesheet" href="styles/vision.css">
 <link rel="stylesheet" href="styles/goals.css">
+<link rel="stylesheet" href="styles/feed.css">
 </helmet>
 <div style="height:100vh;width:100%;overflow:hidden">{{ app }}</div>
 </x-dc>
@@ -124,6 +125,12 @@ class Component extends DCLogic {
     editAff: null,
     draftAff: '',
     affirmReviewed: (() => { try { return localStorage.getItem('vivartam_affirm_reviewed') || ''; } catch (e) { return ''; } })(),
+    // Industry feed (live news per topic; fetched client-side, cached in memory).
+    feedTab: 'cae',
+    feedData: {},     // topicKey -> [ {title, link, source, pubDate} ]
+    feedLoading: {},  // topicKey -> bool
+    feedError: {},    // topicKey -> message | null
+    now: 0,           // live clock (ms) — ticks each second while a plan task runs
     dsReady: false,
   };
 
@@ -132,10 +139,17 @@ class Component extends DCLogic {
     if (window.PeopleOSDesignSystem_eb8f2f) { this.setState({ dsReady: true }); }
     else { this._poll = setInterval(() => { if (window.PeopleOSDesignSystem_eb8f2f) { clearInterval(this._poll); this.setState({ dsReady: true }); } }, 40); }
     this.initSync();
+    this.ensureTick();   // resume any plan-task timer that was running before reload
   }
   componentWillUnmount() {
     if (this._poll) clearInterval(this._poll);
+    if (this._tick) { clearInterval(this._tick); this._tick = null; }
     try { if (this._chan && this._supa) this._supa.removeChannel(this._chan); } catch (e) {}
+  }
+  componentDidUpdate() {
+    // Lazily load the active industry-feed topic the first time it's viewed.
+    if (this.state.nav === 'feed') this.loadFeed(this.feedActive());
+    this.ensureTick();   // start/stop the 1-second clock as tasks start/finish
   }
 
   /* ---------------- Supabase sync (shared habit state) ---------------- */
@@ -226,6 +240,7 @@ class Component extends DCLogic {
       vision: (s) => svg([p('M12 3l1.7 5.1 5.3.1-4.3 3.1 1.6 5.1L12 14.4 7.7 16.5l1.6-5.1-4.3-3.1 5.3-.1z', 1)], s),
       bulbNav: (s) => svg([p('M9 18h6M10 21h4', 1), p('M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3Z', 2)], s),
       goals: (s) => svg([ci(12, 12, 8, 1), ci(12, 12, 3.4, 2), p('M12 1.5v3.2M12 19.3v3.2M1.5 12h3.2M19.3 12h3.2', 3)], s),
+      feed: (s) => svg([p('M4 5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v14H6a2 2 0 0 1-2-2Z', 1), p('M16 8h3a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2', 2), p('M7 8h6M7 11.5h6M7 15h4', 3)], s),
     };
   }
 
@@ -1485,9 +1500,20 @@ class Component extends DCLogic {
     ]) : null;
     const body = rows.map(r => {
       const tk = 'plantext:' + k + ':' + r.id;
-      return h('div', { className: 'vv-planrow', key: r.id }, [
-        this.state.taskEdit === tk
-          ? this.inlineEdit(v => this.wsSet('plan', k, r.id, { text: (v || '').trim() }), { className: 'vv-planedit', ph: 'Task…' })
+      const editing = editable && this.state.taskEdit === tk;
+      const hasName = !!(r.text && r.text.trim());
+      const actions = editable ? h('div', { className: 'vv-planacts', key: 'd' }, [
+        h('button', {
+          className: 'vv-planplay' + (r.running ? ' on' : ''), key: 'p',
+          title: r.running ? 'End task' : (hasName ? 'Start task' : 'Name the task first'),
+          disabled: !r.running && !hasName,
+          onClick: () => r.running ? this.endPlanTask(k, r.id) : this.startPlanTask(k, r.id),
+        }, r.running ? this.hi('stop', 12) : this.hi('play', 14)),
+        h('button', { className: 'vv-planrowdel', key: 'x', title: 'Remove block', onClick: () => this.wsDel('plan', k, r.id) }, this.hi('trash', 13)),
+      ]) : null;
+      const row = h('div', { className: 'vv-planrow' + (editing ? ' editing' : '') + (r.running ? ' active' : ''), key: r.id }, [
+        editing
+          ? this.inlineEdit(v => this.wsSet('plan', k, r.id, { text: (v || '').trim() }), { className: 'vv-planedit', ph: 'Pick a task or type your own…' })
           : h('span', { className: 'vv-plantask' + (r.text ? '' : ' empty'), key: 't', onClick: () => editable && this.startTaskEdit(tk, r.text || '') }, r.text || (editable ? 'Add task…' : '—')),
         editable
           ? h('input', { type: 'time', className: 'vv-plantime', key: 's', value: r.start || '', onChange: e => this.wsSet('plan', k, r.id, { start: e.target.value }) })
@@ -1495,13 +1521,124 @@ class Component extends DCLogic {
         editable
           ? h('input', { type: 'time', className: 'vv-plantime', key: 'e', value: r.end || '', onChange: e => this.wsSet('plan', k, r.id, { end: e.target.value }) })
           : h('span', { className: 'vv-plantimero', key: 'e' }, this.fmtTime(r.end) || '—'),
-        editable ? h('button', { className: 'vv-planrowdel', key: 'd', title: 'Remove block', onClick: () => this.wsDel('plan', k, r.id) }, this.hi('trash', 13)) : null,
+        actions,
       ]);
+      const extras = [];
+      if (editing) extras.push(this.planDrop(p, r));
+      if (r.running || (r.actualMs && r.actualMs > 0)) extras.push(this.planTimer(p, r));
+      return extras.length ? [row, ...extras] : row;
     });
     return h('div', { className: 'vv-wsblock vv-plan', key: 'plan', style: { '--hc': p.color } }, [
       h('div', { className: 'vv-wshead', key: 'h' }, [this.hi('calendar', 14), h('span', { key: 't' }, 'My action plan for the day')]),
       rows.length ? h('div', { className: 'vv-plantable', key: 'tb' }, [head, ...body]) : null,
       editable ? h('button', { className: 'vv-wsadd', key: 'add', onClick: () => this.wsAdd('plan', k, { text: '', start: '', end: '' }) }, [this.hi('plus', 15), 'Add time block']) : null,
+    ]);
+  }
+  // Suggestion dropdown for a plan row: pick a Rule-of-3 task (this day) or type
+  // your own. Buttons use onMouseDown-preventDefault so picking doesn't blur (and
+  // thus commit) the input first.
+  planDrop(p, r) {
+    const h = React.createElement, k = p.key;
+    const draft = (this.state.taskDraft || '').trim().toLowerCase();
+    const pd = e => e.preventDefault();
+    const pick = text => { this.wsSet('plan', k, r.id, { text: (text || '').trim() }); this.closeTaskEdit(); };
+    const tasks = this.getTasks(k).filter(t => (t.text || '').trim());
+    const ordered = tasks.slice().sort((a, b) => (b.top ? 1 : 0) - (a.top ? 1 : 0));
+    const matches = ordered.filter(t => !draft || t.text.toLowerCase().indexOf(draft) !== -1);
+    const opts = matches.map(t => h('button', { className: 'vv-planopt' + (t.top ? ' top' : ''), key: t.id, onMouseDown: pd, onClick: () => pick(t.text) }, [
+      t.top ? this.hi('star', 12) : this.hi('list', 12),
+      h('span', { className: 'vv-planopttx', key: 'x' }, t.text),
+      t.cat ? h('span', { className: 'vv-planoptcat', key: 'c' }, t.cat) : null,
+    ]));
+    return h('div', { className: 'vv-plandrop', key: r.id + ':drop' }, [
+      h('div', { className: 'vv-plandrophd', key: 'hd' }, tasks.length ? 'From your Rule of 3 · pick one or keep typing your own' : 'No Rule-of-3 tasks yet · type your own above'),
+      opts.length ? h('div', { className: 'vv-plandroplist', key: 'l' }, opts)
+        : (draft ? h('div', { className: 'vv-plandropnone', key: 'n' }, 'No match · press Enter to add “' + (this.state.taskDraft || '').trim() + '”') : null),
+    ]);
+  }
+
+  /* ---- plan task time-tracking (start / end + live pomodoro + actual time) ---- */
+  planRow(k, id) { return this.wsList('plan', k).find(x => x.id === id); }
+  // Accumulated actual work time for a row (ms), including the live running segment.
+  planElapsed(r) {
+    const live = (r.running && r.runStart) ? Math.max(0, (this.state.now || Date.now()) - r.runStart) : 0;
+    return (r.actualMs || 0) + live;
+  }
+  startPlanTask(k, id) {
+    const r = this.planRow(k, id); if (!r || r.running) return;
+    const now = Date.now();
+    const patch = { running: true, runStart: now };
+    if (!r.startedAt) patch.startedAt = now;   // remember the very first start
+    this.wsSet('plan', k, id, patch);
+    this.ensureTick();
+  }
+  endPlanTask(k, id) {
+    const r = this.planRow(k, id); if (!r || !r.running) return;
+    const now = Date.now();
+    const add = r.runStart ? Math.max(0, now - r.runStart) : 0;
+    this.wsSet('plan', k, id, { running: false, runStart: null, endedAt: now, actualMs: (r.actualMs || 0) + add });
+    this.ensureTick();
+  }
+  resetPlanTask(k, id) {
+    this.wsSet('plan', k, id, { running: false, runStart: null, actualMs: 0, startedAt: null, endedAt: null });
+    this.ensureTick();
+  }
+  anyPlanRunning() {
+    return this.habitsData.some(p => (this.wsList('plan', p.key) || []).some(r => r.running));
+  }
+  // Run a 1-second clock only while some task is running; stop it otherwise.
+  ensureTick() {
+    const running = this.anyPlanRunning();
+    if (running && !this._tick) this._tick = setInterval(() => this.setState({ now: Date.now() }), 1000);
+    else if (!running && this._tick) { clearInterval(this._tick); this._tick = null; }
+  }
+  fmtClock(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000)), pad = n => String(n).padStart(2, '0');
+    const hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+    return (hh ? hh + ':' : '') + pad(mm) + ':' + pad(ss);
+  }
+  fmtDur(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000)), pad = n => String(n).padStart(2, '0');
+    const hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+    return hh ? (hh + 'h ' + pad(mm) + 'm') : (mm + 'm ' + pad(ss) + 's');
+  }
+  clockOf(ms) {
+    const d = new Date(ms); let hh = d.getHours(); const mm = String(d.getMinutes()).padStart(2, '0');
+    const ap = hh >= 12 ? 'PM' : 'AM'; hh = hh % 12; if (hh === 0) hh = 12;
+    return hh + ':' + mm + ' ' + ap;
+  }
+  // Expandable panel under a plan row: live pomodoro while running, actual time when done.
+  planTimer(p, r) {
+    const h = React.createElement, k = p.key, editable = this.canEditFounder(k);
+    const POMO = 25 * 60 * 1000;
+    const elapsed = this.planElapsed(r);
+    if (r.running) {
+      const into = elapsed % POMO, pomoNum = Math.floor(elapsed / POMO) + 1;
+      const pct = Math.round(into / POMO * 100), remain = POMO - into;
+      return h('div', { className: 'vv-plantimer running', key: r.id + ':timer' }, [
+        h('div', { className: 'vv-pomoring', style: { '--pct': pct + '%' }, key: 'ring' }, h('span', { className: 'vv-pomonum', key: 'n' }, this.hi('flame', 15))),
+        h('div', { className: 'vv-plantimermeta', key: 'm' }, [
+          h('div', { className: 'vv-plantimerbig', key: 'b' }, this.fmtClock(elapsed)),
+          h('div', { className: 'vv-plantimersub', key: 's' }, 'Pomodoro ' + pomoNum + ' · ' + this.fmtClock(remain) + ' to a break'),
+        ]),
+        editable
+          ? h('button', { className: 'vv-plantimerend', key: 'e', onClick: () => this.endPlanTask(k, r.id) }, [this.hi('stop', 13), 'End task'])
+          : h('span', { className: 'vv-plantimerlive', key: 'e' }, 'In progress…'),
+      ]);
+    }
+    // completed — actual time recorded
+    const st = r.startedAt ? this.clockOf(r.startedAt) : '', en = r.endedAt ? this.clockOf(r.endedAt) : '';
+    const sub = (st || en) ? ((st ? 'Started ' + st : '') + (st && en ? ' · ' : '') + (en ? 'ended ' + en : '')) : null;
+    return h('div', { className: 'vv-plantimer done', key: r.id + ':timer' }, [
+      h('span', { className: 'vv-plantimerchk', key: 'c' }, this.hi('check', 15)),
+      h('div', { className: 'vv-plantimermeta', key: 'm' }, [
+        h('div', { className: 'vv-plantimerbig', key: 'b' }, 'Actual · ' + this.fmtDur(elapsed)),
+        sub ? h('div', { className: 'vv-plantimersub', key: 's' }, sub) : null,
+      ]),
+      editable ? h('div', { className: 'vv-plantimeracts', key: 'a' }, [
+        h('button', { className: 'vv-plantimerresume', key: 'r', title: 'Resume — add more time', onClick: () => this.startPlanTask(k, r.id) }, [this.hi('play', 12), 'Resume']),
+        h('button', { className: 'vv-plantimerreset', key: 'x', title: 'Clear recorded time', onClick: () => this.resetPlanTask(k, r.id) }, this.hi('trash', 13)),
+      ]) : null,
     ]);
   }
   // Simple bulleted worksheet list (derailers, focus moves).
@@ -1629,6 +1766,8 @@ class Component extends DCLogic {
       rocket: [p('M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.79-.78.8-2.07.09-2.91a2.18 2.18 0 0 0-3.09-.09z', 1), p('M12 15l-3-3a22 22 0 0 1 2-3.95A12.9 12.9 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z', 2), p('M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5', 3)],
       bulb: [p('M12 3a6 6 0 0 0-4 10.5c.5.5 1 1.4 1 2.5h6c0-1.1.5-2 1-2.5A6 6 0 0 0 12 3Z', 1), p('M9.5 19h5M10.5 22h3', 2)],
       check: [p('M5 12.5 10 17l9-10', 1)],
+      play: [p('M8 5v14l11-7z', 1)],
+      stop: [h('rect', { x: 6, y: 6, width: 12, height: 12, rx: 2, key: 1 })],
       x: [p('M6 6l12 12M18 6 6 18', 1)],
       doc: [p('M7 3h7l4 4v14H7z', 1), p('M14 3v4h4', 2), p('M10 13h5M10 17h5', 3)],
       book: [p('M5 4.5A1.5 1.5 0 0 1 6.5 3H18v14H7a2 2 0 0 0-2 2z', 1), p('M9 7h6', 2)],
@@ -2409,6 +2548,181 @@ class Component extends DCLogic {
     this.setState({ affirmReviewed: next });
     try { if (next) localStorage.setItem('vivartam_affirm_reviewed', next); else localStorage.removeItem('vivartam_affirm_reviewed'); } catch (e) {}
   }
+  /* ---------------- Industry feed — live articles per topic ---------------- */
+  // Each topic maps to a Google News RSS search. Tune `q` to sharpen results.
+  get feedTopics() {
+    return [
+      { key: 'cae', label: 'CAE', title: 'Computer-Aided Engineering', desc: 'Simulation, FEA, CFD & engineering software', accent: 'var(--steel)',
+        q: '"computer aided engineering" OR "CAE simulation" OR "finite element analysis" OR "computational fluid dynamics" when:90d' },
+      { key: 'ai', label: 'Latest in AI', title: 'Latest in AI', desc: 'Models, research & the broader AI industry', accent: 'var(--orange-deep)',
+        q: '("artificial intelligence" OR "generative AI" OR "large language model") when:7d' },
+      { key: 'aihr', label: 'AI in HR', title: 'AI in HR', desc: 'AI for recruiting, people ops & HR tech', accent: '#8A5CC4',
+        q: '("AI in HR" OR "AI recruiting" OR "HR technology AI" OR "people analytics") when:45d' },
+    ];
+  }
+  feedActive() { return this.state.feedTab || 'cae'; }
+  // Browsers block cross-origin RSS, so fetch via CORS-friendly services and
+  // fall back across several so a single outage doesn't break the page. Returns
+  // a normalised [{title, link, source, pubDate}] list.
+  async feedFetchItems(t) {
+    const rss = 'https://news.google.com/rss/search?q=' + encodeURIComponent(t.q) + '&hl=en-US&gl=US&ceid=US:en';
+    const enc = encodeURIComponent(rss);
+    let lastErr;
+    // 0) First-party Supabase Edge Function — reliable, no CORS/proxy/rate limits.
+    //    Falls through silently if the function isn't deployed yet.
+    if (this._supa && this._supa.functions) {
+      try {
+        const r = await this._supa.functions.invoke('feed', { body: { q: t.q } });
+        if (!r.error && r.data && Array.isArray(r.data.items) && r.data.items.length) return r.data.items.slice(0, 20);
+      } catch (e) { /* not deployed / cold — fall back to proxies */ }
+    }
+    // 1) allorigins — JSON-wrapped XML first (its most reliable endpoint), then
+    //    raw XML. Either returns the feed which we parse client-side.
+    const proxies = [
+      { url: 'https://api.allorigins.win/get?url=' + enc, json: true },  // {contents:"…"}
+      { url: 'https://api.allorigins.win/raw?url=' + enc, json: false },
+    ];
+    for (const p of proxies) {
+      try {
+        const res = await fetch(p.url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        let txt = await res.text();
+        if (p.json) { try { txt = (JSON.parse(txt) || {}).contents || ''; } catch (e) { txt = ''; } }
+        if (txt && txt.indexOf('<item') !== -1) return this.parseRss(txt);
+        throw new Error('Empty response');
+      } catch (e) { lastErr = e; }
+    }
+    // 2) rss2json — last resort (rate-limited without an API key).
+    try {
+      const res = await fetch('https://api.rss2json.com/v1/api.json?count=20&rss_url=' + enc);
+      if (res.ok) {
+        const j = await res.json();
+        if (j && j.status === 'ok' && j.items && j.items.length) return this.normItems(j.items);
+      } else { lastErr = new Error('HTTP ' + res.status); }
+    } catch (e) { lastErr = e; }
+    throw lastErr || new Error('Network error');
+  }
+  // Normalise items that arrive without a <source> tag (e.g. rss2json): split the
+  // publisher off the "Headline - Publisher" title that Google News produces.
+  normItems(arr) {
+    const out = [];
+    for (let i = 0; i < arr.length && out.length < 20; i++) {
+      const r = arr[i] || {};
+      let title = (r.title || '').trim(); const link = (r.link || '').trim();
+      if (!title || !link) continue;
+      let source = '';
+      const dash = title.lastIndexOf(' - ');
+      if (dash > 10 && title.length - dash < 50) { source = title.slice(dash + 3).trim(); title = title.slice(0, dash).trim(); }
+      out.push({ title: title, link: link, source: source, pubDate: r.pubDate || '' });
+    }
+    return out;
+  }
+  parseRss(xml) {
+    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+    const nodes = doc.getElementsByTagName('item'), out = [];
+    for (let i = 0; i < nodes.length && out.length < 20; i++) {
+      const it = nodes[i];
+      const txt = tag => { const el = it.getElementsByTagName(tag)[0]; return el ? (el.textContent || '').trim() : ''; };
+      let title = txt('title');
+      const link = txt('link'), pubDate = txt('pubDate'), source = txt('source');
+      if (!title || !link) continue;
+      // Google News appends " - Publisher" to titles; drop it when redundant.
+      if (source && title.endsWith(' - ' + source)) title = title.slice(0, -(source.length + 3)).trim();
+      out.push({ title: title, link: link, pubDate: pubDate, source: source });
+    }
+    return out;
+  }
+  async loadFeed(key, force) {
+    const t = this.feedTopics.find(x => x.key === key); if (!t) return;
+    const s = this.state;
+    // Auto-load once: skip if we already have data, are loading, or errored (until forced).
+    if (!force && (s.feedData[key] || s.feedLoading[key] || s.feedError[key])) return;
+    this.setState(st => ({
+      feedLoading: Object.assign({}, st.feedLoading, { [key]: true }),
+      feedError: Object.assign({}, st.feedError, { [key]: null }),
+    }));
+    try {
+      const items = await this.feedFetchItems(t);
+      this.setState(st => ({
+        feedData: Object.assign({}, st.feedData, { [key]: items }),
+        feedLoading: Object.assign({}, st.feedLoading, { [key]: false }),
+      }));
+    } catch (e) {
+      this.setState(st => ({
+        feedError: Object.assign({}, st.feedError, { [key]: (e && e.message) || 'Network error' }),
+        feedLoading: Object.assign({}, st.feedLoading, { [key]: false }),
+      }));
+    }
+  }
+  timeAgo(s) {
+    const d = new Date(s); if (isNaN(d.getTime())) return '';
+    const sec = Math.round((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return 'just now';
+    const min = Math.round(sec / 60); if (min < 60) return min + 'm ago';
+    const hr = Math.round(min / 60); if (hr < 24) return hr + 'h ago';
+    const day = Math.round(hr / 24); if (day < 30) return day + 'd ago';
+    const mo = Math.round(day / 30); if (mo < 12) return mo + 'mo ago';
+    return Math.round(mo / 12) + 'y ago';
+  }
+  feedCard(h, t, a, i) {
+    return h('a', { className: 'vv-feedcard', key: a.link || i, href: a.link, target: '_blank', rel: 'noopener noreferrer', style: { '--hc': t.accent } }, [
+      h('div', { className: 'vv-feedmeta', key: 'm' }, [
+        h('span', { className: 'vv-feedsrc', key: 's' }, a.source || 'News'),
+        a.pubDate ? h('span', { className: 'vv-feeddot', key: 'd' }, '·') : null,
+        a.pubDate ? h('span', { className: 'vv-feedtime', key: 't' }, this.timeAgo(a.pubDate)) : null,
+      ]),
+      h('div', { className: 'vv-feedctitle', key: 'ti' }, a.title),
+      h('span', { className: 'vv-feedread', key: 'r' }, ['Read article', this.hi('external', 13)]),
+    ]);
+  }
+  feedSkeleton(h) {
+    return h('div', { className: 'vv-feedlist', key: 'skel' }, [0, 1, 2, 3, 4, 5].map(i =>
+      h('div', { className: 'vv-feedcard vv-feedskel', key: i }, [
+        h('div', { className: 'vv-skline w40', key: 1 }),
+        h('div', { className: 'vv-skline w90', key: 2 }),
+        h('div', { className: 'vv-skline w65', key: 3 }),
+      ])
+    ));
+  }
+  renderFeed(DS) {
+    const h = React.createElement, I = this.I;
+    const topics = this.feedTopics, active = this.feedActive();
+    const t = topics.find(x => x.key === active) || topics[0];
+    const loading = !!this.state.feedLoading[active];
+    const error = this.state.feedError[active];
+    const items = this.state.feedData[active];
+    const tab = x => h('button', { key: x.key, className: active === x.key ? 'on' : '', onClick: () => this.setState({ feedTab: x.key }) }, x.label);
+
+    let content;
+    if (items && items.length) content = h('div', { className: 'vv-feedlist', key: 'list' }, items.map((a, i) => this.feedCard(h, t, a, i)));
+    else if (items && !items.length) content = h('div', { className: 'vv-feedempty', key: 'e' }, 'No recent articles found for this topic — try Refresh.');
+    else if (error) content = h('div', { className: 'vv-feederr', key: 'err' }, [
+      h('div', { className: 'vv-feederrt', key: 't' }, 'Couldn’t load articles'),
+      h('div', { className: 'vv-feederrm', key: 'm' }, String(error) + ' — the news source or proxy may be busy.'),
+      h(DS.Button, { variant: 'accent', size: 'sm', onClick: () => this.loadFeed(active, true), key: 'r' }, 'Try again'),
+    ]);
+    else content = this.feedSkeleton(h);
+
+    return h('div', { className: 'vv-feed' }, [
+      h('div', { className: 'vv-feedtop', key: 'top', style: { '--hc': t.accent } }, [
+        h('div', { className: 'vv-feedtitle', key: 'ti' }, [
+          h('span', { className: 'vv-feedic', key: 'i' }, I.feed(20)),
+          h('div', { key: 'tx' }, [
+            h('h2', { key: 'h' }, t.title),
+            h('div', { className: 'vv-feedsub', key: 's' }, t.desc),
+          ]),
+        ]),
+        h('div', { className: 'vv-feedactions', key: 'act' }, [
+          loading ? h('span', { className: 'vv-feedupd', key: 'l' }, 'Loading…') : null,
+          h(DS.Button, { variant: 'ghost', size: 'sm', leadingIcon: I.clock(15), onClick: () => this.loadFeed(active, true), key: 'r' }, 'Refresh'),
+        ]),
+      ]),
+      h('div', { className: 'vv-seg vv-feedseg', key: 'tabs' }, topics.map(tab)),
+      h('div', { className: 'vv-feednote', key: 'note' }, [this.hi('news', 12), 'Live headlines via Google News · opens the original source in a new tab']),
+      content,
+    ]);
+  }
+
   renderAffirmations(DS) {
     const h = React.createElement, I = this.I;
     const reviewed = this.state.affirmReviewed === this.dstr(this.TODAY);
@@ -2797,6 +3111,7 @@ class Component extends DCLogic {
       { key: 'habits', label: 'Habits', icon: I.habits },
       { key: 'vision', label: 'Vision board', icon: I.vision },
       { key: 'affirm', label: 'Affirmations', icon: I.bulbNav },
+      { key: 'feed', label: 'Industry feed', icon: I.feed },
     ];
     const navMile = [
       { key: 'overview', label: 'Overview', icon: I.overview },
@@ -2882,6 +3197,7 @@ class Component extends DCLogic {
     if (nav === 'habits') return this.renderHabits(DS);
     if (nav === 'vision') return this.renderVision(DS);
     if (nav === 'affirm') return this.renderAffirmations(DS);
+    if (nav === 'feed') return this.renderFeed(DS);
     if (nav === 'network') return this.renderNetwork(DS);
     if (nav === 'future') return this.renderFuture(DS);
     if (nav === 'goals') return this.renderGoals(DS);
